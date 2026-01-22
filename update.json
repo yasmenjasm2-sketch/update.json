@@ -1,0 +1,7 @@
+{
+  "latest_version": "1.2.0",
+  "force_update": true,
+  "title": "تحديث جديد متوفر",
+  "message": "تم تحسين الأداء وإصلاح الأخطاء، يرجى التحديث الآن",
+  "update_url": "https://username.github.io/my-app-update/app.apk"
+}

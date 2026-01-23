@@ -1,7 +1,6 @@
 {
-  "latest_version": "1.2.0",
-  "force_update": true,
-  "title": "تحديث جديد متوفر",
-  "message": "يرجا تحديث تطبيق الان",
-  "update_url": "https://t.me/yazinumha/3786"
+  "latest_version": "3.1.2",
+  "title": "تحديث جديد",
+  "message": "تم إضافة مميزات جديدة، يرجى التحديث الآن.",
+  "update_url": "https://www.google.com" 
 }

@@ -21,7 +21,10 @@
         .login-card { background: rgba(30, 30, 30, 0.9); padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); width: 320px; text-align: center; border: 1px solid #444; position: relative; overflow: hidden; }
         /* تأثير لمعان خفيف */
         .login-card::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(to bottom right, rgba(255,255,255,0.1), rgba(255,255,255,0)); transform: rotate(45deg); pointer-events: none; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #555; background: #222; color: #00e676; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+        
+        /* إضافة السماح بتحديد النص داخل حقل الإدخال ليعمل اللصق */
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #555; background: #222; color: #00e676; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px; user-select: text; -webkit-user-select: text; }
+        
         input:focus { outline: none; border-color: #00e676; box-shadow: 0 0 8px rgba(0, 230, 118, 0.5); }
         button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; margin-bottom: 10px; }
         button:hover { background: #00c853; box-shadow: 0 0 15px #00e676; transform: scale(1.02); }
@@ -59,8 +62,12 @@
     // ==========================================
     // 🛡️ طبقات الحماية لصفحة الويب 🛡️
     // ==========================================
-    // 1. منع كليك يمين
-    document.addEventListener('contextmenu', event => event.preventDefault());
+    // 1. منع كليك يمين (مع استثناء حقل الإدخال للسماح باللصق)
+    document.addEventListener('contextmenu', event => {
+        if (event.target.tagName !== 'INPUT') {
+            event.preventDefault();
+        }
+    });
     
     // 2. منع اختصارات لوحة المفاتيح الخاصة بالمطورين (F12, Ctrl+Shift+I, Ctrl+U)
     document.onkeydown = function(e) {
@@ -85,22 +92,28 @@
     document.getElementById('deviceDisplay').innerText = "بصمة جهازك: " + appDeviceId;
 
     // ==========================================
-    // 📦 قاعدة بيانات الأكواد المطورة (تدعم الاستعادة)
+    // 📦 قاعدة بيانات الأكواد المطورة (تدعم الاستعادة والمدد الجديدة)
     // ==========================================
     /*
       شرح المتغيرات للمطور:
       - status: 1 = شغال | 2 = محظور
-      - deviceId: إذا كان فارغاً "" يعمل على أي جهاز لمرة واحدة ويسجل بالهاتف (في التطبيق).
-        *ملاحظة*: لكي تعمل ميزة استعادة الأيام عند حذف التطبيق، يجب عليك تحديث الملف لاحقاً ووضع بصمة هاتف المشتري هنا.
-      - expiryDate: تاريخ انتهاء الاشتراك الفعلي (سنة-شهر-يوم T ساعة:دقيقة:ثانية). هذا الرقم سيعيده للتطبيق عند الاستعادة.
+      - deviceId: إذا كان فارغاً "" يعمل على أي جهاز لمرة واحدة ويسجل بالهاتف.
+      - duration: المدة التي سيلتقطها التطبيق لبرمجة المؤقت.
+      - expiryDate: تاريخ انتهاء الاشتراك الفعلي لعملية الاستعادة (سنة-شهر-يوم T ساعة:دقيقة:ثانية).
     */
     const subscriptionCodes = {
+        // --- 🔴 الاشتراكات القديمة (كما هي) ---
         "WEEK-1111": { duration: "7days", status: 1, deviceId: "", expiryDate: null },
         "MONTH-HACK": { duration: "30days", status: 2, deviceId: "", expiryDate: null }, // ⚠️ كود محظور
-        
-        // 🔥 مثال على مستخدم لديه ميزة الاستعادة (ربطت الكود بجهازه ووضعت تاريخ الانتهاء)
         "hamzazed123": { duration: "30days", status: 1, deviceId: "a1b2c3d4e5f6", expiryDate: "2024-12-31T23:59:59" },
-        "vip_ahmed_2024": { duration: "365days", status: 1, deviceId: "b2c8cdd53aba1104", expiryDate: "2025-05-01T12:00:00" }
+        "vip_ahmed_2024": { duration: "365days", status: 1, deviceId: "ضع_بصمة_جهازه_هنا", expiryDate: "2025-05-01T12:00:00" },
+
+        // --- 🟢 الاشتراكات الجديدة (حسب طلبك) ---
+        "SUB-MONTH": { duration: "30days", status: 1, deviceId: "", expiryDate: null }, // اشتراك شهري
+        "SUB-DAY": { duration: "1day", status: 1, deviceId: "", expiryDate: null }, // اشتراك يومي (24 ساعة)
+        "SUB-HOUR": { duration: "1hour", status: 1, deviceId: "", expiryDate: null }, // اشتراك ساعي (ساعة واحدة)
+        "TEST-20SEC": { duration: "20seconds", status: 1, deviceId: "", expiryDate: null }, // اشتراك 20 ثانية (للتجربة)
+        "VIP-FUTURE": { duration: "lifetime", status: 1, deviceId: "", expiryDate: null } // اشتراك مستقبلي/مدى الحياة
     };
 
     // ==========================================
@@ -171,7 +184,11 @@
             // نجاح التفعيل
             else if (codeData.status === 1) {
                 errorDiv.style.display = 'none';
-                // إرسال رابط التفعيل للتطبيق ليلتقطه (بناءً على الكود الذي وضعناه في الـ Android)
+                
+                // إرسال رابط التفعيل للتطبيق ليلتقطه (بناءً على المدة المحددة في قاعدة البيانات)
+                // أمثلة: 
+                // https://dummy_success_auth_20seconds?code=...
+                // https://dummy_success_auth_1hour?code=...
                 window.location.href = `https://dummy_success_auth_${codeData.duration}?code=${subCode}`;
                 
                 // تغيير شكل الزر لإعطاء إحساس بالنجاح

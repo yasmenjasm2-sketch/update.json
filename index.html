@@ -3,72 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفعيل الاشتراك</title>
+    <title>نظام إدارة الاشتراكات</title>
     <style>
-        /* تم تعديل الخلفية هنا لتكون متدرجة واحترافية */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-card { background: rgba(30, 30, 30, 0.9); padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); width: 320px; text-align: center; border: 1px solid #444; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #555; background: #222; color: #00e676; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
-        input:focus { outline: none; border-color: #00e676; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #555; background: #222; color: #00e676; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; }
         button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; }
         button:hover { background: #00c853; box-shadow: 0 0 10px #00e676; }
         .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; border: 1px solid #ff5252; padding: 5px; border-radius: 5px; background: rgba(255, 82, 82, 0.1); }
-        .info { color: #aaa; font-size: 12px; margin-top: 15px; }
+        .info { color: #aaa; font-size: 11px; margin-top: 15px; text-align: right; }
     </style>
 </head>
 <body>
 
 <div class="login-card">
     <h2>تفعيل الاشتراك</h2>
-    <p style="font-size: 13px; color: #ccc;">يرجى إدخال كود التفعيل الخاص بك</p>
-    <input type="text" id="subCode" placeholder="أدخل الكود هنا">
+    <p style="font-size: 13px; color: #ccc;">أدخل كود التفعيل الخاص بك</p>
+    <input type="text" id="subCode" placeholder="XXXX-XXXX-XXXX">
     <button onclick="login()">دخول</button>
-    <div id="error" class="error">الكود غير صحيح أو منتهي!</div>
+    <div id="error" class="error">الكود غير صحيح، منتهي، أو تم حظره!</div>
     
     <div class="info">
-        أكواد للتجربة:<br>
-        20 ثانية: <b>TEST-20SEC</b><br>
-        أسبوع: <b>WEEK-1111</b>
+        <b>حالة الأكواد الحالية:</b><br>
+        20 ثانية: TEST-20SEC (شغال)<br>
+        أسبوع: WEEK-1111 (شغال)
     </div>
 </div>
 
 <script>
-    // ==========================================
-    // منطقة تحكم المطور (التحديث الإجباري)
-    // ==========================================
-    const REQUIRED_APP_VERSION = "3.0.1"; // ⚠️ بمجرد أن تغير هذا الرقم إلى 3.0.2 مثلاً، سيتوقف التطبيق القديم ويطلب التحديث الإجباري
-    const UPDATE_LINK = "https://t.me/yazinumha"; // ضع هنا رابط قناتك أو رابط تحميل التحديث
+    // --- 1. منطقة التحكم في الإصدار (Update) ---
+    const REQUIRED_APP_VERSION = "3.0.1"; 
+    const UPDATE_LINK = "https://t.me/yourchannel";
 
-    // إرسال أمر فحص التحديث للتطبيق فور فتح الصفحة
+    // --- 2. قاعدة بيانات الأكواد (إدارة المطور) ---
+    // status: 1 تعني شغال | status: 2 تعني محظور (Banned)
+    const subscriptionDatabase = [
+        { code: "TEST-20SEC",  duration: "20sec",  status: 1 },
+        { code: "WEEK-1111",   duration: "7days",  status: 1 },
+        { code: "FWKH-MONTH1", duration: "30days", status: 1 },
+        { code: "GOLD-2MONTH", duration: "60days", status: 1 },
+        // خانات فارغة لإضافة أكواد جديدة مستقبلاً
+        { code: "NEW-CODE1",   duration: "30days", status: 1 },
+        { code: "NEW-CODE2",   duration: "30days", status: 1 }
+    ];
+
+    // وظيفة إرسال البيانات للتطبيق (تحديث + فحص حظر)
     window.onload = function() {
+        // نرسل قائمة الأكواد المحظورة للتطبيق ليفحصها في الخلفية
+        const bannedCodes = subscriptionDatabase.filter(item => item.status === 2).map(item => item.code).join(",");
+        
         setTimeout(function() {
+            // فحص التحديث
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(UPDATE_LINK);
-        }, 300); // يرسلها بعد ثلث ثانية من تحميل الصفحة بصمت
+            // فحص الحظر (نرسل قائمة المحظورين)
+            if(bannedCodes) {
+                window.location.href = "app://check_ban?list=" + bannedCodes;
+            }
+        }, 500);
     };
 
-    // ==========================================
-    // نظام الأكواد والأوقات
-    // ==========================================
-    const codes1Week = ["WEEK-1111", "WEEK-2222"];
-    const codes1Month = [
-        "FWKH-78X2-K9Q1-M0P5", "AUTH-99V1-B6Z4-X2L8", "SUBSC-44R7-T2Y0-N1M9",
-        "PREM-12K3-L5H9-G8F2", "GOLD-55W2-E7S1-D0C4", "ELITE-88N4-J1B6-X9V3",
-        "SECURE-33Z2-A8Q4-W1L0", "ACCESS-66H3-G5P7-K2M9", "FWKH-X9V1-Z8B2-C3M4", "VIP-00L5-K1J9-H7G2"
-    ];
-    const codes2Months = ["MONTH2-111", "MONTH2-222"];
-
     function login() {
-        const subCode = document.getElementById('subCode').value.trim();
+        const input = document.getElementById('subCode').value.trim();
+        const found = subscriptionDatabase.find(item => item.code === input);
         
-        if (subCode === "TEST-20SEC") {
-            window.location.href = "index.html?status=success_auth_20sec";
-        } else if (codes1Week.includes(subCode)) {
-            window.location.href = "index.html?status=success_auth_7days";
-        } else if (codes1Month.includes(subCode)) {
-            window.location.href = "index.html?status=success_auth_30days";
-        } else if (codes2Months.includes(subCode)) {
-            window.location.href = "index.html?status=success_auth_60days";
+        if (found) {
+            if (found.status === 2) {
+                document.getElementById('error').innerText = "هذا الكود محظور من قبل المطور!";
+                document.getElementById('error').style.display = 'block';
+                return;
+            }
+            // إذا كان الكود سليم، نرسل النوع للتطبيق
+            window.location.href = "index.html?status=success_auth_" + found.duration + "&code=" + found.code;
         } else {
+            document.getElementById('error').innerText = "الكود غير صحيح!";
             document.getElementById('error').style.display = 'block';
         }
     }

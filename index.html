@@ -9,10 +9,12 @@
         .login-card { background: rgba(30, 30, 30, 0.9); padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); width: 320px; text-align: center; border: 1px solid #444; }
         input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #555; background: #222; color: #00e676; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
         input:focus { outline: none; border-color: #00e676; }
-        button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; margin-bottom: 10px; }
         button:hover { background: #00c853; box-shadow: 0 0 10px #00e676; }
+        .whatsapp-btn { background: #25D366; color: white; text-decoration: none; display: block; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.3s; margin-top: 10px; }
+        .whatsapp-btn:hover { background: #128C7E; box-shadow: 0 0 10px #25D366; }
         .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; border: 1px solid #ff5252; padding: 5px; border-radius: 5px; background: rgba(255, 82, 82, 0.1); }
-        .info { color: #aaa; font-size: 12px; margin-top: 15px; }
+        .device-info { font-size: 11px; color: #888; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -20,55 +22,73 @@
 <div class="login-card">
     <h2>تفعيل الاشتراك</h2>
     <p style="font-size: 13px; color: #ccc;">يرجى إدخال كود التفعيل الخاص بك</p>
+    
     <input type="text" id="subCode" placeholder="أدخل الكود هنا">
     <button onclick="login()">دخول</button>
+    
+    <a href="https://wsend.co/905424678123" class="whatsapp-btn" target="_blank">💬 الدعم الفني / شراء اشتراك</a>
+    
     <div id="error" class="error">الكود غير صحيح، منتهي، أو محظور!</div>
     
-    <div class="info">
-        أكواد للتجربة:<br>
-        20 ثانية: <b>TEST-20SEC</b><br>
-        أسبوع: <b>WEEK-1111</b>
-    </div>
+    <div class="device-info" id="deviceDisplay">جاري جلب بصمة الهاتف...</div>
 </div>
 
 <script>
     // ==========================================
-    // منطقة تحكم المطور (التحديث الإجباري وروابط الدعم)
+    // منطقة تحكم المطور
     // ==========================================
     const REQUIRED_APP_VERSION = "3.0.1"; 
-    const DEVELOPER_LINK = "https://t.me/yourchannel"; // رابط التحديث أو الدعم عند الحظر
+    const DEVELOPER_LINK = "https://wsend.co/905424678123"; // رابط الواتساب للدعم وفك الحظر
+
+    // استخراج بصمة الهاتف (Device ID) التي يرسلها التطبيق
+    const urlParams = new URLSearchParams(window.location.search);
+    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
+    
+    // عرض بصمة الهاتف للمستخدم
+    document.getElementById('deviceDisplay').innerText = "بصمة جهازك: " + appDeviceId;
 
     // ==========================================
-    // قاعدة بيانات الأكواد (جديدة واحترافية)
-    // الحالة 1 = شغال | الحالة 2 = محظور ومسحوب
+    // قاعدة بيانات الأكواد
+    // الحالة: 1 = شغال | 2 = محظور ومسحوب
+    // deviceId: اتركها "" ليعمل على أي هاتف، أو ضع بصمة هاتف المستخدم ليعمل على هاتفه فقط
     // ==========================================
     const subscriptionCodes = {
-        "TEST-20SEC": { duration: "20sec", status: 1 },
-        "WEEK-1111": { duration: "7days", status: 1 },
-        "WEEK-2222": { duration: "7days", status: 2 }, // ⚠️ هذا كود محظور كمثال
-        "FWKH-78X2-K9Q1-M0P5": { duration: "30days", status: 1 },
-        "AUTH-99V1-B6Z4-X2L8": { duration: "30days", status: 2 },
-        "HACKER-CODE-99": { duration: "30days", status: 2 }, // ⚠️ كود مسرب تم حظره
-        "MONTH2-111": { duration: "60days", status: 1 }
+        // --- أكواد أسبوعية ---
+        "WEEK-1111": { duration: "7days", status: 1, deviceId: "" },
+        
+        // --- أكواد شهرية ---
+        "MONTH-A1B2": { duration: "30days", status: 1, deviceId: "" },
+        "MONTH-HACK": { duration: "30days", status: 2, deviceId: "" }, // ⚠️ كود محظور
+
+        // --- كود مربوط بجهاز واحد فقط (مثال) ---
+        "VIP-STRICT": { duration: "30days", status: 1, deviceId: "a1b2c3d4e5f6" }, 
+
+        // ==========================================
+        // ⬇️ أضف الأكواد الجديدة هنا في المستقبل ⬇️
+        // ==========================================
+        
+        // "CODE-HERE-1": { duration: "30days", status: 1, deviceId: "" },
+        // "CODE-HERE-2": { duration: "60days", status: 1, deviceId: "" },
+        // "CODE-HERE-3": { duration: "365days", status: 1, deviceId: "" },
+        
+        // ==========================================
     };
 
     // ==========================================
     // أوامر الفحص التلقائية عند فتح التطبيق
     // ==========================================
     window.onload = function() {
-        // 1. إرسال أمر فحص التحديث
+        // فحص التحديث
         setTimeout(function() {
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }, 300);
 
-        // 2. فحص حالة الكود المحفوظ في الخلفية (إذا كان التطبيق يرسله)
-        const urlParams = new URLSearchParams(window.location.search);
+        // فحص الحظر في الخلفية
         const codeToCheck = urlParams.get('check_code');
-        
         if (codeToCheck) {
-            // إذا الكود موجود في القاعدة وحالته 2 (محظور)
             if (subscriptionCodes[codeToCheck] && subscriptionCodes[codeToCheck].status === 2) {
                 setTimeout(function() {
+                    // أمر الطرد وإرسال المستخدم للواتساب
                     window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
                 }, 600);
             }
@@ -76,25 +96,30 @@
     };
 
     // ==========================================
-    // نظام تسجيل الدخول اليدوي
+    // نظام تسجيل الدخول (مع فحص بصمة الهاتف)
     // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
         const codeData = subscriptionCodes[subCode];
+        const errorDiv = document.getElementById('error');
 
         if (codeData) {
             if (codeData.status === 2) {
-                // الكود صحيح ولكنه محظور
-                document.getElementById('error').innerText = "تم حظر هذا الكود من قبل المطور!";
-                document.getElementById('error').style.display = 'block';
-            } else if (codeData.status === 1) {
-                // الكود صحيح وشغال، نرسل المدة ومعها الكود ليتم حفظه
+                errorDiv.innerText = "تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.";
+                errorDiv.style.display = 'block';
+            } 
+            // التحقق من بصمة الهاتف (إذا كان المطور قد خصص الكود لهاتف معين)
+            else if (codeData.deviceId !== "" && codeData.deviceId !== appDeviceId) {
+                errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه هنا!";
+                errorDiv.style.display = 'block';
+            }
+            else if (codeData.status === 1) {
+                // تفعيل ناجح
                 window.location.href = `index.html?status=success_auth_${codeData.duration}&code=${subCode}`;
             }
         } else {
-            // الكود غير موجود أصلاً
-            document.getElementById('error').innerText = "الكود غير صحيح أو منتهي!";
-            document.getElementById('error').style.display = 'block';
+            errorDiv.innerText = "الكود غير صحيح أو منتهي!";
+            errorDiv.style.display = 'block';
         }
     }
 </script>

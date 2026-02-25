@@ -1,9 +1,0 @@
-{
-  "server_online": true,
-  "maintenance": false,
-  "maintenance_message": "الموقع حالياً تحت الصيانة المبرمجة، سنعود قريباً.",
-  "latest_version": "3.1.2",
-  "update_title": "تحديث جديد متوفر",
-  "update_message": "تم تحسين الأداء وإضافة مميزات جديدة، يرجى التحديث الآن.",
-  "update_url": "https://www.google.com"
-}

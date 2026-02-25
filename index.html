@@ -15,19 +15,21 @@
             align-items: center; 
             height: 100vh; 
             margin: 0; 
-            user-select: none; 
+            user-select: none;
             -webkit-user-select: none;
         }
         .login-card { background: rgba(30, 30, 30, 0.9); padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); width: 320px; text-align: center; border: 1px solid #444; position: relative; overflow: hidden; }
         .login-card::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(to bottom right, rgba(255,255,255,0.1), rgba(255,255,255,0)); transform: rotate(45deg); pointer-events: none; }
         
-        /* السماح بتحديد النص داخل حقل الإدخال فقط ليعمل اللصق */
         input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #555; background: #222; color: #00e676; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px; user-select: text; -webkit-user-select: text; }
         input:focus { outline: none; border-color: #00e676; box-shadow: 0 0 8px rgba(0, 230, 118, 0.5); }
+        
         button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; margin-bottom: 10px; }
         button:hover { background: #00c853; box-shadow: 0 0 15px #00e676; transform: scale(1.02); }
+        
         .whatsapp-btn { background: #25D366; color: white; text-decoration: none; display: block; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.3s; margin-top: 10px; }
         .whatsapp-btn:hover { background: #128C7E; box-shadow: 0 0 15px #25D366; transform: scale(1.02); }
+        
         .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; border: 1px solid #ff5252; padding: 8px; border-radius: 5px; background: rgba(255, 82, 82, 0.1); font-weight: bold; animation: shake 0.3s ease-in-out; }
         .device-info { font-size: 11px; color: #aaa; margin-top: 15px; font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; }
         
@@ -46,154 +48,175 @@
     <p style="font-size: 13px; color: #ccc;">يرجى إدخال كود التفعيل الخاص بك</p>
     
     <input type="text" id="subCode" placeholder="أدخل الكود هنا" autocomplete="off">
-    <button onclick="login()">دخول آمن</button>
+    <button id="loginBtn" onclick="login()">تفعيل وبدء الاشتراك</button>
     
     <a href="https://wsend.co/905424678123" class="whatsapp-btn" target="_blank">💬 الدعم الفني / شراء اشتراك</a>
     
-    <div id="error" class="error"></div>
+    <div id="error" class="error">الكود غير صحيح، منتهي، أو محظور!</div>
     
     <div class="device-info" id="deviceDisplay">جاري جلب بصمة الهاتف...</div>
 </div>
 
 <script>
     // ==========================================
-    // 🛡️ طبقات الحماية لصفحة الويب
+    // 🛡️ طبقات الحماية لصفحة الويب 
     // ==========================================
-    document.addEventListener('contextmenu', event => {
-        if (event.target.tagName !== 'INPUT') event.preventDefault();
-    });
+    document.addEventListener('contextmenu', event => { if (event.target.tagName !== 'INPUT') event.preventDefault(); });
     document.onkeydown = function(e) {
         if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) return false;
     };
 
     // ==========================================
-    // إعدادات المطور الإلزامية
+    // منطقة تحكم المطور
     // ==========================================
     const REQUIRED_APP_VERSION = "3.0.1"; 
     const DEVELOPER_LINK = "https://wsend.co/905424678123";
 
     const urlParams = new URLSearchParams(window.location.search);
-    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
+    const appDeviceId = urlParams.get('device_id') || "DEVICE_" + Math.random().toString(36).substr(2, 9); // توليد وهمي في حال لم يرسل التطبيق البصمة
     const checkCode = urlParams.get('check_code') || "";
+    
     document.getElementById('deviceDisplay').innerText = "بصمة جهازك: " + appDeviceId;
 
     // ==========================================
-    // 📦 قاعدة بيانات الأكواد (تم حذف التاريخ الثابت)
+    // 📦 قاعدة بيانات الأكواد (تعتمد على المدة بالثواني فقط)
     // ==========================================
+    /*
+      - durationSec: مدة الكود بالثواني (مثال: يوم = 86400 ثانية، 30 يوم = 2592000 ثانية)
+      - status: 1 = شغال | 2 = محظور
+    */
     const subscriptionCodes = {
-        "WEEK-1111": { duration: "7days", status: 1, deviceId: "" },
-        "MONTH-HACK": { duration: "30days", status: 2, deviceId: "" }, // محظور
-        "TEST-20SEC": { duration: "20seconds", status: 1, deviceId: "" }, // تجربة 20 ثانية
-        "SUB-HOUR": { duration: "1hour", status: 1, deviceId: "" },
-        "SUB-DAY": { duration: "1day", status: 1, deviceId: "" },
-        "SUB-MONTH": { duration: "30days", status: 1, deviceId: "" },
-        "VIP-FUTURE": { duration: "lifetime", status: 1, deviceId: "" }
+        "SUB-MONTH": { durationSec: 30 * 24 * 60 * 60, status: 1, type: "30days" }, // 30 يوم
+        "SUB-WEEK":  { durationSec: 7 * 24 * 60 * 60, status: 1, type: "7days" },  // 7 أيام
+        "SUB-DAY":   { durationSec: 24 * 60 * 60, status: 1, type: "1day" },       // 24 ساعة
+        "SUB-HOUR":  { durationSec: 60 * 60, status: 1, type: "1hour" },           // ساعة واحدة
+        "TEST-20":   { durationSec: 20, status: 1, type: "20seconds" },            // 20 ثانية للتجربة
+        "BANNED-CD": { durationSec: 86400, status: 2, type: "1day" }               // كود محظور
     };
 
     // ==========================================
-    // ⚙️ دالة تحويل المدة النصية إلى وقت فعلي (ملي ثانية)
-    // ==========================================
-    function getDurationMs(durationStr) {
-        let num = parseInt(durationStr);
-        if (durationStr.includes('second')) return num * 1000;
-        if (durationStr.includes('hour')) return num * 60 * 60 * 1000;
-        if (durationStr.includes('day')) return num * 24 * 60 * 60 * 1000;
-        if (durationStr.includes('lifetime')) return 9999999999999; 
-        return 0;
-    }
-
-    // ==========================================
-    // أوامر الفحص التلقائية عند فتح الصفحة
+    // ⚙️ أوامر الفحص التلقائية عند الفتح
     // ==========================================
     window.onload = function() {
+        // فحص تحديث التطبيق
         setTimeout(function() {
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }, 300);
 
-        if (checkCode !== "") {
-            if (subscriptionCodes[checkCode] && subscriptionCodes[checkCode].status === 2) {
-                setTimeout(function() { window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK); }, 600);
-            }
-        } 
-        // فحص الاستعادة من الذاكرة المحلية للجهاز
-        else if (checkCode === "" && appDeviceId !== "UNKNOWN") {
-            for (const [codeKey, data] of Object.entries(subscriptionCodes)) {
-                let savedExpiry = localStorage.getItem('exp_' + codeKey);
-                let savedDevice = localStorage.getItem('dev_' + codeKey);
+        // محاولة الاستعادة التلقائية من الذاكرة المحلية (localStorage)
+        restoreSubscriptionIfValid();
+    };
+
+    function restoreSubscriptionIfValid() {
+        // البحث في الذاكرة المحلية عن اشتراك مسجل لهذا الجهاز
+        let activeCode = localStorage.getItem("active_sub_code");
+        
+        if (activeCode) {
+            let savedData = JSON.parse(localStorage.getItem("sub_data_" + activeCode));
+            
+            // التأكد أن البيانات تخص هذا الجهاز
+            if (savedData && savedData.deviceId === appDeviceId) {
+                let currentTime = Date.now();
                 
-                if (savedExpiry && savedDevice === appDeviceId && data.status === 1) {
-                    let expiryMs = parseInt(savedExpiry);
-                    if (expiryMs > Date.now()) { // إذا كان الاشتراك لا يزال سارياً
-                        document.getElementById('mainCard').innerHTML = `
-                            <h2 style='color:#00e676;'>جاري استعادة اشتراكك... 🔄</h2>
-                            <p style='color:#ccc;font-size:14px;'>تم التعرف على جهازك، انتظر لحظة</p>
-                            <div style="margin-top:20px; width:40px; height:40px; border:4px solid #00e676; border-top:4px solid transparent; border-radius:50%; animation: spin 1s linear infinite; margin-left:auto; margin-right:auto;"></div>
-                            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-                        `;
-                        setTimeout(function() {
-                            window.location.href = `app://restore_sub?code=${encodeURIComponent(codeKey)}&expiry_time=${expiryMs}`;
-                        }, 2000);
-                        return;
-                    }
+                // إذا كان الوقت الحالي أقل من وقت الانتهاء (الاشتراك لا يزال سارياً)
+                if (currentTime < savedData.expiryTimestamp) {
+                    showLoadingScreen("جاري استعادة اشتراكك... 🔄");
+                    
+                    // إرسال البيانات للتطبيق (الكود + الوقت المتبقي لانتهاء الاشتراك بالملي ثانية)
+                    setTimeout(function() {
+                        window.location.href = `app://restore_sub?code=${encodeURIComponent(activeCode)}&expiry_time=${savedData.expiryTimestamp}`;
+                    }, 2000);
+                } else {
+                    // الاشتراك انتهى
+                    localStorage.removeItem("active_sub_code");
+                    showError("اشتراكك السابق قد انتهى. يرجى إدخال كود جديد.");
                 }
             }
         }
-    };
+    }
 
     // ==========================================
-    // 🔐 نظام تسجيل الدخول وبدء العداد لأول مرة
+    // 🔐 نظام تسجيل الدخول وتفعيل المؤقت لأول مرة
     // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
-        const codeData = subscriptionCodes[subCode];
-        const errorDiv = document.getElementById('error');
+        const codeConfig = subscriptionCodes[subCode];
 
-        if (codeData) {
-            // 1. فحص الحظر
-            if (codeData.status === 2) {
-                errorDiv.innerText = "تم حظر هذا الكود من قبل المطور!";
-                errorDiv.style.display = 'block';
+        if (!codeConfig) {
+            showError("الكود غير صحيح أو غير موجود!");
+            return;
+        }
+
+        if (codeConfig.status === 2) {
+            showError("تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.");
+            return;
+        }
+
+        // فحص حالة الكود في الذاكرة المحلية لمعرفة ما إذا تم استخدامه مسبقاً
+        let savedData = JSON.parse(localStorage.getItem("sub_data_" + subCode));
+
+        if (savedData) {
+            // الكود مستخدم مسبقاً.. لنتأكد هل هو نفس الجهاز؟
+            if (savedData.deviceId !== appDeviceId) {
+                showError("⛔ هذا الكود مستخدم بالفعل على هاتف آخر! مستحيل تكراره.");
                 return;
-            } 
-
-            // 2. فحص الذاكرة المحلية (لمنع التكرار وبدء العداد)
-            let savedExpiry = localStorage.getItem('exp_' + subCode);
-            let savedDevice = localStorage.getItem('dev_' + subCode);
-
-            if (savedExpiry) {
-                // الكود تم استخدامه مسبقاً، نتحقق من الوقت
-                if (Date.now() > parseInt(savedExpiry)) {
-                    errorDiv.innerText = "عذراً، هذا الكود تم استخدامه وانتهت مدته!";
-                    errorDiv.style.display = 'block';
-                    return; // طرد المستخدم ومنع التكرار
-                }
-                // التحقق من بصمة الجهاز إذا حاول نقله لجهاز آخر
-                if (savedDevice && savedDevice !== appDeviceId && savedDevice !== "UNKNOWN") {
-                    errorDiv.innerText = "⛔ هذا الكود مستخدم بالفعل على جهاز آخر!";
-                    errorDiv.style.display = 'block';
+            } else {
+                // هو نفس الجهاز، لنتأكد هل انتهى وقته؟
+                if (Date.now() > savedData.expiryTimestamp) {
+                    showError("⏳ هذا الكود منتهي الصلاحية.");
+                    return;
+                } else {
+                    // الكود ساري ونفس الجهاز (استعادة يدوية)
+                    completeLogin(subCode, savedData.expiryTimestamp, codeConfig.type);
                     return;
                 }
-            } else {
-                // أول مرة يتم إدخال الكود! (هنا يبدأ العداد)
-                let durationMs = getDurationMs(codeData.duration);
-                let newExpiry = Date.now() + durationMs;
-                localStorage.setItem('exp_' + subCode, newExpiry); // حفظ وقت الانتهاء في الجهاز
-                localStorage.setItem('dev_' + subCode, appDeviceId); // ربط الكود بجهاز المستخدم
             }
-
-            // 3. نجاح التفعيل
-            if (codeData.status === 1) {
-                errorDiv.style.display = 'none';
-                window.location.href = `https://dummy_success_auth_${codeData.duration}?code=${subCode}`;
-                
-                const btn = document.querySelector('button');
-                btn.innerText = "تم التفعيل ✅";
-                btn.style.background = "#fff";
-            }
-        } else {
-            errorDiv.innerText = "الكود غير صحيح أو غير موجود!";
-            errorDiv.style.display = 'block';
         }
+
+        // --- التفعيل لأول مرة ---
+        // حساب وقت الانتهاء المستقبلي بناءً على الثواني المحددة للكود
+        let durationInMs = codeConfig.durationSec * 1000;
+        let expiryTimestamp = Date.now() + durationInMs;
+
+        // حفظ بيانات التفعيل في الجهاز لضمان عدم استخدامه على جهاز آخر
+        let activationData = {
+            deviceId: appDeviceId,
+            expiryTimestamp: expiryTimestamp,
+            activationDate: new Date().toISOString()
+        };
+        
+        localStorage.setItem("sub_data_" + subCode, JSON.stringify(activationData));
+        localStorage.setItem("active_sub_code", subCode); // تعيينه كالكود النشط حالياً
+
+        completeLogin(subCode, expiryTimestamp, codeConfig.type);
+    }
+
+    function completeLogin(subCode, expiryTimestamp, durationType) {
+        document.getElementById('error').style.display = 'none';
+        
+        const btn = document.getElementById('loginBtn');
+        btn.innerText = "تم التفعيل ✅";
+        btn.style.background = "#fff";
+
+        // توجيه التطبيق لبدء العمل وإعطائه وقت الانتهاء الدقيق
+        setTimeout(function() {
+            window.location.href = `https://dummy_success_auth_${durationType}?code=${encodeURIComponent(subCode)}&expiry=${expiryTimestamp}`;
+        }, 800);
+    }
+
+    function showError(msg) {
+        const errorDiv = document.getElementById('error');
+        errorDiv.innerText = msg;
+        errorDiv.style.display = 'block';
+    }
+
+    function showLoadingScreen(msg) {
+        document.getElementById('mainCard').innerHTML = `
+            <h2 style='color:#00e676;'>${msg}</h2>
+            <p style='color:#ccc;font-size:14px;'>تم التعرف على جهازك، انتظر لحظة</p>
+            <div style="margin-top:20px; width:40px; height:40px; border:4px solid #00e676; border-top:4px solid transparent; border-radius:50%; animation: spin 1s linear infinite; margin-left:auto; margin-right:auto;"></div>
+            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+        `;
     }
 </script>
 

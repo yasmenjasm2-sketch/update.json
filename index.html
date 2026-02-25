@@ -3,28 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفعيل الاشتراك</title>
+    <title>تفعيل الاشتراك | نظام محمي</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: rgba(30, 30, 30, 0.9); padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); width: 320px; text-align: center; border: 1px solid #444; }
+        /* منع تحديد النص ونسخه للحماية */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            user-select: none; /* منع التحديد */
+            -webkit-user-select: none;
+        }
+        .login-card { background: rgba(30, 30, 30, 0.9); padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); width: 320px; text-align: center; border: 1px solid #444; position: relative; overflow: hidden; }
+        /* تأثير لمعان خفيف */
+        .login-card::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(to bottom right, rgba(255,255,255,0.1), rgba(255,255,255,0)); transform: rotate(45deg); pointer-events: none; }
         input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #555; background: #222; color: #00e676; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
-        input:focus { outline: none; border-color: #00e676; }
+        input:focus { outline: none; border-color: #00e676; box-shadow: 0 0 8px rgba(0, 230, 118, 0.5); }
         button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; margin-bottom: 10px; }
-        button:hover { background: #00c853; box-shadow: 0 0 10px #00e676; }
+        button:hover { background: #00c853; box-shadow: 0 0 15px #00e676; transform: scale(1.02); }
         .whatsapp-btn { background: #25D366; color: white; text-decoration: none; display: block; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.3s; margin-top: 10px; }
-        .whatsapp-btn:hover { background: #128C7E; box-shadow: 0 0 10px #25D366; }
-        .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; border: 1px solid #ff5252; padding: 5px; border-radius: 5px; background: rgba(255, 82, 82, 0.1); }
-        .device-info { font-size: 11px; color: #888; margin-top: 15px; }
+        .whatsapp-btn:hover { background: #128C7E; box-shadow: 0 0 15px #25D366; transform: scale(1.02); }
+        .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; border: 1px solid #ff5252; padding: 8px; border-radius: 5px; background: rgba(255, 82, 82, 0.1); font-weight: bold; animation: shake 0.3s ease-in-out; }
+        .device-info { font-size: 11px; color: #aaa; margin-top: 15px; font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; }
+        
+        /* حركة الاهتزاز عند الخطأ */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
+<div class="login-card" id="mainCard">
     <h2>تفعيل الاشتراك</h2>
     <p style="font-size: 13px; color: #ccc;">يرجى إدخال كود التفعيل الخاص بك</p>
     
-    <input type="text" id="subCode" placeholder="أدخل الكود هنا">
-    <button onclick="login()">دخول</button>
+    <input type="text" id="subCode" placeholder="أدخل الكود هنا" autocomplete="off">
+    <button onclick="login()">دخول آمن</button>
     
     <a href="https://wsend.co/905424678123" class="whatsapp-btn" target="_blank">💬 الدعم الفني / شراء اشتراك</a>
     
@@ -35,68 +57,100 @@
 
 <script>
     // ==========================================
-    // منطقة تحكم المطور
+    // 🛡️ طبقات الحماية لصفحة الويب 🛡️
     // ==========================================
-    const REQUIRED_APP_VERSION = "3.0.1"; 
-    const DEVELOPER_LINK = "https://wsend.co/905424678123"; // رابط الواتساب للدعم وفك الحظر
-
-    // استخراج بصمة الهاتف (Device ID) التي يرسلها التطبيق
-    const urlParams = new URLSearchParams(window.location.search);
-    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
+    // 1. منع كليك يمين
+    document.addEventListener('contextmenu', event => event.preventDefault());
     
-    // عرض بصمة الهاتف للمستخدم
-    document.getElementById('deviceDisplay').innerText = "بصمة جهازك: " + appDeviceId;
-
-    // ==========================================
-    // قاعدة بيانات الأكواد
-    // الحالة: 1 = شغال | 2 = محظور ومسحوب
-    // deviceId: اتركها "" ليعمل على أي هاتف، أو ضع بصمة هاتف المستخدم ليعمل على هاتفه فقط
-    // ==========================================
-    const subscriptionCodes = {
-        // --- أكواد أسبوعية ---
-        "WEEK-1111": { duration: "7days", status: 1, deviceId: "" },
-        
-        // --- أكواد شهرية ---
-        "MONTH-A1B2": { duration: "30days", status: 1, deviceId: "" },
-        "MONTH-HACK": { duration: "30days", status: 2, deviceId: "" }, // ⚠️ كود محظور
-
-        // --- كود مربوط بجهاز واحد فقط (مثال) ---
-        "VIP-STRICT": { duration: "30days", status: 1, deviceId: "a1b2c3d4e5f6" }, 
-
-        // ==========================================
-        // ⬇️ أضف الأكواد الجديدة هنا في المستقبل ⬇️
-        // ==========================================
-        
-        "hamzazed123": { duration: "30days", status: 1, deviceId: "" },
-        // "CODE-HERE-2": { duration: "60days", status: 1, deviceId: "" },
-        // "CODE-HERE-3": { duration: "365days", status: 1, deviceId: "" },
-        
-        // ==========================================
+    // 2. منع اختصارات لوحة المفاتيح الخاصة بالمطورين (F12, Ctrl+Shift+I, Ctrl+U)
+    document.onkeydown = function(e) {
+        if (e.keyCode === 123 || 
+           (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
+           (e.ctrlKey && e.keyCode === 85)) {
+            return false;
+        }
     };
 
     // ==========================================
-    // أوامر الفحص التلقائية عند فتح التطبيق
+    // منطقة تحكم المطور الإلزامية
+    // ==========================================
+    const REQUIRED_APP_VERSION = "3.0.1"; 
+    const DEVELOPER_LINK = "https://wsend.co/905424678123";
+
+    // استخراج بصمة الهاتف (Device ID)
+    const urlParams = new URLSearchParams(window.location.search);
+    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
+    const checkCode = urlParams.get('check_code') || "";
+    
+    document.getElementById('deviceDisplay').innerText = "بصمة جهازك: " + appDeviceId;
+
+    // ==========================================
+    // 📦 قاعدة بيانات الأكواد المطورة (تدعم الاستعادة)
+    // ==========================================
+    /*
+      شرح المتغيرات للمطور:
+      - status: 1 = شغال | 2 = محظور
+      - deviceId: إذا كان فارغاً "" يعمل على أي جهاز لمرة واحدة ويسجل بالهاتف (في التطبيق).
+        *ملاحظة*: لكي تعمل ميزة استعادة الأيام عند حذف التطبيق، يجب عليك تحديث الملف لاحقاً ووضع بصمة هاتف المشتري هنا.
+      - expiryDate: تاريخ انتهاء الاشتراك الفعلي (سنة-شهر-يوم T ساعة:دقيقة:ثانية). هذا الرقم سيعيده للتطبيق عند الاستعادة.
+    */
+    const subscriptionCodes = {
+        "WEEK-1111": { duration: "7days", status: 1, deviceId: "", expiryDate: null },
+        "MONTH-HACK": { duration: "30days", status: 2, deviceId: "", expiryDate: null }, // ⚠️ كود محظور
+        
+        // 🔥 مثال على مستخدم لديه ميزة الاستعادة (ربطت الكود بجهازه ووضعت تاريخ الانتهاء)
+        "hamzazed123": { duration: "30days", status: 1, deviceId: "a1b2c3d4e5f6", expiryDate: "2024-12-31T23:59:59" },
+        "vip_ahmed_2024": { duration: "365days", status: 1, deviceId: "b2c8cdd53aba1104", expiryDate: "2025-05-01T12:00:00" }
+    };
+
+    // ==========================================
+    // ⚙️ أوامر الفحص التلقائية والتوجيه عند الفتح
     // ==========================================
     window.onload = function() {
-        // فحص التحديث
+        // 1. فحص تحديث التطبيق
         setTimeout(function() {
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }, 300);
 
-        // فحص الحظر في الخلفية
-        const codeToCheck = urlParams.get('check_code');
-        if (codeToCheck) {
-            if (subscriptionCodes[codeToCheck] && subscriptionCodes[codeToCheck].status === 2) {
+        // 2. فحص الحظر إذا كان المستخدم يملك كود مسجل مسبقاً بالتطبيق
+        if (checkCode !== "") {
+            if (subscriptionCodes[checkCode] && subscriptionCodes[checkCode].status === 2) {
                 setTimeout(function() {
-                    // أمر الطرد وإرسال المستخدم للواتساب
                     window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
                 }, 600);
+            }
+        } 
+        // 3. 🔄 نظام الاستعادة التلقائي (إذا حذف بيانات التطبيق ورجع)
+        else if (checkCode === "" && appDeviceId !== "UNKNOWN") {
+            // البحث إذا كان هذا الجهاز لديه اشتراك ساري في قاعدة البيانات
+            for (const [codeKey, data] of Object.entries(subscriptionCodes)) {
+                if (data.deviceId === appDeviceId && data.status === 1 && data.expiryDate) {
+                    
+                    let expiryMs = new Date(data.expiryDate).getTime(); // تحويل التاريخ إلى ملي ثانية
+                    
+                    // إذا كان الوقت المتبقي أكبر من وقت اليوم (الاشتراك لم ينتهي)
+                    if (expiryMs > Date.now()) {
+                        // إخفاء واجهة الدخول وعرض رسالة استعادة
+                        document.getElementById('mainCard').innerHTML = `
+                            <h2 style='color:#00e676;'>جاري استعادة اشتراكك... 🔄</h2>
+                            <p style='color:#ccc;font-size:14px;'>تم التعرف على جهازك، انتظر لحظة</p>
+                            <div style="margin-top:20px; width:40px; height:40px; border:4px solid #00e676; border-top:4px solid transparent; border-radius:50%; animation: spin 1s linear infinite; margin-left:auto; margin-right:auto;"></div>
+                            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+                        `;
+                        
+                        // إرسال البيانات للتطبيق (الكود + الوقت المتبقي)
+                        setTimeout(function() {
+                            window.location.href = `app://restore_sub?code=${encodeURIComponent(codeKey)}&expiry_time=${expiryMs}`;
+                        }, 2000);
+                        return; // إيقاف إكمال الأوامر
+                    }
+                }
             }
         }
     };
 
     // ==========================================
-    // نظام تسجيل الدخول (مع فحص بصمة الهاتف)
+    // 🔐 نظام تسجيل الدخول اليدوي (لأول مرة)
     // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
@@ -104,21 +158,29 @@
         const errorDiv = document.getElementById('error');
 
         if (codeData) {
+            // التحقق من الحظر
             if (codeData.status === 2) {
                 errorDiv.innerText = "تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.";
                 errorDiv.style.display = 'block';
             } 
-            // التحقق من بصمة الهاتف (إذا كان المطور قد خصص الكود لهاتف معين)
+            // التحقق من بصمة الهاتف (إذا كان الكود مربوطاً بجهاز معين مسبقاً)
             else if (codeData.deviceId !== "" && codeData.deviceId !== appDeviceId) {
-                errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه هنا!";
+                errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه على هذا الجهاز!";
                 errorDiv.style.display = 'block';
             }
+            // نجاح التفعيل
             else if (codeData.status === 1) {
-                // تفعيل ناجح
-                window.location.href = `index.html?status=success_auth_${codeData.duration}&code=${subCode}`;
+                errorDiv.style.display = 'none';
+                // إرسال رابط التفعيل للتطبيق ليلتقطه (بناءً على الكود الذي وضعناه في الـ Android)
+                window.location.href = `https://dummy_success_auth_${codeData.duration}?code=${subCode}`;
+                
+                // تغيير شكل الزر لإعطاء إحساس بالنجاح
+                const btn = document.querySelector('button');
+                btn.innerText = "تم التفعيل ✅";
+                btn.style.background = "#fff";
             }
         } else {
-            errorDiv.innerText = "الكود غير صحيح أو منتهي!";
+            errorDiv.innerText = "الكود غير صحيح أو غير موجود!";
             errorDiv.style.display = 'block';
         }
     }

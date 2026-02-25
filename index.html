@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 300px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #2c2c2c; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #00c853; }
+        .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>تفعيل الاشتراك</h2>
+    <input type="text" id="user" placeholder="اسم المستخدم">
+    <input type="password" id="pass" placeholder="كلمة المرور">
+    <button onclick="login()">دخول</button>
+    <div id="error" class="error">البيانات غير صحيحة!</div>
+</div>
+
+<script>
+    function login() {
+        const user = document.getElementById('user').value;
+        const pass = document.getElementById('pass').value;
+
+        // يمكنك تغيير البيانات هنا (هذا مثال ثابت)
+        if (user === "fawakih" && pass === "2026") {
+            // التوجيه لرابط وهمي يحتوي على كلمة نجاح ليقرأها التطبيق
+            window.location.href = "index.html?status=success_auth_30days";
+        } else {
+            document.getElementById('error').style.display = 'block';
+        }
+    }
+</script>
+
+</body>
+</html>

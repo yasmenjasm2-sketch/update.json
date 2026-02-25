@@ -3,136 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام تفعيل الاشتراكات الذكي</title>
+    <title>تفعيل الاشتراك التجريبي</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #121212; 
-            color: white; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            overflow: hidden;
-        }
-        .login-card, .member-card { 
-            background: #1e1e1e; 
-            padding: 30px; 
-            border-radius: 15px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            width: 320px; 
-            text-align: center; 
-            transition: 0.5s;
-        }
-        .member-card { display: none; border: 2px solid #00e676; }
-        
-        input { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-            border: 1px solid #333; 
-            background: #2c2c2c; 
-            color: white; 
-            box-sizing: border-box; 
-            text-align: center; 
-            font-family: monospace; 
-        }
-        
-        button { 
-            width: 100%; 
-            padding: 12px; 
-            background: #00e676; 
-            border: none; 
-            border-radius: 8px; 
-            color: #000; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            font-size: 16px; 
-        }
-        button:hover { background: #00c853; transform: scale(1.02); }
-        
-        .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; border: 1px solid #ff5252; padding: 5px; border-radius: 5px; }
-        
-        #timer { font-size: 24px; font-weight: bold; color: #ff5252; margin-top: 10px; }
-        .status-badge { background: #333; padding: 5px 10px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; display: inline-block; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 320px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #333; background: #2c2c2c; color: white; box-sizing: border-box; text-align: center; font-family: monospace; }
+        button { width: 100%; padding: 12px; background: #00e676; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        button:hover { background: #00c853; }
+        .error { color: #ff5252; font-size: 14px; margin-top: 10px; display: none; }
+        .info { color: #2196F3; font-size: 12px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div id="loginSection" class="login-card">
+<div class="login-card">
     <h2>تفعيل الاشتراك</h2>
-    <p style="font-size: 13px; color: #aaa;">أدخل الكود (جرب: TEMP-20SEC-ONLY)</p>
-    <input type="text" id="subCode" placeholder="XXXX-XXXX-XXXX-XXXX">
-    <button onclick="login()">دخول</button>
-    <div id="error" class="error">كود الاشتراك غير صحيح أو منتهي!</div>
-</div>
-
-<div id="memberSection" class="member-card">
-    <div class="status-badge">اشتراك مؤقت نشط</div>
-    <h2>أهلاً بك في المنطقة الخاصة</h2>
-    <p>سينتهي وصولك خلال:</p>
-    <div id="timer">20</div>
-    <p style="font-size: 12px; color: #888; margin-top: 20px;">هذا الكود تجريبي لمدة 20 ثانية فقط.</p>
+    <p style="font-size: 13px; color: #aaa;">أدخل كود التجربة (20 ثانية)</p>
+    <input type="text" id="subCode" placeholder="TEST-20SEC">
+    <button onclick="login()">دخول التجربة</button>
+    <div id="error" class="error">الكود غير صحيح!</div>
+    <div class="info">كود التجربة: <b>TEST-20SEC</b></div>
 </div>
 
 <script>
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
-        const loginSection = document.getElementById('loginSection');
-        const memberSection = document.getElementById('memberSection');
-        const errorDiv = document.getElementById('error');
-
-        // قائمة الأكواد الدائمة
-        const validCodes = ["FWKH-78X2-K9Q1", "AUTH-99V1-B6Z4", "VIP-00L5-K1J9"];
         
-        // الكود المؤقت لمدة 20 ثانية
-        const tempCode = "TEMP-20SEC-ONLY";
-
-        if (subCode === tempCode) {
-            startTemporarySession();
-        } else if (validCodes.includes(subCode)) {
-            alert("تم الدخول بكود دائم بنجاح!");
-            // هنا يمكنك التوجيه لصفحة أخرى
-            // window.location.href = "dashboard.html"; 
+        // الأكواد العادية + كود التجربة
+        if (subCode === "TEST-20SEC") {
+            // إرسال إشارة اشتراك لمدة 20 ثانية فقط
+            window.location.href = "index.html?status=success_auth_20sec";
+        } else if (["FWKH-78X2-K9Q1-M0P5", "VIP-00L5-K1J9-H7G2"].includes(subCode)) {
+            // الأكواد العادية (30 يوم)
+            window.location.href = "index.html?status=success_auth_30days";
         } else {
-            errorDiv.style.display = 'block';
-            errorDiv.innerText = "كود غير صالح!";
+            document.getElementById('error').style.display = 'block';
         }
-    }
-
-    function startTemporarySession() {
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('memberSection').style.display = 'block';
-        
-        let timeLeft = 20;
-        const timerDisplay = document.getElementById('timer');
-
-        const countdown = setInterval(() => {
-            timeLeft--;
-            timerDisplay.innerText = timeLeft;
-
-            if (timeLeft <= 5) {
-                timerDisplay.style.color = "#ff1744"; // تغيير اللون للأحمر في آخر 5 ثواني
-            }
-
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                endSession();
-            }
-        }, 1000);
-    }
-
-    function endSession() {
-        alert("انتهت مدة الـ 20 ثانية! سيتم إغلاق الوصول.");
-        document.getElementById('memberSection').style.display = 'none';
-        document.getElementById('loginSection').style.display = 'block';
-        document.getElementById('subCode').value = ""; // مسح الكود المنتهي
-        const errorDiv = document.getElementById('error');
-        errorDiv.style.display = 'block';
-        errorDiv.innerText = "انتهت صلاحية الكود المؤقت!";
     }
 </script>
 

@@ -215,65 +215,34 @@
 </div>
 
 <script>
-    // ==========================================
-    // 🛡️ طبقات الحماية 
-    // ==========================================
+    // 🛡️ طبقات الحماية
     document.addEventListener('contextmenu', event => event.preventDefault());
     document.onkeydown = function(e) {
-        if (e.keyCode === 123 || 
-           (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
-           (e.ctrlKey && e.keyCode === 85)) {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
             return false;
         }
     };
 
-    // ==========================================
-    // ⚙️ الإعدادات الأساسية
-    // ==========================================
+    // ⚙️ المتغيرات من التطبيق
     const REQUIRED_APP_VERSION = "3.0.1"; 
     const DEVELOPER_LINK = "https://wsend.co/905424678123";
-
     const urlParams = new URLSearchParams(window.location.search);
     const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
-    const checkCode = urlParams.get('check_code') || "";
-    const appExpiryParam = urlParams.get('expiry_time') || null; 
-    
-    document.getElementById('deviceDisplay').innerText = "DEVICE ID: " + appDeviceId;
+    const isBgCheck = urlParams.get('bg_check') === 'true'; // هل هذا فحص صامت في الخلفية؟
 
-    // ==========================================
-    // 📋 دالة اللصق
-    // ==========================================
-    async function pasteCode() {
-        try {
-            if (navigator.clipboard && navigator.clipboard.readText) {
-                const text = await navigator.clipboard.readText();
-                if(text) applyPastedText(text);
-            } else {
-                fallbackPaste();
-            }
-        } catch (err) {
-            fallbackPaste();
-        }
-    }
-
-    function fallbackPaste() {
-        let pastedText = prompt("الرجاء لصق الكود هنا والضغط على حسناً:", "");
-        if (pastedText !== null && pastedText.trim() !== "") {
-            applyPastedText(pastedText);
-        }
-    }
-
-    function applyPastedText(text) {
-        let inputField = document.getElementById('subCode');
-        inputField.value = text.trim();
-        inputField.style.borderColor = "var(--primary)";
-        setTimeout(() => inputField.style.borderColor = "var(--border-color)", 500);
+    if (!isBgCheck) {
+        document.getElementById('deviceDisplay').innerText = "DEVICE ID: " + appDeviceId;
     }
 
     // ==========================================
-    // 📦 قاعدة بيانات الأكواد 
-    // الآن، فقط ضع المدة (duration)، والنظام سيتكفل بالباقي تلقائياً!
+    // 👑 الأجهزة الموثوقة (VIP) - لا تتأثر بمسح البيانات
     // ==========================================
+    const vipDevices = {
+        // ضع هنا بصمة الجهاز وتاريخ الانتهاء، حتى لو مسح التطبيق سيدخل مباشرة!
+        // "b2c8cdd53aba1104": { status: 1, expireAt: "2026-12-30T23:59:59" },
+    };
+
+    // 📦 قاعدة بيانات الأكواد
     const subscriptionCodes = {
         "WEEK-1111": { duration: "7days", status: 1 },
         "MONTH-HACK": { duration: "30days", status: 2 }, 
@@ -284,55 +253,67 @@
         "VIP-FUTURE": { duration: "lifetime", status: 1 } 
     };
 
-    // ==========================================
-    // ⏱️ دالة حساب المدة بالملي ثانية
-    // ==========================================
+    // ⏱️ دالة حساب المدة
     function getDurationMs(durationStr) {
-        let ms = 0;
-        let match = durationStr.match(/(\d+)/);
-        let val = match ? parseInt(match[0]) : 0;
-
+        let ms = 0; let match = durationStr.match(/(\d+)/); let val = match ? parseInt(match[0]) : 0;
         if (durationStr.includes("day")) ms = val * 24 * 60 * 60 * 1000;
         else if (durationStr.includes("hour")) ms = val * 60 * 60 * 1000;
         else if (durationStr.includes("sec")) ms = val * 1000;
         else if (durationStr.includes("lifetime")) ms = 100 * 365 * 24 * 60 * 60 * 1000;
-
         return ms;
     }
 
     // ==========================================
-    // 🔄 أوامر الفحص عند الفتح
+    // 🔄 الاتصال المركزي بالسيرفر (يتم تنفيذه فور فتح أو فحص التطبيق)
     // ==========================================
     window.onload = function() {
-        setTimeout(function() {
-            window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
-        }, 300);
+        if (!isBgCheck) {
+            setTimeout(() => window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK), 300);
+        }
 
-        if (checkCode !== "") {
-            if (subscriptionCodes[checkCode] && subscriptionCodes[checkCode].status === 2) {
-                setTimeout(function() {
-                    window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
-                }, 600);
+        // البحث عن الجهاز في قائمة الـ VIP أو في الذاكرة المحلية
+        let memoryKey = "DEVICE_DB_" + appDeviceId;
+        let deviceData = vipDevices[appDeviceId] || JSON.parse(localStorage.getItem(memoryKey));
+
+        if (deviceData && appDeviceId !== "UNKNOWN") {
+            // الجهاز معروف للسيرفر
+            if (deviceData.status === 2) {
+                // محظور! إرسال أمر طرد فوراً
+                window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                return;
             }
-        } 
-        else if (checkCode === "" && appDeviceId !== "UNKNOWN" && appExpiryParam) {
-            let expiryMs = parseInt(appExpiryParam);
-            if (expiryMs > Date.now()) {
-                document.getElementById('mainCard').innerHTML = `
-                    <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
-                    <h2 style='color:var(--text-main);'>جاري استعادة اشتراكك...</h2>
-                    <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك، انتظر لحظة</p>
-                    <div class="spinner"></div>
-                `;
-                setTimeout(function() {
-                    window.location.href = `app://restore_sub?expiry_time=${expiryMs}`;
-                }, 2000);
+
+            let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
+            
+            if (finalExpiry > Date.now()) {
+                // الاشتراك ساري -> دخول تلقائي
+                window.location.href = `app://success_auth?code=AUTO_RECOGNIZED&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                
+                if (!isBgCheck) {
+                    document.getElementById('mainCard').innerHTML = `
+                        <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
+                        <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
+                        <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك تلقائياً</p>
+                        <div class="spinner"></div>
+                    `;
+                }
+                return;
+            } else {
+                // الاشتراك منتهي
+                if (isBgCheck) {
+                    window.location.href = "app://logout_user"; // إجبار التطبيق على الخروج
+                }
+            }
+        } else {
+            // الجهاز غير معروف
+            if (isBgCheck) {
+                window.location.href = "app://logout_user";
             }
         }
     };
 
     // ==========================================
-    // 🔐 نظام تسجيل الدخول الذكي التلقائي
+    // 🔐 تسجيل الدخول وربط الجهاز (يتم حفظه في السيرفر/الذاكرة)
     // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
@@ -340,50 +321,36 @@
         const errorDiv = document.getElementById('error');
 
         if (codeData) {
-            // التحقق من الحظر
             if (codeData.status === 2) {
                 errorDiv.innerText = "تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.";
                 errorDiv.style.display = 'block';
                 return;
             }
 
-            // --- نظام الذاكرة المحلية (الاحترافي التلقائي) ---
-            let memoryKey = "SAVED_CODE_" + subCode;
-            let savedData = JSON.parse(localStorage.getItem(memoryKey));
-            
-            let finalExpiryTime = 0;
+            // التحقق مما إذا كان الكود مستخدماً لجهاز آخر
+            let codeMemoryKey = "CODE_USED_" + subCode;
+            let codeOwner = localStorage.getItem(codeMemoryKey);
 
-            // إذا لم يتم استخدام الكود مسبقاً (هذا أول استخدام له)
-            if (!savedData) {
-                finalExpiryTime = Date.now() + getDurationMs(codeData.duration);
-                // حفظ بيانات الجهاز ووقت الانتهاء في الذاكرة لتثبيتها
-                let newData = {
-                    deviceId: appDeviceId,
-                    expiryTime: finalExpiryTime
-                };
-                localStorage.setItem(memoryKey, JSON.stringify(newData));
-            } 
-            // إذا كان الكود مستخدماً مسبقاً (موجود في الذاكرة)
-            else {
-                // التأكد أن الذي يستخدمه هو نفس الجهاز الذي فعله أول مرة
-                if (savedData.deviceId !== appDeviceId && savedData.deviceId !== "UNKNOWN") {
-                    errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر (تم تفعيله مسبقاً) ولا يمكن استخدامه على هذا الجهاز!";
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-                finalExpiryTime = savedData.expiryTime; // استرجاع وقت الانتهاء المحفوظ بدلاً من إعطاء وقت جديد
-            }
-
-            // التحقق مما إذا كان الكود المحفوظ قد انتهى وقته فعلياً
-            if (finalExpiryTime < Date.now()) {
-                errorDiv.innerText = "لقد انتهت صلاحية هذا الكود!";
+            if (codeOwner && codeOwner !== appDeviceId && codeOwner !== "UNKNOWN") {
+                errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه على هذا الجهاز!";
                 errorDiv.style.display = 'block';
                 return;
             }
 
-            // التفعيل بنجاح
+            // تفعيل الكود وربطه بالجهاز في قاعدة بيانات السيرفر
+            let finalExpiryTime = Date.now() + getDurationMs(codeData.duration);
+            
+            // ربط الكود بالجهاز
+            localStorage.setItem(codeMemoryKey, appDeviceId);
+            
+            // حفظ الجهاز واشتراكه
+            localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
+                status: 1,
+                expiryTime: finalExpiryTime
+            }));
+
             errorDiv.style.display = 'none';
-            window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}`;
+            window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
             
             const btn = document.querySelector('.main-btn');
             btn.innerText = "تم التفعيل بنجاح ✅";
@@ -394,6 +361,25 @@
             errorDiv.innerText = "الكود غير صحيح أو غير موجود!";
             errorDiv.style.display = 'block';
         }
+    }
+
+    async function pasteCode() {
+        try {
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                const text = await navigator.clipboard.readText();
+                if(text) applyPastedText(text);
+            } else fallbackPaste();
+        } catch (err) { fallbackPaste(); }
+    }
+    function fallbackPaste() {
+        let pastedText = prompt("الرجاء لصق الكود هنا:", "");
+        if (pastedText) applyPastedText(pastedText);
+    }
+    function applyPastedText(text) {
+        let inputField = document.getElementById('subCode');
+        inputField.value = text.trim();
+        inputField.style.borderColor = "var(--primary)";
+        setTimeout(() => inputField.style.borderColor = "var(--border-color)", 500);
     }
 </script>
 

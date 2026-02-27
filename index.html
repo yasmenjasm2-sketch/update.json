@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0b1121">
+    
     <title>تفعيل الاشتراك | نظام محمي</title>
     <style>
         /* إعدادات التطبيق الأساسية لمنع سلوك المتصفح */
@@ -29,6 +34,9 @@
             /* منع التحديد والنسخ للحماية والمظهر كالتطبيق */
             -webkit-user-select: none;
             user-select: none; 
+            -webkit-touch-callout: none; /* منع ظهور قائمة الحفظ عند الضغط المطول */
+            -webkit-user-drag: none; /* منع سحب العناصر */
+            touch-action: manipulation; /* منع التكبير عند النقر المزدوج */
             -webkit-tap-highlight-color: transparent;
             overflow: hidden;
         }
@@ -67,7 +75,7 @@
         
         input { 
             width: 100%; 
-            padding: 16px 85px 16px 16px; /* مسافة للزر في اليمين (RTL) */
+            padding: 16px 85px 16px 16px; 
             border-radius: 16px; 
             border: 1.5px solid var(--border-color); 
             background: var(--input-bg); 
@@ -84,13 +92,13 @@
         input:focus { 
             outline: none; 
             border-color: var(--primary); 
-            background: #192b38; /* لون خفيف عند التركيز */
+            background: #192b38; 
         }
         input::placeholder { color: #64748b; font-weight: normal; letter-spacing: normal; }
         
         .paste-btn { 
             position: absolute; 
-            right: 8px; /* وضعناه على اليمين ليتناسب مع RTL */
+            right: 8px; 
             top: 50%; 
             transform: translateY(-50%); 
             background: rgba(255, 255, 255, 0.1); 
@@ -175,7 +183,6 @@
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
-        /* تصميم دائرة التحميل للاستعادة */
         .spinner {
             width: 40px; 
             height: 40px; 
@@ -217,7 +224,7 @@
 
 <script>
     // ==========================================
-    // 🛡️ طبقات الحماية لصفحة الويب (تم الإبقاء عليها كما هي)
+    // 🛡️ طبقات الحماية لصفحة الويب
     // ==========================================
     document.addEventListener('contextmenu', event => event.preventDefault());
     document.onkeydown = function(e) {
@@ -242,25 +249,45 @@
     document.getElementById('deviceDisplay').innerText = "DEVICE ID: " + appDeviceId;
 
     // ==========================================
-    // 📋 دالة اللصق الاحترافية (Clipboard API)
+    // 📋 دالة اللصق (تم حل مشكلة الرفض من التطبيق)
     // ==========================================
     async function pasteCode() {
         try {
-            const text = await navigator.clipboard.readText();
-            if(text) {
-                document.getElementById('subCode').value = text.trim();
-                document.getElementById('subCode').style.borderColor = "var(--primary)";
-                setTimeout(() => document.getElementById('subCode').style.borderColor = "var(--border-color)", 500);
+            // محاولة اللصق التلقائي
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                const text = await navigator.clipboard.readText();
+                if(text) applyPastedText(text);
+            } else {
+                fallbackPaste(); // إذا كان التطبيق لا يدعم الحافظة
             }
         } catch (err) {
-            alert("يرجى إعطاء صلاحية الوصول للحافظة أو قم باللصق يدوياً.");
+            fallbackPaste(); // إذا رفض التطبيق الصلاحية
         }
     }
 
+    function fallbackPaste() {
+        // بديل ذكي: إظهار نافذة إدخال منبثقة للمستخدم للصق الكود بها
+        let pastedText = prompt("يمنع نظام هاتفك اللصق التلقائي. الرجاء لصق الكود هنا والضغط على حسناً:", "");
+        if (pastedText !== null && pastedText.trim() !== "") {
+            applyPastedText(pastedText);
+        }
+    }
+
+    function applyPastedText(text) {
+        let inputField = document.getElementById('subCode');
+        inputField.value = text.trim();
+        inputField.style.borderColor = "var(--primary)";
+        setTimeout(() => inputField.style.borderColor = "var(--border-color)", 500);
+    }
+
     // ==========================================
-    // 📦 قاعدة بيانات الأكواد (نفس المنطق البرمجي)
+    // 📦 قاعدة بيانات الأكواد 
+    // ملاحظة: لحل مشكلة "تجدد الأيام عند مسح البيانات"، أضفنا خاصية (expireAt)
     // ==========================================
     const subscriptionCodes = {
+        // يمكنك استخدام expireAt لتحديد تاريخ انتهاء لا يتغير أبدأً حتى لو مسح المستخدم بيانات التطبيق 100 مرة
+        "FIXED-CODE-1": { expireAt: "2026-12-30T23:59:59", status: 1, deviceId: "a1b2c3d4e5f6" }, 
+        
         "WEEK-1111": { duration: "7days", status: 1, deviceId: "" },
         "MONTH-HACK": { duration: "30days", status: 2, deviceId: "" }, 
         "hamzazed123": { duration: "30days", status: 1, deviceId: "a1b2c3d4e5f6" }, 
@@ -272,22 +299,24 @@
     };
 
     // ==========================================
-    // ⏱️ دالة حساب وقت الانتهاء الديناميكي
+    // ⏱️ دالة حساب وقت الانتهاء
     // ==========================================
-    function calculateExpiryTime(durationStr) {
+    function calculateExpiryTime(codeData) {
+        // إذا كان هناك تاريخ انتهاء ثابت، نعتمده (هذا يحل مشكلة مسح البيانات)
+        if (codeData.expireAt) {
+            return new Date(codeData.expireAt).getTime();
+        }
+
+        // وإلا نحسب بناءً على المدة الحالية
+        let durationStr = codeData.duration || "";
         let ms = 0;
         let match = durationStr.match(/(\d+)/);
         let val = match ? parseInt(match[0]) : 0;
 
-        if (durationStr.includes("day")) {
-            ms = val * 24 * 60 * 60 * 1000;
-        } else if (durationStr.includes("hour")) {
-            ms = val * 60 * 60 * 1000;
-        } else if (durationStr.includes("sec")) {
-            ms = val * 1000;
-        } else if (durationStr.includes("lifetime")) {
-            ms = 100 * 365 * 24 * 60 * 60 * 1000;
-        }
+        if (durationStr.includes("day")) ms = val * 24 * 60 * 60 * 1000;
+        else if (durationStr.includes("hour")) ms = val * 60 * 60 * 1000;
+        else if (durationStr.includes("sec")) ms = val * 1000;
+        else if (durationStr.includes("lifetime")) ms = 100 * 365 * 24 * 60 * 60 * 1000;
 
         return Date.now() + ms;
     }
@@ -310,14 +339,12 @@
         else if (checkCode === "" && appDeviceId !== "UNKNOWN" && appExpiryParam) {
             let expiryMs = parseInt(appExpiryParam);
             if (expiryMs > Date.now()) {
-                // تصميم التحميل عند الاستعادة يطابق ثيم التطبيق الجديد
                 document.getElementById('mainCard').innerHTML = `
                     <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
                     <h2 style='color:var(--text-main);'>جاري استعادة اشتراكك...</h2>
                     <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك، انتظر لحظة</p>
                     <div class="spinner"></div>
                 `;
-                
                 setTimeout(function() {
                     window.location.href = `app://restore_sub?expiry_time=${expiryMs}`;
                 }, 2000);
@@ -326,7 +353,7 @@
     };
 
     // ==========================================
-    // 🔐 نظام تسجيل الدخول (وحساب وقت الانتهاء)
+    // 🔐 نظام تسجيل الدخول 
     // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
@@ -334,6 +361,8 @@
         const errorDiv = document.getElementById('error');
 
         if (codeData) {
+            const expiryTimeMs = calculateExpiryTime(codeData);
+
             if (codeData.status === 2) {
                 errorDiv.innerText = "تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.";
                 errorDiv.style.display = 'block';
@@ -342,11 +371,16 @@
                 errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه على هذا الجهاز!";
                 errorDiv.style.display = 'block';
             }
+            // التحقق مما إذا كان الكود الثابت منتهي الصلاحية فعلياً
+            else if (expiryTimeMs < Date.now()) {
+                errorDiv.innerText = "لقد انتهت صلاحية هذا الكود!";
+                errorDiv.style.display = 'block';
+            }
             else if (codeData.status === 1) {
                 errorDiv.style.display = 'none';
                 
-                const expiryTimeMs = calculateExpiryTime(codeData.duration);
-                window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${expiryTimeMs}`;
+                // إرسال وقت الانتهاء لتطبيقك لكي يحفظه
+                window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration || "fixed"}&expiry_time=${expiryTimeMs}`;
                 
                 const btn = document.querySelector('.main-btn');
                 btn.innerText = "تم التفعيل بنجاح ✅";

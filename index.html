@@ -223,7 +223,7 @@
         }
     };
 
-    // ⚙️ المتغيرات من التطبيق
+    // ⚙️ المتغيرات من التطبيق والأوامر
     const REQUIRED_APP_VERSION = "3.0.2"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
@@ -235,20 +235,23 @@
     }
 
     // ==========================================
-    // 👑 الأجهزة الموثوقة (VIP) - لا تتأثر بمسح البيانات
+    // 👑 الأجهزة الموثوقة (VIP) ولوحة التحكم
     // ==========================================
+    // يمكنك تغيير حالة (status) الجهاز للتحكم به فوراً:
+    // status: 1  => اشتراك فعال (يتم تحديث الوقت فوراً)
+    // status: 2  => محظور (يطرد المستخدم فوراً)
+    // status: 3  => ريست/تحديث (يحدث شاشة المستخدم بدون التأثير على الوقت)
     const vipDevices = {
-        // ضع هنا بصمة الجهاز وتاريخ الانتهاء، حتى لو مسح التطبيق سيدخل مباشرة!
-          "": { status: 1, expireAt: "2026-02-28T03:00:00" },
+          "b2c8cdd53aba1104": { status: 2, expireAt: "2026-02-28T03:00:00" },
     };
 
     // 📦 قاعدة بيانات الأكواد
     const subscriptionCodes = {
         "hamzazed1": { duration: "7days", status: 1 },
-        "MONTH-HACK": { duration: "30days", status: 2 }, 
+        "MONTH-HACK": { duration: "30days", status: 2 }, // محظور
         "SUB-MONTH": { duration: "30days", status: 1 }, 
         "SUB-DAY": { duration: "1day", status: 1 }, 
-        "SUB-HOUR": { duration: "1hour", status: 2 }, 
+        "SUB-HOUR": { duration: "1hour", status: 1 }, 
         "TEST-20SEC": { duration: "20seconds", status: 1 }, 
         "VIP-FUTURE": { duration: "lifetime", status: 1 } 
     };
@@ -264,9 +267,10 @@
     }
 
     // ==========================================
-    // 🔄 الاتصال المركزي بالسيرفر (يتم تنفيذه فور فتح أو فحص التطبيق)
+    // 🔄 الاتصال المركزي بالسيرفر (تنفيذ الأوامر فوراً)
     // ==========================================
     window.onload = function() {
+        // التحقق من التحديث الإجباري يتم فقط عند الدخول الرئيسي (ليس في الخلفية)
         if (!isBgCheck) {
             setTimeout(() => window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK), 300);
         }
@@ -276,36 +280,44 @@
         let deviceData = vipDevices[appDeviceId] || JSON.parse(localStorage.getItem(memoryKey));
 
         if (deviceData && appDeviceId !== "UNKNOWN") {
-            // الجهاز معروف للسيرفر
+            
+            // 🚫 أمر الحظر الفوري
             if (deviceData.status === 2) {
-                // محظور! إرسال أمر طرد فوراً
                 window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
                 return;
             }
+            
+            // 🔄 أمر الريست (تحديث الشاشة يدوياً)
+            if (deviceData.status === 3) {
+                window.location.href = "app://reset_app";
+                return;
+            }
 
+            // ✅ التحقق من الوقت وإرسال أمر التحديث الصامت
             let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
             
             if (finalExpiry > Date.now()) {
-                // الاشتراك ساري -> دخول تلقائي
+                // إرسال الوقت الجديد للتطبيق ليتحدث العداد فوراً (سواء زاد أو نقص)
                 window.location.href = `app://success_auth?code=AUTO_RECOGNIZED&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
                 
+                // تغيير شكل الشاشة للمستخدم إذا لم يكن الفحص بالخلفية
                 if (!isBgCheck) {
                     document.getElementById('mainCard').innerHTML = `
                         <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
                         <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
-                        <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك تلقائياً</p>
+                        <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك والتحقق منه تلقائياً</p>
                         <div class="spinner"></div>
                     `;
                 }
                 return;
             } else {
-                // الاشتراك منتهي
+                // ❌ الاشتراك منتهي -> أمر تسجيل خروج إجباري
                 if (isBgCheck) {
-                    window.location.href = "app://logout_user"; // إجبار التطبيق على الخروج
+                    window.location.href = "app://logout_user";
                 }
             }
         } else {
-            // الجهاز غير معروف
+            // الجهاز غير معروف وتم مسح بياناته من السيرفر
             if (isBgCheck) {
                 window.location.href = "app://logout_user";
             }
@@ -313,7 +325,7 @@
     };
 
     // ==========================================
-    // 🔐 تسجيل الدخول وربط الجهاز (يتم حفظه في السيرفر/الذاكرة)
+    // 🔐 تسجيل الدخول وربط الجهاز 
     // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
@@ -337,19 +349,17 @@
                 return;
             }
 
-            // تفعيل الكود وربطه بالجهاز في قاعدة بيانات السيرفر
             let finalExpiryTime = Date.now() + getDurationMs(codeData.duration);
             
-            // ربط الكود بالجهاز
+            // ربط الكود وحفظ الجهاز محلياً (محاكاة قاعدة البيانات)
             localStorage.setItem(codeMemoryKey, appDeviceId);
-            
-            // حفظ الجهاز واشتراكه
             localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
                 status: 1,
                 expiryTime: finalExpiryTime
             }));
 
             errorDiv.style.display = 'none';
+            // أمر الدخول الأساسي
             window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
             
             const btn = document.querySelector('.main-btn');

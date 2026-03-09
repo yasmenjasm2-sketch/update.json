@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -26,17 +26,18 @@
             background-color: var(--bg-color); 
             color: var(--text-main); 
             display: flex; 
-            justify-content: center; 
+            flex-direction: column;
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
+            padding: 20px 0;
             -webkit-user-select: none;
             user-select: none; 
             -webkit-touch-callout: none; 
             -webkit-user-drag: none; 
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         .app-container { 
@@ -47,6 +48,8 @@
             width: 85%; 
             max-width: 340px; 
             text-align: center; 
+            margin-top: auto;
+            margin-bottom: auto;
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
         
@@ -162,6 +165,39 @@
             font-family: monospace; 
             opacity: 0.7;
         }
+
+        /* 👑 لوحة التحكم المخفية للمطور 👑 */
+        .admin-panel {
+            display: none; /* مخفية افتراضياً */
+            width: 90%;
+            max-width: 600px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 40px;
+            text-align: right;
+        }
+
+        .admin-panel h3 {
+            color: #ef4444;
+            margin-top: 0;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        .refund-card {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border-right: 4px solid #ef4444;
+        }
+
+        .refund-card strong {
+            color: var(--primary);
+        }
         
         @keyframes slideUp {
             0% { transform: translateY(30px); opacity: 0; }
@@ -214,6 +250,13 @@
     <div class="device-info" id="deviceDisplay">جاري جلب بصمة الهاتف...</div>
 </div>
 
+<div class="admin-panel" id="adminPanel">
+    <h3>بيانات الاسترداد المستلمة (سري)</h3>
+    <div id="refundsList">
+        <div style="color: var(--text-muted); text-align: center;">في انتظار الطلبات...</div>
+    </div>
+</div>
+
 <script>
     // 🛡️ طبقات الحماية
     document.addEventListener('contextmenu', event => event.preventDefault());
@@ -228,7 +271,32 @@
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
-    const isBgCheck = urlParams.get('bg_check') === 'true'; // هل هذا فحص صامت في الخلفية؟
+    const isBgCheck = urlParams.get('bg_check') === 'true'; 
+
+    // 👑 التحقق من المطور لإظهار لوحة التحكم السرية
+    const isAdmin = urlParams.get('admin') === 'remas';
+    if (isAdmin) {
+        document.getElementById('adminPanel').style.display = 'block';
+        
+        // التقاط بيانات الاسترداد إذا تم تمريرها في الرابط للاختبار
+        const r_id = urlParams.get('id');
+        const r_code = urlParams.get('code');
+        const r_name = urlParams.get('name');
+        const r_phone = urlParams.get('phone');
+        const r_reason = urlParams.get('reason');
+
+        if (r_name && r_phone) {
+            document.getElementById('refundsList').innerHTML = `
+                <div class="refund-card">
+                    <strong>الاسم:</strong> ${decodeURIComponent(r_name)}<br>
+                    <strong>رقم الهاتف:</strong> <a href="https://wa.me/${r_phone}" style="color:#25D366">${decodeURIComponent(r_phone)}</a><br>
+                    <strong>الكود:</strong> ${decodeURIComponent(r_code)}<br>
+                    <strong>الـ ID:</strong> ${r_id}<br>
+                    <strong>السبب:</strong> ${decodeURIComponent(r_reason)}
+                </div>
+            `;
+        }
+    }
 
     if (!isBgCheck) {
         document.getElementById('deviceDisplay').innerText = "DEVICE ID: " + appDeviceId;
@@ -238,7 +306,6 @@
     // 👑 الأجهزة الموثوقة (VIP) - لا تتأثر بمسح البيانات
     // ==========================================
     const vipDevices = {
-        // ضع هنا بصمة الجهاز وتاريخ الانتهاء، حتى لو مسح التطبيق سيدخل مباشرة!
          "b2c8cdd53aba1104": { status: 1, expireAt: "2026-04-05T23:59:59" },
     };
 
@@ -263,22 +330,16 @@
         return ms;
     }
 
-    // ==========================================
-    // 🔄 الاتصال المركزي بالسيرفر (يتم تنفيذه فور فتح أو فحص التطبيق)
-    // ==========================================
     window.onload = function() {
-        if (!isBgCheck) {
+        if (!isBgCheck && !isAdmin) { // لا تحول التطبيق إذا كنت في وضع الإدارة
             setTimeout(() => window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK), 300);
         }
 
-        // البحث عن الجهاز في قائمة الـ VIP أو في الذاكرة المحلية
         let memoryKey = "DEVICE_DB_" + appDeviceId;
         let deviceData = vipDevices[appDeviceId] || JSON.parse(localStorage.getItem(memoryKey));
 
         if (deviceData && appDeviceId !== "UNKNOWN") {
-            // الجهاز معروف للسيرفر
             if (deviceData.status === 2) {
-                // محظور! إرسال أمر طرد فوراً
                 window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
                 return;
             }
@@ -286,10 +347,9 @@
             let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
             
             if (finalExpiry > Date.now()) {
-                // الاشتراك ساري -> دخول تلقائي
                 window.location.href = `app://success_auth?code=AUTO_RECOGNIZED&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
                 
-                if (!isBgCheck) {
+                if (!isBgCheck && !isAdmin) {
                     document.getElementById('mainCard').innerHTML = `
                         <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
                         <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
@@ -299,22 +359,17 @@
                 }
                 return;
             } else {
-                // الاشتراك منتهي
                 if (isBgCheck) {
-                    window.location.href = "app://logout_user"; // إجبار التطبيق على الخروج
+                    window.location.href = "app://logout_user"; 
                 }
             }
         } else {
-            // الجهاز غير معروف
             if (isBgCheck) {
                 window.location.href = "app://logout_user";
             }
         }
     };
 
-    // ==========================================
-    // 🔐 تسجيل الدخول وربط الجهاز (يتم حفظه في السيرفر/الذاكرة)
-    // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
         const codeData = subscriptionCodes[subCode];
@@ -327,7 +382,6 @@
                 return;
             }
 
-            // التحقق مما إذا كان الكود مستخدماً لجهاز آخر
             let codeMemoryKey = "CODE_USED_" + subCode;
             let codeOwner = localStorage.getItem(codeMemoryKey);
 
@@ -337,13 +391,9 @@
                 return;
             }
 
-            // تفعيل الكود وربطه بالجهاز في قاعدة بيانات السيرفر
             let finalExpiryTime = Date.now() + getDurationMs(codeData.duration);
             
-            // ربط الكود بالجهاز
             localStorage.setItem(codeMemoryKey, appDeviceId);
-            
-            // حفظ الجهاز واشتراكه
             localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
                 status: 1,
                 expiryTime: finalExpiryTime

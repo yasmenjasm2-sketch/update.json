@@ -166,8 +166,9 @@
             opacity: 0.7;
         }
 
+        /* 👑 لوحة التحكم المخفية للمطور 👑 */
         .admin-panel {
-            display: none;
+            display: none; /* مخفية افتراضياً */
             width: 90%;
             max-width: 600px;
             background: #1e293b;
@@ -257,6 +258,7 @@
 </div>
 
 <script>
+    // 🛡️ طبقات الحماية
     document.addEventListener('contextmenu', event => event.preventDefault());
     document.onkeydown = function(e) {
         if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
@@ -264,16 +266,19 @@
         }
     };
 
+    // ⚙️ المتغيرات من التطبيق
     const REQUIRED_APP_VERSION = "3.0.2"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
 
+    // 👑 التحقق من المطور لإظهار لوحة التحكم السرية
     const isAdmin = urlParams.get('admin') === 'remas';
     if (isAdmin) {
         document.getElementById('adminPanel').style.display = 'block';
         
+        // التقاط بيانات الاسترداد إذا تم تمريرها في الرابط للاختبار
         const r_id = urlParams.get('id');
         const r_code = urlParams.get('code');
         const r_name = urlParams.get('name');
@@ -297,17 +302,17 @@
         document.getElementById('deviceDisplay').innerText = "DEVICE ID: " + appDeviceId;
     }
 
+    // ==========================================
+    // 👑 الأجهزة الموثوقة (VIP) - لا تتأثر بمسح البيانات
+    // ==========================================
     const vipDevices = {
-        
-        // البصمة الأولى: تنتهي بعد 24 ساعة
-        "b2c8cdd53aba1104": { status: 1, expireAt: "2026-03-21T23:55:34Z" },
-        
-        // البصمة الثانية: تنتهي بعد 24 ساعة (لاحظ الفاصلة في السطر السابق)
-        "8bb4ddde207e188d": { status: 1, expireAt: "2026-03-21T23:55:34Z" }
-    };
+         
+        "8bb4ddde207e188d": { status: 1, expireAt: "2026-03-20T23:55:34" }
 
-    };
+    }:
+    
 
+    // 📦 قاعدة بيانات الأكواد
     const subscriptionCodes = {
         "hamzazed123": { duration: "30days", status: 1 },
         "MONTH-HACK": { duration: "30days", status: 2 }, 
@@ -319,6 +324,7 @@
         "VIP-FUTURE": { duration: "lifetime", status: 1 } 
     };
 
+    // ⏱️ دالة حساب المدة
     function getDurationMs(durationStr) {
         let ms = 0; let match = durationStr.match(/(\d+)/); let val = match ? parseInt(match[0]) : 0;
         if (durationStr.includes("day")) ms = val * 24 * 60 * 60 * 1000;
@@ -329,7 +335,7 @@
     }
 
     window.onload = function() {
-        if (!isBgCheck && !isAdmin) { 
+        if (!isBgCheck && !isAdmin) { // لا تحول التطبيق إذا كنت في وضع الإدارة
             setTimeout(() => window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK), 300);
         }
 

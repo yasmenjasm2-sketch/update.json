@@ -168,7 +168,7 @@
 
         /* 👑 لوحة التحكم المخفية للمطور 👑 */
         .admin-panel {
-            display: none; /* مخفية افتراضياً */
+            display: none; 
             width: 90%;
             max-width: 600px;
             background: #1e293b;
@@ -306,11 +306,8 @@
     // 👑 الأجهزة الموثوقة (VIP) - لا تتأثر بمسح البيانات
     // ==========================================
     const vipDevices = {
-         
         "8bb4ddde207e188d": { status: 1, expireAt: "2026-03-20T23:55:34" }
-
-    }:
-    
+    }; // تم إصلاح الخطأ هنا (استبدال النقطتين بفاصلة منقوطة)
 
     // 📦 قاعدة بيانات الأكواد
     const subscriptionCodes = {
@@ -335,7 +332,7 @@
     }
 
     window.onload = function() {
-        if (!isBgCheck && !isAdmin) { // لا تحول التطبيق إذا كنت في وضع الإدارة
+        if (!isBgCheck && !isAdmin) { 
             setTimeout(() => window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK), 300);
         }
 

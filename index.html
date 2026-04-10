@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -166,7 +166,6 @@
             opacity: 0.7;
         }
 
-        /* 👑 لوحة التحكم المخفية للمطور 👑 */
         .admin-panel {
             display: none; 
             width: 90%;
@@ -258,7 +257,6 @@
 </div>
 
 <script>
-    // 🛡️ طبقات الحماية
     document.addEventListener('contextmenu', event => event.preventDefault());
     document.onkeydown = function(e) {
         if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
@@ -266,19 +264,16 @@
         }
     };
 
-    // ⚙️ المتغيرات من التطبيق
     const REQUIRED_APP_VERSION = "3.1.5"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
 
-    // 👑 التحقق من المطور لإظهار لوحة التحكم السرية
     const isAdmin = urlParams.get('admin') === 'remas';
     if (isAdmin) {
         document.getElementById('adminPanel').style.display = 'block';
         
-        // التقاط بيانات الاسترداد إذا تم تمريرها في الرابط للاختبار
         const r_id = urlParams.get('id');
         const r_code = urlParams.get('code');
         const r_name = urlParams.get('name');
@@ -302,18 +297,13 @@
         document.getElementById('deviceDisplay').innerText = "DEVICE ID: " + appDeviceId;
     }
 
-    // ==========================================
-    // 👑 الأجهزة الموثوقة (VIP) - لا تتأثر بمسح البيانات
-    // ==========================================
     const vipDevices = {
         "8bb4ddde207e188d": { status: 2, expireAt: "2026-03-29T23:55:34" },
         "6357ef9846e96b17": { status: 1, expireAt: "2026-05-21T02:21:52" },
         "b2c8cdd53aba1104": { status: 1, expireAt: "2026-04-19T02:21:52" },
-         "ed07df5ef76e1219": { status: 1, expireAt: "2026-05-07T02:09:49" },
-
+        "ed07df5ef76e1219": { status: 1, expireAt: "2026-05-07T02:09:49" },
     };
 
-    // 📦 قاعدة بيانات الأكواد
     const subscriptionCodes = {
         "opssyria": { duration: "30days", status: 2 },
         "MONTH-HACK": { duration: "30days", status: 2 }, 
@@ -325,7 +315,6 @@
         "VIP-FUTURE": { duration: "lifetime", status: 1 } 
     };
 
-    // ⏱️ دالة حساب المدة
     function getDurationMs(durationStr) {
         let ms = 0; let match = durationStr.match(/(\d+)/); let val = match ? parseInt(match[0]) : 0;
         if (durationStr.includes("day")) ms = val * 24 * 60 * 60 * 1000;
@@ -335,65 +324,59 @@
         return ms;
     }
 
-    let checkUpdateTimer = null; 
-
     window.onload = function() {
-        if (!isBgCheck && !isAdmin) { 
-            checkUpdateTimer = setTimeout(() => window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK), 300);
+        if (!isBgCheck && !isAdmin) {
+            window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }
 
-        let memoryKey = "DEVICE_DB_" + appDeviceId;
-        let deviceData = null;
-        
-        try {
-            let localData = localStorage.getItem(memoryKey);
-            deviceData = vipDevices[appDeviceId] || (localData ? JSON.parse(localData) : null);
-        } catch (e) {
-            deviceData = vipDevices[appDeviceId] || null;
-        }
-
-        if (deviceData && appDeviceId !== "UNKNOWN") {
-            // التحقق إذا كان محظوراً
-            if (deviceData.status === 2) {
-                if (checkUpdateTimer) clearTimeout(checkUpdateTimer); 
-                window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
-                return;
-            }
-
-            let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
+        setTimeout(() => {
+            let memoryKey = "DEVICE_DB_" + appDeviceId;
+            let deviceData = null;
             
-            // التحقق إذا كان الوقت ساري
-            if (finalExpiry > Date.now()) {
-                if (checkUpdateTimer) clearTimeout(checkUpdateTimer); 
-                window.location.href = `app://success_auth?code=${deviceData.code || "AUTO"}&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
-                
-                if (!isBgCheck && !isAdmin) {
-                    document.getElementById('mainCard').innerHTML = `
-                        <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
-                        <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
-                        <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك تلقائياً</p>
-                        <div class="spinner"></div>
-                    `;
+            try {
+                let localData = localStorage.getItem(memoryKey);
+                deviceData = vipDevices[appDeviceId] || (localData ? JSON.parse(localData) : null);
+            } catch (e) {
+                deviceData = vipDevices[appDeviceId] || null;
+            }
+
+            if (deviceData && appDeviceId !== "UNKNOWN") {
+                if (deviceData.status === 2) {
+                    window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                    return;
                 }
-                return;
-            } else {
-                // المشكلة تم حلها هنا: إذا انتهى الوقت نقوم بمسح الجلسة وتوجيهه للخروج (وليس الحظر)
-                if (checkUpdateTimer) clearTimeout(checkUpdateTimer);
-                localStorage.removeItem(memoryKey); // إفراغ الذاكرة ليتمكن من إدخال كود جديد
+
+                let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
                 
-                if (isBgCheck) {
-                    window.location.href = "app://logout_user"; 
+                if (finalExpiry > Date.now()) {
+                    window.location.href = `app://success_auth?code=${deviceData.code || "AUTO"}&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                    
+                    if (!isBgCheck && !isAdmin) {
+                        document.getElementById('mainCard').innerHTML = `
+                            <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
+                            <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
+                            <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك تلقائياً</p>
+                            <div class="spinner"></div>
+                        `;
+                    }
+                    return;
                 } else {
-                    let errorDiv = document.getElementById('error');
-                    errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
-                    errorDiv.style.display = 'block';
+                    localStorage.removeItem(memoryKey);
+                    
+                    if (isBgCheck) {
+                        window.location.href = "app://logout_user"; 
+                    } else {
+                        let errorDiv = document.getElementById('error');
+                        errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
+                        errorDiv.style.display = 'block';
+                    }
+                }
+            } else {
+                if (isBgCheck) {
+                    window.location.href = "app://logout_user";
                 }
             }
-        } else {
-            if (isBgCheck) {
-                window.location.href = "app://logout_user";
-            }
-        }
+        }, 300); 
     };
 
     function login() {
@@ -402,7 +385,6 @@
         const errorDiv = document.getElementById('error');
 
         if (codeData) {
-            // إذا الكود نفسه محظور
             if (codeData.status === 2) {
                 errorDiv.innerText = "تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.";
                 errorDiv.style.display = 'block';
@@ -412,7 +394,6 @@
             let codeMemoryKey = "CODE_USED_" + subCode;
             let codeOwner = localStorage.getItem(codeMemoryKey);
 
-            // التحقق من أن الكود مرتبط ببصمة جهاز آخر
             if (codeOwner && codeOwner !== appDeviceId && codeOwner !== "UNKNOWN") {
                 errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه على هذا الجهاز!";
                 errorDiv.style.display = 'block';
@@ -421,12 +402,11 @@
 
             let finalExpiryTime = Date.now() + getDurationMs(codeData.duration);
             
-            // ربط احترافي ومتكامل: الكود + بصمة الجهاز + وقت الانتهاء + الحالة
             localStorage.setItem(codeMemoryKey, appDeviceId);
             localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
-                status: codeData.status, // الحالة الأساسية للكود (1 = شغال، 2 = محظور)
+                status: codeData.status,
                 expiryTime: finalExpiryTime,
-                code: subCode // تم دمج الكود لتعريف بصمة الهاتف به دائماً
+                code: subCode
             }));
 
             errorDiv.style.display = 'none';

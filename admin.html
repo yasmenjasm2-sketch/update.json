@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم النظام | fawakihAI</title>
+    <style>
+        :root {
+            --bg: #0b1121;
+            --card: #151c2c;
+            --primary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --input: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card);
+            border-radius: 20px;
+            border-bottom: 4px solid var(--primary);
+        }
+
+        .section {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        h3 { color: var(--primary); margin-top: 0; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .input-group { margin-bottom: 15px; }
+
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #94a3b8; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: var(--input);
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-danger { background: var(--danger); color: white; padding: 5px 10px; }
+        .btn-accent { background: var(--accent); color: black; margin-top: 10px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #334155; }
+
+        .json-output {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>لوحة إدارة التحديثات والاشتراكات</h1>
+        <p>رابط المصدر: <code>update.json</code></p>
+    </div>
+
+    <div class="section">
+        <h3>🚀 إعدادات التحديث الإجباري</h3>
+        <div class="grid">
+            <div class="input-group">
+                <label>إصدار التطبيق الحالي</label>
+                <input type="text" id="appVersion" placeholder="مثال: 3.1.5">
+            </div>
+            <div class="input-group">
+                <label>حالة الصيانة</label>
+                <select id="maintenance">
+                    <option value="false">يعمل بنجاح</option>
+                    <option value="true">تحت الصيانة</option>
+                </select>
+            </div>
+        </div>
+        <div class="input-group">
+            <label>رابط تحميل APK المباشر</label>
+            <input type="text" id="apkLink" placeholder="https://...">
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>🔑 إدارة الأكواد (Subscription Codes)</h3>
+        <div class="grid">
+            <input type="text" id="newCode" placeholder="كود جديد">
+            <select id="codeDuration">
+                <option value="1hour">ساعة واحدة</option>
+                <option value="1day">يوم واحد</option>
+                <option value="30days">شهر (30 يوم)</option>
+                <option value="lifetime">مدى الحياة</option>
+            </select>
+        </div>
+        <button class="btn-accent" onclick="addCode()">إضافة الكود للقائمة</button>
+
+        <table id="codesTable">
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>المدة</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <button class="btn-primary" onclick="generateJSON()">توليد ملف JSON الجديد 🛠️</button>
+        <div id="jsonResult" class="json-output"></div>
+        <button id="copyBtn" class="btn-accent" style="display:none; width:100%" onclick="copyToClipboard()">نسخ الكود البرمجي</button>
+    </div>
+</div>
+
+<script>
+    let codes = [
+        { name: "MONTH-HACK", duration: "30days" },
+        { name: "VIP-FUTURE", duration: "lifetime" }
+    ];
+
+    function renderTable() {
+        const tbody = document.querySelector("#codesTable tbody");
+        tbody.innerHTML = "";
+        codes.forEach((c, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${c.name}</td>
+                    <td>${c.duration}</td>
+                    <td><button class="btn-danger" onclick="deleteCode(${index})">حذف</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function addCode() {
+        const name = document.getElementById("newCode").value;
+        const duration = document.getElementById("codeDuration").value;
+        if(name) {
+            codes.push({ name, duration });
+            document.getElementById("newCode").value = "";
+            renderTable();
+        }
+    }
+
+    function deleteCode(index) {
+        codes.splice(index, 1);
+        renderTable();
+    }
+
+    function generateJSON() {
+        const data = {
+            version: document.getElementById("appVersion").value,
+            maintenance: document.getElementById("maintenance").value === "true",
+            update_url: document.getElementById("apkLink").value,
+            last_updated: new Date().toISOString(),
+            subscription_codes: {}
+        };
+
+        codes.forEach(c => {
+            data.subscription_codes[c.name] = { duration: c.duration, status: 1 };
+        });
+
+        const jsonStr = JSON.stringify(data, null, 4);
+        const output = document.getElementById("jsonResult");
+        output.textContent = jsonStr;
+        output.style.display = "block";
+        document.getElementById("copyBtn").style.display = "block";
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById("jsonResult").textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("تم نسخ الـ JSON! قم بلصقه الآن في ملف update.json على GitHub");
+        });
+    }
+
+    // Initialize
+    renderTable();
+</script>
+
+</body>
+</html>

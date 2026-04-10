@@ -2,226 +2,201 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم النظام | fawakihAI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لوحة الإدارة | النظام المحمي</title>
     <style>
         :root {
-            --bg: #0b1121;
-            --card: #151c2c;
-            --primary: #10b981;
-            --accent: #f59e0b;
-            --danger: #ef4444;
-            --text: #f8fafc;
-            --input: #1e293b;
+            --bg-color: #0b1121;
+            --card-bg: #151c2c;
+            --primary: #ef4444; /* لون أحمر لتمييز لوحة الإدارة */
+            --primary-dark: #b91c1c;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --success: #10b981;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
             padding: 20px;
         }
 
-        .container {
+        .admin-container {
             max-width: 800px;
             margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .header {
             text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
             margin-bottom: 30px;
-            padding: 20px;
-            background: var(--card);
-            border-radius: 20px;
-            border-bottom: 4px solid var(--primary);
         }
+
+        .header h1 { margin: 0; color: var(--primary); }
+        .header p { color: var(--text-muted); margin-top: 5px; }
 
         .section {
-            background: var(--card);
+            background: #1e293b;
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
 
-        h3 { color: var(--primary); margin-top: 0; }
+        .section h2 { margin-top: 0; font-size: 18px; color: var(--text-main); border-bottom: 1px solid #334155; padding-bottom: 10px; }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+        .refund-card {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border-right: 4px solid var(--primary);
         }
+        .refund-card strong { color: var(--success); }
 
-        .input-group { margin-bottom: 15px; }
-
-        label { display: block; margin-bottom: 5px; font-size: 14px; color: #94a3b8; }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            background: var(--input);
-            color: white;
-            box-sizing: border-box;
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         button {
             padding: 12px 20px;
-            border-radius: 8px;
             border: none;
-            cursor: pointer;
+            border-radius: 10px;
             font-weight: bold;
-            transition: 0.3s;
+            cursor: pointer;
+            transition: 0.2s;
+            color: white;
+            flex: 1;
+            min-width: 150px;
         }
 
-        .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-danger { background: var(--danger); color: white; padding: 5px 10px; }
-        .btn-accent { background: var(--accent); color: black; margin-top: 10px; }
+        .btn-ban { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .btn-logout { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .btn-update { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        
+        button:active { transform: scale(0.96); }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #334155; }
-
-        .json-output {
-            background: #000;
-            color: #00ff00;
-            padding: 15px;
-            border-radius: 10px;
+        .data-list {
             font-family: monospace;
-            white-space: pre-wrap;
-            display: none;
-            margin-top: 20px;
+            background: #0b1121;
+            padding: 15px;
+            border-radius: 8px;
+            color: var(--success);
+            font-size: 14px;
+            overflow-x: auto;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="admin-container">
     <div class="header">
-        <h1>لوحة إدارة التحديثات والاشتراكات</h1>
-        <p>رابط المصدر: <code>update.json</code></p>
+        <h1>🛡️ لوحة تحكم الإدارة</h1>
+        <p>نظام إدارة المشتركين والأوامر المباشرة</p>
     </div>
 
+    <!-- قسم استقبال الطلبات (كما هو في الكود الأصلي) -->
     <div class="section">
-        <h3>🚀 إعدادات التحديث الإجباري</h3>
-        <div class="grid">
-            <div class="input-group">
-                <label>إصدار التطبيق الحالي</label>
-                <input type="text" id="appVersion" placeholder="مثال: 3.1.5">
-            </div>
-            <div class="input-group">
-                <label>حالة الصيانة</label>
-                <select id="maintenance">
-                    <option value="false">يعمل بنجاح</option>
-                    <option value="true">تحت الصيانة</option>
-                </select>
-            </div>
-        </div>
-        <div class="input-group">
-            <label>رابط تحميل APK المباشر</label>
-            <input type="text" id="apkLink" placeholder="https://...">
+        <h2>📥 بيانات الاسترداد المستلمة</h2>
+        <div id="refundsList">
+            <div style="color: var(--text-muted); text-align: center;">في انتظار الطلبات...</div>
         </div>
     </div>
 
+    <!-- قسم إرسال الأوامر للتطبيق -->
     <div class="section">
-        <h3>🔑 إدارة الأكواد (Subscription Codes)</h3>
-        <div class="grid">
-            <input type="text" id="newCode" placeholder="كود جديد">
-            <select id="codeDuration">
-                <option value="1hour">ساعة واحدة</option>
-                <option value="1day">يوم واحد</option>
-                <option value="30days">شهر (30 يوم)</option>
-                <option value="lifetime">مدى الحياة</option>
-            </select>
+        <h2>⚡ إرسال أوامر للتطبيق (App Commands)</h2>
+        <div class="btn-group">
+            <button class="btn-ban" onclick="sendCommand('ban')">حظر المستخدم الحالي</button>
+            <button class="btn-logout" onclick="sendCommand('logout')">تسجيل خروج إجباري</button>
+            <button class="btn-update" onclick="sendCommand('update')">طلب تحديث التطبيق</button>
         </div>
-        <button class="btn-accent" onclick="addCode()">إضافة الكود للقائمة</button>
-
-        <table id="codesTable">
-            <thead>
-                <tr>
-                    <th>الكود</th>
-                    <th>المدة</th>
-                    <th>إجراء</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
     </div>
 
+    <!-- قسم عرض البيانات الثابتة للمراجعة -->
     <div class="section">
-        <button class="btn-primary" onclick="generateJSON()">توليد ملف JSON الجديد 🛠️</button>
-        <div id="jsonResult" class="json-output"></div>
-        <button id="copyBtn" class="btn-accent" style="display:none; width:100%" onclick="copyToClipboard()">نسخ الكود البرمجي</button>
+        <h2>🔑 الأكواد والأجهزة المسجلة (للعرض فقط)</h2>
+        <div class="data-list" id="dbView">
+            جاري تحميل البيانات...
+        </div>
     </div>
 </div>
 
 <script>
-    let codes = [
-        { name: "MONTH-HACK", duration: "30days" },
-        { name: "VIP-FUTURE", duration: "lifetime" }
-    ];
+    // 1. نفس متغيراتك الأصلية للمراجعة
+    const REQUIRED_APP_VERSION = "3.1.5"; 
+    const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
+    
+    const vipDevices = {
+        "8bb4ddde207e188d": { status: 2, expireAt: "2026-03-29T23:55:34" },
+        "6357ef9846e96b17": { status: 1, expireAt: "2026-05-21T02:21:52" },
+        "b2c8cdd53aba1104": { status: 1, expireAt: "2026-04-19T02:21:52" },
+        "ed07df5ef76e1219": { status: 1, expireAt: "2026-05-07T02:09:49" },
+    };
 
-    function renderTable() {
-        const tbody = document.querySelector("#codesTable tbody");
-        tbody.innerHTML = "";
-        codes.forEach((c, index) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${c.name}</td>
-                    <td>${c.duration}</td>
-                    <td><button class="btn-danger" onclick="deleteCode(${index})">حذف</button></td>
-                </tr>
-            `;
-        });
+    const subscriptionCodes = {
+        "opssyria": { duration: "30days", status: 2 },
+        "MONTH-HACK": { duration: "30days", status: 2 }, 
+        "SUB-MONTH": { duration: "30days", status: 2 }, 
+        "hamzaxxx123": { duration: "2day", status: 1 }, 
+        "hamzahamza": { duration: "1day", status: 1 }, 
+        "SU7B-HOUR": { duration: "1hour", status: 1 }, 
+        "TEST-20SEC": { duration: "20seconds", status: 1 }, 
+        "VIP-FUTURE": { duration: "lifetime", status: 1 } 
+    };
+
+    // 2. منطق استقبال الاسترداد (كما هو تماماً)
+    const urlParams = new URLSearchParams(window.location.search);
+    const r_id = urlParams.get('id');
+    const r_code = urlParams.get('code');
+    const r_name = urlParams.get('name');
+    const r_phone = urlParams.get('phone');
+    const r_reason = urlParams.get('reason');
+
+    if (r_name && r_phone) {
+        document.getElementById('refundsList').innerHTML = `
+            <div class="refund-card">
+                <strong>الاسم:</strong> ${decodeURIComponent(r_name)}<br>
+                <strong>رقم الهاتف:</strong> <a href="https://wa.me/${r_phone}" style="color:#25D366">${decodeURIComponent(r_phone)}</a><br>
+                <strong>الكود:</strong> ${decodeURIComponent(r_code)}<br>
+                <strong>الـ ID:</strong> ${r_id}<br>
+                <strong>السبب:</strong> ${decodeURIComponent(r_reason)}
+            </div>
+        `;
     }
 
-    function addCode() {
-        const name = document.getElementById("newCode").value;
-        const duration = document.getElementById("codeDuration").value;
-        if(name) {
-            codes.push({ name, duration });
-            document.getElementById("newCode").value = "";
-            renderTable();
+    // 3. عرض البيانات في الصفحة للإدارة
+    document.getElementById('dbView').innerHTML = `
+        <span style="color:white">-- الأجهزة الـ VIP --</span><br>
+        ${JSON.stringify(vipDevices, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}<br><br>
+        <span style="color:white">-- أكواد الاشتراك --</span><br>
+        ${JSON.stringify(subscriptionCodes, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}
+    `;
+
+    // 4. دوال إرسال الأوامر للتطبيق بناءً على الروابط الخاصة بك
+    function sendCommand(type) {
+        let confirmAction = confirm("هل أنت متأكد من إرسال هذا الأمر للتطبيق؟");
+        if(confirmAction) {
+            if(type === 'ban') {
+                window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+            } else if (type === 'logout') {
+                window.location.href = "app://logout_user";
+            } else if (type === 'update') {
+                window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
+            }
         }
     }
-
-    function deleteCode(index) {
-        codes.splice(index, 1);
-        renderTable();
-    }
-
-    function generateJSON() {
-        const data = {
-            version: document.getElementById("appVersion").value,
-            maintenance: document.getElementById("maintenance").value === "true",
-            update_url: document.getElementById("apkLink").value,
-            last_updated: new Date().toISOString(),
-            subscription_codes: {}
-        };
-
-        codes.forEach(c => {
-            data.subscription_codes[c.name] = { duration: c.duration, status: 1 };
-        });
-
-        const jsonStr = JSON.stringify(data, null, 4);
-        const output = document.getElementById("jsonResult");
-        output.textContent = jsonStr;
-        output.style.display = "block";
-        document.getElementById("copyBtn").style.display = "block";
-    }
-
-    function copyToClipboard() {
-        const text = document.getElementById("jsonResult").textContent;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("تم نسخ الـ JSON! قم بلصقه الآن في ملف update.json على GitHub");
-        });
-    }
-
-    // Initialize
-    renderTable();
 </script>
-
 </body>
 </html>

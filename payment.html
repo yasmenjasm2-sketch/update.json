@@ -74,10 +74,8 @@
     
     // التحقق الصارم من وضع الأمان
     if (!appDeviceId || appDeviceId.trim() === "" || appDeviceId === "UNKNOWN") {
-        // تفعيل وضع الأمان
         document.getElementById('errorView').style.display = 'block';
     } else {
-        // إذا كان الـ device_id موجوداً وصحيحاً، نظهر صفحة الدفع ونشغل السكربتات
         document.getElementById('paymentView').style.display = 'block';
         initializeApp();
     }
@@ -86,7 +84,7 @@
         if(window.history.length > 1) {
             window.history.back();
         } else {
-            window.location.href = "index.html"; // بديل في حال لم يكن هناك سجل متصفح
+            window.location.href = "index.html"; 
         }
     }
 
@@ -115,7 +113,6 @@
     }
 
     async function sendPayment() {
-        // حماية إضافية قبل الإرسال
         if (!appDeviceId || appDeviceId.trim() === "") return;
 
         const fileInput = document.getElementById("payFileInput");
@@ -127,25 +124,56 @@
             errorDiv.style.display = "block"; return;
         }
 
-        btn.disabled = true; btn.textContent = "جاري الإرسال..."; errorDiv.style.display = "none";
-        
-        const caption = `💰 *اشتراك PayPal جديد*\n\nالمستخدم: \`${telegramUserId}\`\nالجهاز: \`${appDeviceId}\`\n\nللرد والتفعيل، أرسل:\n\`${telegramUserId} تفعيل\``;
-        const formData = new FormData();
-        formData.append("chat_id", CHAT_ID);
-        formData.append("parse_mode", "Markdown");
-        formData.append("photo", fileInput.files[0]);
-        formData.append("caption", caption);
+        const file = fileInput.files[0];
+        if (!file || file.size === 0) {
+            errorDiv.innerText = "الملف غير صالح أو لا يمكن قراءته.";
+            errorDiv.style.display = "block"; return;
+        }
 
+        btn.disabled = true; 
+        btn.textContent = "جاري الإرسال..."; 
+        errorDiv.style.display = "none";
+        
         try {
-            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: "POST", body: formData });
+            const caption = `💰 *اشتراك PayPal جديد*\n\nالمستخدم: \`${telegramUserId}\`\nالجهاز: \`${appDeviceId}\`\n\nللرد والتفعيل، أرسل:\n\`${telegramUserId} تفعيل\``;
+            const formData = new FormData();
+            formData.append("chat_id", CHAT_ID);
+            formData.append("parse_mode", "Markdown");
+            formData.append("photo", file);
+            formData.append("caption", caption);
+
+            // إضافة نظام إنهاء الاتصال بعد 30 ثانية لتجنب التعليق
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 ثانية
+
+            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { 
+                method: "POST", 
+                body: formData,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
             if (res.ok) {
                 document.getElementById('paymentView').style.display = 'none';
                 document.getElementById('waitingView').style.display = 'block';
                 isPolling = true; pollTelegram();
-            } else throw new Error();
+            } else {
+                const errData = await res.json();
+                throw new Error(errData.description || "فشل الإرسال من السيرفر.");
+            }
         } catch (e) {
-            errorDiv.innerText = "فشل الإرسال. تأكد من الإنترنت."; errorDiv.style.display = "block";
-            btn.disabled = false; btn.textContent = "إرسال الإيصال";
+            let errorMsg = "فشل الإرسال. تأكد من اتصالك بالإنترنت.";
+            if (e.name === 'AbortError') {
+                errorMsg = "انتهى وقت الاتصال. يرجى المحاولة بصورة ذات حجم أصغر.";
+            } else if (e.message && e.message.trim() !== "") {
+                errorMsg = e.message;
+            }
+            
+            errorDiv.innerText = errorMsg; 
+            errorDiv.style.display = "block";
+            btn.disabled = false; 
+            btn.textContent = "إرسال الإيصال";
         }
     }
 
@@ -165,16 +193,14 @@
                             if (text.includes(telegramUserId) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
-                                // توليد اشتراك 30 يوم وحفظه في الجهاز
                                 let autoCode = "PAY-" + Math.floor(1000 + Math.random() * 9000);
-                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 Days
+                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); 
                                 
                                 localStorage.setItem("CODE_USED_" + autoCode, appDeviceId);
                                 localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
                                     status: 1, expiryTime: finalExpiryTime, code: autoCode
                                 }));
                                 
-                                // إرجاع المستخدم للملف الرئيسي ليتم إدخاله للتطبيق
                                 window.location.href = "index.html?device_id=" + encodeURIComponent(appDeviceId);
                                 return;
                             }

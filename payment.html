@@ -20,7 +20,6 @@
         .paypal-btn { background: var(--paypal-color); }
         .submit-btn { background: var(--primary); }
         .submit-btn:disabled { background: #475569; cursor: not-allowed; }
-        .back-btn { background: #334155; margin-top: 10px; }
         
         .file-label { display: block; background: #1e293b; padding: 15px; border-radius: 16px; border: 1.5px dashed var(--primary); color: var(--primary); cursor: pointer; margin-bottom: 10px; font-weight: bold; }
         .top-back { position: absolute; top: 15px; right: 15px; color: var(--text-muted); text-decoration: none; font-size: 20px; }
@@ -33,7 +32,7 @@
 </head>
 <body>
 
-<div class="app-container" id="paymentView" style="display: none;">
+<div class="app-container" id="paymentView">
     <a href="index.html" class="top-back">🔙</a>
     <div class="app-icon" style="background: linear-gradient(135deg, var(--paypal-color), #1546a0);">💳</div>
     <h2>شراء اشتراك</h2>
@@ -61,51 +60,22 @@
     <div style="font-size: 11px; color: #64748b; margin-top: 20px;" id="userIdDisplay"></div>
 </div>
 
-<div class="app-container" id="errorView" style="display: none;">
-    <div class="app-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">⚠️</div>
-    <h2 style="color: #ef4444;">خطأ: عدم استجابة السيرفر</h2>
-    <p class="subtitle">تم رفض الوصول لأسباب أمنية. يرجى العودة والتأكد من فتح الرابط عبر التطبيق حصراً، أو تواصل مع المطور.</p>
-    <button class="main-btn back-btn" onclick="goBack()">🔙 رجوع للشاشة السابقة</button>
-</div>
-
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const appDeviceId = urlParams.get('device_id');
+    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
     
-    // التحقق الصارم من وضع الأمان
-    if (!appDeviceId || appDeviceId.trim() === "" || appDeviceId === "UNKNOWN") {
-        document.getElementById('errorView').style.display = 'block';
-    } else {
-        document.getElementById('paymentView').style.display = 'block';
-        initializeApp();
+    const ENC_BOT_TOKEN = "NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==";
+    const ENC_CHAT_ID = "NTk5ODI1MDM2Nw==";
+    const BOT_TOKEN = atob(ENC_BOT_TOKEN);
+    const CHAT_ID = atob(ENC_CHAT_ID);
+    
+    if (!localStorage.getItem("fawakih_user_id")) {
+        localStorage.setItem("fawakih_user_id", "ID-" + Math.floor(10000 + Math.random() * 90000));
     }
-
-    function goBack() {
-        if(window.history.length > 1) {
-            window.history.back();
-        } else {
-            window.location.href = "index.html"; 
-        }
-    }
-
+    const telegramUserId = localStorage.getItem("fawakih_user_id");
     let isPolling = false;
-    let telegramUserId = "";
-    let BOT_TOKEN = "";
-    let CHAT_ID = "";
 
-    function initializeApp() {
-        const ENC_BOT_TOKEN = "NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==";
-        const ENC_CHAT_ID = "NTk5ODI1MDM2Nw==";
-        BOT_TOKEN = atob(ENC_BOT_TOKEN);
-        CHAT_ID = atob(ENC_CHAT_ID);
-        
-        if (!localStorage.getItem("fawakih_user_id")) {
-            localStorage.setItem("fawakih_user_id", "ID-" + Math.floor(10000 + Math.random() * 90000));
-        }
-        telegramUserId = localStorage.getItem("fawakih_user_id");
-
-        document.getElementById('userIdDisplay').innerText = "User ID: " + telegramUserId;
-    }
+    document.getElementById('userIdDisplay').innerText = "User ID: " + telegramUserId;
 
     function updateFileName() {
         const input = document.getElementById("payFileInput");
@@ -113,8 +83,6 @@
     }
 
     async function sendPayment() {
-        if (!appDeviceId || appDeviceId.trim() === "") return;
-
         const fileInput = document.getElementById("payFileInput");
         const errorDiv = document.getElementById("payError");
         const btn = document.getElementById("paySubmitBtn");
@@ -124,56 +92,25 @@
             errorDiv.style.display = "block"; return;
         }
 
-        const file = fileInput.files[0];
-        if (!file || file.size === 0) {
-            errorDiv.innerText = "الملف غير صالح أو لا يمكن قراءته.";
-            errorDiv.style.display = "block"; return;
-        }
-
-        btn.disabled = true; 
-        btn.textContent = "جاري الإرسال..."; 
-        errorDiv.style.display = "none";
+        btn.disabled = true; btn.textContent = "جاري الإرسال..."; errorDiv.style.display = "none";
         
+        const caption = `💰 *اشتراك PayPal جديد*\n\nالمستخدم: \`${telegramUserId}\`\nالجهاز: \`${appDeviceId}\`\n\nللرد والتفعيل، أرسل:\n\`${telegramUserId} تفعيل\``;
+        const formData = new FormData();
+        formData.append("chat_id", CHAT_ID);
+        formData.append("parse_mode", "Markdown");
+        formData.append("photo", fileInput.files[0]);
+        formData.append("caption", caption);
+
         try {
-            const caption = `💰 *اشتراك PayPal جديد*\n\nالمستخدم: \`${telegramUserId}\`\nالجهاز: \`${appDeviceId}\`\n\nللرد والتفعيل، أرسل:\n\`${telegramUserId} تفعيل\``;
-            const formData = new FormData();
-            formData.append("chat_id", CHAT_ID);
-            formData.append("parse_mode", "Markdown");
-            formData.append("photo", file);
-            formData.append("caption", caption);
-
-            // إضافة نظام إنهاء الاتصال بعد 30 ثانية لتجنب التعليق
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 ثانية
-
-            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { 
-                method: "POST", 
-                body: formData,
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
+            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: "POST", body: formData });
             if (res.ok) {
                 document.getElementById('paymentView').style.display = 'none';
                 document.getElementById('waitingView').style.display = 'block';
                 isPolling = true; pollTelegram();
-            } else {
-                const errData = await res.json();
-                throw new Error(errData.description || "فشل الإرسال من السيرفر.");
-            }
+            } else throw new Error();
         } catch (e) {
-            let errorMsg = "فشل الإرسال. تأكد من اتصالك بالإنترنت.";
-            if (e.name === 'AbortError') {
-                errorMsg = "انتهى وقت الاتصال. يرجى المحاولة بصورة ذات حجم أصغر.";
-            } else if (e.message && e.message.trim() !== "") {
-                errorMsg = e.message;
-            }
-            
-            errorDiv.innerText = errorMsg; 
-            errorDiv.style.display = "block";
-            btn.disabled = false; 
-            btn.textContent = "إرسال الإيصال";
+            errorDiv.innerText = "فشل الإرسال. تأكد من الإنترنت."; errorDiv.style.display = "block";
+            btn.disabled = false; btn.textContent = "إرسال الإيصال";
         }
     }
 
@@ -193,14 +130,16 @@
                             if (text.includes(telegramUserId) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
+                                // توليد اشتراك 30 يوم وحفظه في الجهاز
                                 let autoCode = "PAY-" + Math.floor(1000 + Math.random() * 9000);
-                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); 
+                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 Days
                                 
                                 localStorage.setItem("CODE_USED_" + autoCode, appDeviceId);
                                 localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
                                     status: 1, expiryTime: finalExpiryTime, code: autoCode
                                 }));
                                 
+                                // إرجاع المستخدم للملف الرئيسي ليتم إدخاله للتطبيق
                                 window.location.href = "index.html?device_id=" + encodeURIComponent(appDeviceId);
                                 return;
                             }

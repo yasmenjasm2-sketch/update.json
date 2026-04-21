@@ -60,94 +60,110 @@
     <div style="font-size: 11px; color: #64748b; margin-top: 20px;" id="userIdDisplay"></div>
 </div>
 
+<div class="app-container" id="securityView" style="display: none;">
+    <div class="app-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444;">🚫</div>
+    <h2 style="color: #ef4444;">خطأ في الاستجابة</h2>
+    <p class="subtitle">عدم استجابة السيرفر، يرجى إخبار المطور.</p>
+    <button class="main-btn" style="background: #334155; margin-top: 20px;" onclick="window.history.back()">🔙 رجوع للشاشة السابقة</button>
+</div>
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
+    const rawDeviceId = urlParams.get('device_id');
     
-    const ENC_BOT_TOKEN = "NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==";
-    const ENC_CHAT_ID = "NTk5ODI1MDM2Nw==";
-    const BOT_TOKEN = atob(ENC_BOT_TOKEN);
-    const CHAT_ID = atob(ENC_CHAT_ID);
-    
-    if (!localStorage.getItem("fawakih_user_id")) {
-        localStorage.setItem("fawakih_user_id", "ID-" + Math.floor(10000 + Math.random() * 90000));
-    }
-    const telegramUserId = localStorage.getItem("fawakih_user_id");
-    let isPolling = false;
-
-    document.getElementById('userIdDisplay').innerText = "User ID: " + telegramUserId;
-
-    function updateFileName() {
-        const input = document.getElementById("payFileInput");
-        document.getElementById("payFileName").textContent = input.files.length > 0 ? "تم إرفاق: " + input.files[0].name : "";
-    }
-
-    async function sendPayment() {
-        const fileInput = document.getElementById("payFileInput");
-        const errorDiv = document.getElementById("payError");
-        const btn = document.getElementById("paySubmitBtn");
+    // وضع الأمان: إذا كان الرابط لا يحتوي على device_id فهذا يعني أنه تم فتحه من متصفح عادي
+    if (!rawDeviceId || rawDeviceId.trim() === "") {
+        document.getElementById('paymentView').style.display = 'none';
+        document.getElementById('securityView').style.display = 'block';
+    } else {
+        // تشغيل الأكواد العادية فقط إذا اجتاز فحص الأمان
+        const appDeviceId = rawDeviceId;
         
-        if (fileInput.files.length === 0) {
-            errorDiv.innerText = "الرجاء إرفاق الإيصال!";
-            errorDiv.style.display = "block"; return;
-        }
-
-        btn.disabled = true; btn.textContent = "جاري الإرسال..."; errorDiv.style.display = "none";
+        const ENC_BOT_TOKEN = "NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==";
+        const ENC_CHAT_ID = "NTk5ODI1MDM2Nw==";
+        const BOT_TOKEN = atob(ENC_BOT_TOKEN);
+        const CHAT_ID = atob(ENC_CHAT_ID);
         
-        const caption = `💰 *اشتراك PayPal جديد*\n\nالمستخدم: \`${telegramUserId}\`\nالجهاز: \`${appDeviceId}\`\n\nللرد والتفعيل، أرسل:\n\`${telegramUserId} تفعيل\``;
-        const formData = new FormData();
-        formData.append("chat_id", CHAT_ID);
-        formData.append("parse_mode", "Markdown");
-        formData.append("photo", fileInput.files[0]);
-        formData.append("caption", caption);
-
-        try {
-            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: "POST", body: formData });
-            if (res.ok) {
-                document.getElementById('paymentView').style.display = 'none';
-                document.getElementById('waitingView').style.display = 'block';
-                isPolling = true; pollTelegram();
-            } else throw new Error();
-        } catch (e) {
-            errorDiv.innerText = "فشل الإرسال. تأكد من الإنترنت."; errorDiv.style.display = "block";
-            btn.disabled = false; btn.textContent = "إرسال الإيصال";
+        if (!localStorage.getItem("fawakih_user_id")) {
+            localStorage.setItem("fawakih_user_id", "ID-" + Math.floor(10000 + Math.random() * 90000));
         }
-    }
+        const telegramUserId = localStorage.getItem("fawakih_user_id");
+        let isPolling = false;
 
-    async function pollTelegram() {
-        let offset = localStorage.getItem("fawakih_tg_offset") || 0;
-        while (isPolling) {
+        document.getElementById('userIdDisplay').innerText = "User ID: " + telegramUserId;
+
+        window.updateFileName = function() {
+            const input = document.getElementById("payFileInput");
+            document.getElementById("payFileName").textContent = input.files.length > 0 ? "تم إرفاق: " + input.files[0].name : "";
+        };
+
+        window.sendPayment = async function() {
+            const fileInput = document.getElementById("payFileInput");
+            const errorDiv = document.getElementById("payError");
+            const btn = document.getElementById("paySubmitBtn");
+            
+            if (fileInput.files.length === 0) {
+                errorDiv.innerText = "الرجاء إرفاق الإيصال!";
+                errorDiv.style.display = "block"; return;
+            }
+
+            btn.disabled = true; btn.textContent = "جاري الإرسال..."; errorDiv.style.display = "none";
+            
+            const caption = `💰 *اشتراك PayPal جديد*\n\nالمستخدم: \`${telegramUserId}\`\nالجهاز: \`${appDeviceId}\`\n\nللرد والتفعيل، أرسل:\n\`${telegramUserId} تفعيل\``;
+            const formData = new FormData();
+            formData.append("chat_id", CHAT_ID);
+            formData.append("parse_mode", "Markdown");
+            formData.append("photo", fileInput.files[0]);
+            formData.append("caption", caption);
+
             try {
-                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=30`);
+                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: "POST", body: formData });
                 if (res.ok) {
-                    const data = await res.json();
-                    for (let item of data.result) {
-                        offset = item.update_id + 1;
-                        localStorage.setItem("fawakih_tg_offset", offset);
-                        
-                        if (item.message && item.message.text) {
-                            const text = item.message.text;
-                            if (text.includes(telegramUserId) && text.includes("تفعيل")) {
-                                isPolling = false;
-                                
-                                // توليد اشتراك 30 يوم وحفظه في الجهاز
-                                let autoCode = "PAY-" + Math.floor(1000 + Math.random() * 9000);
-                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 Days
-                                
-                                localStorage.setItem("CODE_USED_" + autoCode, appDeviceId);
-                                localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
-                                    status: 1, expiryTime: finalExpiryTime, code: autoCode
-                                }));
-                                
-                                // إرجاع المستخدم للملف الرئيسي ليتم إدخاله للتطبيق
-                                window.location.href = "index.html?device_id=" + encodeURIComponent(appDeviceId);
-                                return;
+                    document.getElementById('paymentView').style.display = 'none';
+                    document.getElementById('waitingView').style.display = 'block';
+                    isPolling = true; pollTelegram();
+                } else throw new Error();
+            } catch (e) {
+                errorDiv.innerText = "فشل الإرسال. تأكد من الإنترنت."; errorDiv.style.display = "block";
+                btn.disabled = false; btn.textContent = "إرسال الإيصال";
+            }
+        };
+
+        async function pollTelegram() {
+            let offset = localStorage.getItem("fawakih_tg_offset") || 0;
+            while (isPolling) {
+                try {
+                    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=30`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        for (let item of data.result) {
+                            offset = item.update_id + 1;
+                            localStorage.setItem("fawakih_tg_offset", offset);
+                            
+                            if (item.message && item.message.text) {
+                                const text = item.message.text;
+                                if (text.includes(telegramUserId) && text.includes("تفعيل")) {
+                                    isPolling = false;
+                                    
+                                    // توليد اشتراك 30 يوم وحفظه في الجهاز
+                                    let autoCode = "PAY-" + Math.floor(1000 + Math.random() * 9000);
+                                    let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 Days
+                                    
+                                    localStorage.setItem("CODE_USED_" + autoCode, appDeviceId);
+                                    localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
+                                        status: 1, expiryTime: finalExpiryTime, code: autoCode
+                                    }));
+                                    
+                                    // إرجاع المستخدم للملف الرئيسي ليتم إدخاله للتطبيق
+                                    window.location.href = "index.html?device_id=" + encodeURIComponent(appDeviceId);
+                                    return;
+                                }
                             }
                         }
                     }
-                }
-            } catch (e) {}
-            await new Promise(r => setTimeout(r, 4000));
+                } catch (e) {}
+                await new Promise(r => setTimeout(r, 4000));
+            }
         }
     }
 </script>

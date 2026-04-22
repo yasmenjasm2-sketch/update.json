@@ -169,7 +169,17 @@
 </head>
 <body>
 
-<div class="app-container" id="paymentView">
+<div class="app-container" id="securityView" style="display: none;">
+    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="var(--error-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <h2 style="color: var(--error-color);">تحذير أمني!</h2>
+    <p class="subtitle">تم اكتشاف مشاكل في الحماية أو أن معرف الجهاز غير معروف (UNKNOWN). <br><br>لا يمكن فتح هذه الشاشة أو معالجة أي طلبات حفاظاً على أمان النظام.</p>
+</div>
+
+<div class="app-container" id="paymentView" style="display: none;">
     <div class="paypal-logo-svg">
         <svg viewBox="0 0 436 500" xmlns="http://www.w3.org/2000/svg">
             <path fill="#003087" d="M375.3 118.6c-4.4-23.7-16-43.2-34.6-58.4C322.2 46.1 298.5 38.3 270 38.3H112.5c-7.8 0-14.4 5.8-15.5 13.5L48.1 366.5c-1 6.3 3.9 12 10.3 12h71.8c7.8 0 14.4-5.8 15.5-13.5l14.4-91.4c1.1-7.1 7.2-12.4 14.4-12.4h37.4c64 0 114.2-26 128.4-96.1 3.5-17.5 3-33.1-4.8-46.5z"/>
@@ -252,28 +262,31 @@
 </div>
 
 <script>
-    // نظام المعرف المخفي والثابت للجهاز
     const urlParams = new URLSearchParams(window.location.search);
     let deviceId = urlParams.get('device_id');
-    
-    if (!deviceId || deviceId === "UNKNOWN" || deviceId.trim() === "") {
-        deviceId = localStorage.getItem("fawakih_static_device_id");
-        if (!deviceId) {
-            deviceId = "FWK-" + Math.random().toString(36).substr(2, 9).toUpperCase();
-            localStorage.setItem("fawakih_static_device_id", deviceId);
-        }
+    let isDeviceValid = false;
+
+    // التحقق من الحماية ومعرف الجهاز أولاً
+    if (!deviceId || deviceId.toUpperCase() === "UNKNOWN" || deviceId.trim() === "") {
+        // حالة الحماية: المعرف غير معروف أو فارغ
+        document.getElementById('securityView').style.display = 'block';
+        isDeviceValid = false;
     } else {
+        // حالة سليمة: المعرف صحيح، نظهر الشاشة ونكمل الإعدادات
+        document.getElementById('paymentView').style.display = 'block';
         localStorage.setItem("fawakih_static_device_id", deviceId);
+        isDeviceValid = true;
+
+        // إعداد واجهة الانتظار وروابط الواتساب بعد التأكد من صحة المعرف
+        document.getElementById('userIdDisplayWait').innerText = deviceId;
+        const waNumber = "905424678123";
+        const waMessage = encodeURIComponent(`مرحباً، أواجه مشكلة في تفعيل اشتراك fawakihAI.\n\nرمز الحوالة (معرف الجهاز): \n${deviceId}`);
+        document.getElementById('whatsappLinkWait').href = `https://wa.me/${waNumber}?text=${waMessage}`;
+        document.getElementById('whatsappLinkReject').href = `https://wa.me/${waNumber}?text=${waMessage}`;
     }
 
-    // إعداد واجهة الانتظار وروابط الواتساب
-    document.getElementById('userIdDisplayWait').innerText = deviceId;
-    const waNumber = "905424678123";
-    const waMessage = encodeURIComponent(`مرحباً، أواجه مشكلة في تفعيل اشتراك fawakihAI.\n\nرمز الحوالة (معرف الجهاز): \n${deviceId}`);
-    document.getElementById('whatsappLinkWait').href = `https://wa.me/${waNumber}?text=${waMessage}`;
-    document.getElementById('whatsappLinkReject').href = `https://wa.me/${waNumber}?text=${waMessage}`;
-
     function copyDeviceId() {
+        if (!isDeviceValid) return;
         navigator.clipboard.writeText(deviceId).then(() => {
             const btn = document.getElementById('copyBtn');
             btn.innerText = "✅ تم النسخ";
@@ -292,8 +305,9 @@
         document.getElementById("payFileName").textContent = input.files.length > 0 ? "✅ تم اختيار الإيصال" : "";
     }
 
-    // إرسال رسالة نصية مخفية للتليجرام (تستخدم لإرسال الكود المولد)
+    // إرسال رسالة نصية مخفية للتليجرام
     async function sendSecretTelegramMessage(text) {
+        if (!isDeviceValid) return;
         try {
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                 method: "POST",
@@ -304,6 +318,9 @@
     }
 
     async function sendPayment() {
+        // منع الإرسال نهائياً إذا كان المعرف غير صالح
+        if (!isDeviceValid) return;
+
         const fileInput = document.getElementById("payFileInput");
         const errorDiv = document.getElementById("payError");
         const btn = document.getElementById("paySubmitBtn");
@@ -343,6 +360,7 @@
 
     // فحص رد المطور
     async function pollTelegram() {
+        if (!isDeviceValid) return;
         let offset = localStorage.getItem("fawakih_tg_offset") || 0;
         while (isPolling) {
             try {

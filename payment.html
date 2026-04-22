@@ -6,6 +6,16 @@
     <meta name="theme-color" content="#0b1121">
     <title>fawakihAI - تفعيل الاشتراك</title>
     <style>
+        /* حماية شاملة لمنع تحديد أو نسخ النصوص لمحاكاة تطبيقات الهواتف */
+        * {
+            -webkit-user-select: none; /* Safari/Chrome/iOS */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE/Edge */
+            user-select: none; /* Standard */
+            -webkit-touch-callout: none; /* إخفاء قائمة النقر المطول في iOS */
+            -webkit-tap-highlight-color: transparent; /* إخفاء وميض النقر */
+        }
+
         :root {
             --bg-color: #0b1121; 
             --card-bg: #151c2c; 
@@ -42,8 +52,8 @@
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .paypal-logo-svg { width: 120px; margin-bottom: 20px; }
-        .status-icon { width: 80px; margin-bottom: 15px; animation: scaleIn 0.4s ease; }
+        .paypal-logo-svg { width: 120px; margin-bottom: 20px; pointer-events: none; }
+        .status-icon { width: 80px; margin-bottom: 15px; animation: scaleIn 0.4s ease; pointer-events: none; }
         @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
 
         h2 { margin: 10px 0; font-size: 22px; font-weight: 800; }
@@ -162,12 +172,13 @@
             margin-right: 10px;
             transition: 0.2s;
             white-space: nowrap;
+            -webkit-user-select: none;
         }
         .copy-btn:hover { background: #475569; }
         .copy-btn.copied { background: var(--primary); }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
 <div class="app-container" id="securityView" style="display: none;">
     <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="var(--error-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -176,7 +187,7 @@
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
     </svg>
     <h2 style="color: var(--error-color);">تحذير أمني!</h2>
-    <p class="subtitle">تم اكتشاف مشاكل في الحماية أو أن معرف الجهاز غير معروف (UNKNOWN). <br><br>لا يمكن فتح هذه الشاشة أو معالجة أي طلبات حفاظاً على أمان النظام.</p>
+    <p class="subtitle">تم اكتشاف مشاكل في الحماية أو أن معرف الجهاز غير صالح. <br><br>لا يمكن فتح هذه الشاشة أو معالجة أي طلبات حفاظاً على أمان النظام.</p>
 </div>
 
 <div class="app-container" id="paymentView" style="display: none;">
@@ -272,9 +283,8 @@
         document.getElementById('securityView').style.display = 'block';
         isDeviceValid = false;
     } else {
-        // حالة سليمة: المعرف صحيح، نظهر الشاشة ونكمل الإعدادات
+        // حالة سليمة: المعرف صحيح، نظهر الشاشة ونكمل الإعدادات (بدون حفظ المعرف كعنصر دائم احتياطي)
         document.getElementById('paymentView').style.display = 'block';
-        localStorage.setItem("fawakih_static_device_id", deviceId);
         isDeviceValid = true;
 
         // إعداد واجهة الانتظار وروابط الواتساب بعد التأكد من صحة المعرف
@@ -378,6 +388,9 @@
                             if (text.includes(deviceId) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
+                                // مسح سجلات التتبع لعدم ترك بيانات يمكن استرجاعها
+                                localStorage.removeItem("fawakih_tg_offset");
+                                
                                 // توليد كود اشتراك عشوائي
                                 const subCode = "SUB-" + Math.random().toString(36).substr(2, 6).toUpperCase();
                                 
@@ -402,6 +415,10 @@
                             // 2. حالة الرفض
                             if (text.includes(deviceId) && text.includes("رفض")) {
                                 isPolling = false;
+                                
+                                // مسح سجلات التتبع فوراً
+                                localStorage.removeItem("fawakih_tg_offset");
+                                
                                 document.getElementById('waitingView').style.display = 'none';
                                 document.getElementById('rejectedView').style.display = 'block';
                                 return;

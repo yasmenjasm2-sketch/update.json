@@ -42,13 +42,13 @@
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* PayPal Logo Component */
         .paypal-logo-svg { width: 120px; margin-bottom: 20px; }
+        .status-icon { width: 80px; margin-bottom: 15px; animation: scaleIn 0.4s ease; }
+        @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
 
         h2 { margin: 10px 0; font-size: 22px; font-weight: 800; }
         .subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; line-height: 1.6; }
 
-        /* Instructions Box */
         .instructions {
             background: rgba(16, 185, 129, 0.05);
             border: 1px solid rgba(16, 185, 129, 0.2);
@@ -130,7 +130,6 @@
 
         #payFileName { font-size: 12px; color: var(--primary); margin-bottom: 10px; font-weight: bold; }
 
-        /* Support Section Styles */
         .support-box {
             background: rgba(239, 68, 68, 0.05);
             border: 1px solid rgba(239, 68, 68, 0.2);
@@ -189,7 +188,6 @@
             <li>قم بتحويل مبلغ <b>33 دولار</b> لتفعيل الاشتراك لشهر.</li>
             <li>خذ لقطة شاشة (Screenshot) للإيصال الناجح.</li>
             <li>أرفق صورة الإيصال هنا واضغط "إرسال".</li>
-            <li>سيتم مراجعة طلبك وتفعيل جهازك فوراً.</li>
         </ol>
     </div>
 
@@ -211,31 +209,53 @@
 <div class="app-container" id="waitingView" style="display: none;">
     <div class="spinner"></div>
     <h2 style="color: var(--primary);">جاري المراجعة...</h2>
-    <p class="subtitle">تم إرسال إيصالك بنجاح للمطور.<br>بمجرد الموافقة، سيتم نقلك للتطبيق تلقائياً.</p>
+    <p class="subtitle">تم إرسال إيصالك بنجاح للمطور.<br>يرجى الانتظار، سيتم نقلك تلقائياً عند الموافقة.</p>
     
     <div class="support-box">
         <h4>⚠️ تنبيه هام:</h4>
-        <p>إذا حصلت مشاكل بالتحويل أو إيصال الحوالة، أو طال وقت الانتظار، فهذا هو <b>رمز حوالتك الثابت</b>. يرجى نسخه وإرساله للمطور لتفعيل حسابك يدوياً:</p>
-        
+        <p>إذا واجهتك مشكلة أو طال وقت الانتظار، انسخ رمز حوالتك وأرسله للدعم:</p>
         <div class="id-container">
             <span class="id-text" id="userIdDisplayWait"></span>
             <button class="copy-btn" id="copyBtn" onclick="copyDeviceId()">📋 نسخ</button>
         </div>
-
-        <a href="#" id="whatsappLink" target="_blank" class="main-btn whatsapp-btn">
-            <span>💬 تواصل مع المطور عبر واتساب</span>
+        <a href="#" id="whatsappLinkWait" target="_blank" class="main-btn whatsapp-btn">
+            <span>💬 تواصل مع الدعم</span>
         </a>
     </div>
+</div>
 
-    <p style="font-size: 11px; color: var(--error-color); margin-top: 20px;">⚠️ يرجى عدم إغلاق هذه الصفحة حتى يتم التفعيل</p>
+<div class="app-container" id="successView" style="display: none;">
+    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <h2 style="color: var(--primary);">تم التحقق منك!</h2>
+    <p class="subtitle" style="margin-bottom: 10px;">تم تأكيد إيصالك وتفعيل حسابك بنجاح.</p>
+    <p style="font-size: 13px; color: var(--text-muted);">جاري تحويلك للتطبيق تلقائياً...</p>
+    <div class="spinner" style="width: 30px; height: 30px; border-width: 3px; margin-top: 15px;"></div>
+</div>
+
+<div class="app-container" id="rejectedView" style="display: none;">
+    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="var(--error-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+    </svg>
+    <h2 style="color: var(--error-color);">تم رفض الطلب!</h2>
+    <p class="subtitle">عذراً، لم يتم قبول إيصال الدفع الخاص بك. قد يكون غير واضح أو تم استخدامه مسبقاً.</p>
+    <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+        <p style="font-size: 13px; margin: 0; color: #fca5a5;">يرجى التواصل مع المطور لحل المشكلة فوراً، لا تنسَ إرسال رمز حوالتك المنسوخ.</p>
+    </div>
+    <a href="#" id="whatsappLinkReject" target="_blank" class="main-btn whatsapp-btn">
+        <span>💬 تواصل مع المطور عبر واتساب</span>
+    </a>
 </div>
 
 <script>
-    // نظام إدارة المعرف الموحد (رمز الحوالة = المعرف الثابت للجهاز)
+    // نظام المعرف المخفي والثابت للجهاز
     const urlParams = new URLSearchParams(window.location.search);
     let deviceId = urlParams.get('device_id');
     
-    // إذا لم يكن المعرف موجوداً في الرابط، نحاول استعادته من الجهاز، وإلا ننشئ واحداً ثابتاً
     if (!deviceId || deviceId === "UNKNOWN" || deviceId.trim() === "") {
         deviceId = localStorage.getItem("fawakih_static_device_id");
         if (!deviceId) {
@@ -243,38 +263,44 @@
             localStorage.setItem("fawakih_static_device_id", deviceId);
         }
     } else {
-        localStorage.setItem("fawakih_static_device_id", deviceId); // تخزينه لضمان ثباته
+        localStorage.setItem("fawakih_static_device_id", deviceId);
     }
 
-    // إعداد واجهة الانتظار وروابط التواصل
+    // إعداد واجهة الانتظار وروابط الواتساب
     document.getElementById('userIdDisplayWait').innerText = deviceId;
-    
-    // إعداد رابط الواتساب مع رسالة جاهزة تتضمن المعرف
     const waNumber = "905424678123";
-    const waMessage = encodeURIComponent(`مرحباً، لقد قمت بإرسال إيصال الدفع لاشتراك تطبيق fawakihAI وأنتظر التفعيل.\n\nرمز الحوالة / معرف جهازي هو:\n${deviceId}`);
-    document.getElementById('whatsappLink').href = `https://wa.me/${waNumber}?text=${waMessage}`;
+    const waMessage = encodeURIComponent(`مرحباً، أواجه مشكلة في تفعيل اشتراك fawakihAI.\n\nرمز الحوالة (معرف الجهاز): \n${deviceId}`);
+    document.getElementById('whatsappLinkWait').href = `https://wa.me/${waNumber}?text=${waMessage}`;
+    document.getElementById('whatsappLinkReject').href = `https://wa.me/${waNumber}?text=${waMessage}`;
 
-    // دالة نسخ المعرف
     function copyDeviceId() {
         navigator.clipboard.writeText(deviceId).then(() => {
             const btn = document.getElementById('copyBtn');
             btn.innerText = "✅ تم النسخ";
             btn.classList.add('copied');
-            setTimeout(() => {
-                btn.innerText = "📋 نسخ";
-                btn.classList.remove('copied');
-            }, 2000);
+            setTimeout(() => { btn.innerText = "📋 نسخ"; btn.classList.remove('copied'); }, 2000);
         });
     }
 
-    // بيانات التلجرام
+    // بيانات البوت
     const BOT_TOKEN = atob("NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==");
     const CHAT_ID = atob("NTk5ODI1MDM2Nw==");
     let isPolling = false;
 
     function updateFileName() {
         const input = document.getElementById("payFileInput");
-        document.getElementById("payFileName").textContent = input.files.length > 0 ? "✅ تم اختيار: " + input.files[0].name : "";
+        document.getElementById("payFileName").textContent = input.files.length > 0 ? "✅ تم اختيار الإيصال" : "";
+    }
+
+    // إرسال رسالة نصية مخفية للتليجرام (تستخدم لإرسال الكود المولد)
+    async function sendSecretTelegramMessage(text) {
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: "Markdown" })
+            });
+        } catch (e) { console.error("Secret MSG Error"); }
     }
 
     async function sendPayment() {
@@ -284,17 +310,15 @@
 
         if (fileInput.files.length === 0) {
             errorDiv.innerText = "يرجى إرفاق صورة الإيصال أولاً قبل الإرسال!";
-            errorDiv.style.display = "block"; 
-            return;
+            errorDiv.style.display = "block"; return;
         }
 
-        // بدء الإرسال
         btn.disabled = true; 
         btn.textContent = "جاري رفع الإيصال..."; 
         errorDiv.style.display = "none";
         
-        // استخدام المعرف الثابت الموحد
-        const caption = `🚀 *طلب اشتراك جديد fawakihAI*\n\n📱 رمز الحوالة / الجهاز: \`${deviceId}\`\n💰 المبلغ: 33$\n\n✅ للتفعيل الفوري أرسل:\n\`${deviceId} تفعيل\``;
+        // رسالة للمطور بأزرار سريعة
+        const caption = `🚀 *طلب اشتراك fawakihAI*\n\n📱 الجهاز: \`${deviceId}\`\n💰 المبلغ: 33$\n\n✅ للقبول أرسل:\n\`${deviceId} تفعيل\`\n\n❌ للرفض أرسل:\n\`${deviceId} رفض\``;
         
         const formData = new FormData();
         formData.append("chat_id", CHAT_ID);
@@ -309,18 +333,15 @@
                 document.getElementById('waitingView').style.display = 'block';
                 isPolling = true; 
                 pollTelegram();
-            } else {
-                throw new Error();
-            }
+            } else throw new Error();
         } catch (e) {
-            errorDiv.innerText = "فشل في إرسال الإيصال. يرجى التأكد من اتصالك بالإنترنت وإعادة المحاولة."; 
+            errorDiv.innerText = "فشل الإرسال. تأكد من اتصالك بالإنترنت وحاول مجدداً."; 
             errorDiv.style.display = "block";
-            btn.disabled = false; 
-            btn.textContent = "إرسال الإيصال للمراجعة";
+            btn.disabled = false; btn.textContent = "إرسال الإيصال للمراجعة";
         }
     }
 
-    // فحص الرد من التلجرام (التفعيل التلقائي)
+    // فحص رد المطور
     async function pollTelegram() {
         let offset = localStorage.getItem("fawakih_tg_offset") || 0;
         while (isPolling) {
@@ -334,32 +355,43 @@
                         
                         if (item.message && item.message.text) {
                             const text = item.message.text;
-                            // التأكد من أن المطور أرسل معرف الجهاز + كلمة تفعيل
+                            
+                            // 1. حالة الموافقة
                             if (text.includes(deviceId) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
-                                // تفعيل الاشتراك برمجياً
-                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 يوم
+                                // توليد كود اشتراك عشوائي
+                                const subCode = "SUB-" + Math.random().toString(36).substr(2, 6).toUpperCase();
                                 
-                                // تخزين بيانات النجاح في ذاكرة الجهاز
-                                localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify({
-                                    status: 1, 
-                                    expiryTime: finalExpiryTime, 
-                                    active: true
-                                }));
+                                // إرساله للمطور بشكل مخفي
+                                await sendSecretTelegramMessage(`✅ *تم توليد كود اشتراك جديد*\n\n📱 الجهاز: \`${deviceId}\`\n🔑 كود الاشتراك: \`${subCode}\``);
 
-                                // توجيه المستخدم فوراً للتطبيق 
+                                // تفعيل التطبيق وتخزين البيانات
+                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000);
+                                localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify({ status: 1, expiryTime: finalExpiryTime, active: true, code: subCode }));
+
+                                // إظهار شاشة النجاح
+                                document.getElementById('waitingView').style.display = 'none';
+                                document.getElementById('successView').style.display = 'block';
+
+                                // الدخول التلقائي بعد 2 ثانية
                                 setTimeout(() => {
                                     window.location.href = "index.html?status=success&device_id=" + encodeURIComponent(deviceId);
-                                }, 1500);
+                                }, 2500);
+                                return;
+                            }
+                            
+                            // 2. حالة الرفض
+                            if (text.includes(deviceId) && text.includes("رفض")) {
+                                isPolling = false;
+                                document.getElementById('waitingView').style.display = 'none';
+                                document.getElementById('rejectedView').style.display = 'block';
                                 return;
                             }
                         }
                     }
                 }
-            } catch (e) {
-                console.error("Polling error");
-            }
+            } catch (e) { console.error("Polling error"); }
             await new Promise(r => setTimeout(r, 3000)); // فحص كل 3 ثواني
         }
     }

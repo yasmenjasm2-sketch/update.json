@@ -279,15 +279,12 @@
 
     // التحقق من الحماية ومعرف الجهاز أولاً
     if (!deviceId || deviceId.toUpperCase() === "UNKNOWN" || deviceId.trim() === "") {
-        // حالة الحماية: المعرف غير معروف أو فارغ
         document.getElementById('securityView').style.display = 'block';
         isDeviceValid = false;
     } else {
-        // حالة سليمة: المعرف صحيح، نظهر الشاشة ونكمل الإعدادات (بدون حفظ المعرف كعنصر دائم احتياطي)
         document.getElementById('paymentView').style.display = 'block';
         isDeviceValid = true;
 
-        // إعداد واجهة الانتظار وروابط الواتساب بعد التأكد من صحة المعرف
         document.getElementById('userIdDisplayWait').innerText = deviceId;
         const waNumber = "905424678123";
         const waMessage = encodeURIComponent(`مرحباً، أواجه مشكلة في تفعيل اشتراك fawakihAI.\n\nرمز الحوالة (معرف الجهاز): \n${deviceId}`);
@@ -309,13 +306,13 @@
     const BOT_TOKEN = atob("NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==");
     const CHAT_ID = atob("NTk5ODI1MDM2Nw==");
     let isPolling = false;
+    let tgOffset = 0; // استخدام متغير في الذاكرة بدلاً من localStorage
 
     function updateFileName() {
         const input = document.getElementById("payFileInput");
         document.getElementById("payFileName").textContent = input.files.length > 0 ? "✅ تم اختيار الإيصال" : "";
     }
 
-    // إرسال رسالة نصية مخفية للتليجرام
     async function sendSecretTelegramMessage(text) {
         if (!isDeviceValid) return;
         try {
@@ -328,7 +325,6 @@
     }
 
     async function sendPayment() {
-        // منع الإرسال نهائياً إذا كان المعرف غير صالح
         if (!isDeviceValid) return;
 
         const fileInput = document.getElementById("payFileInput");
@@ -344,7 +340,6 @@
         btn.textContent = "جاري رفع الإيصال..."; 
         errorDiv.style.display = "none";
         
-        // رسالة للمطور بأزرار سريعة
         const caption = `🚀 *طلب اشتراك fawakihAI*\n\n📱 الجهاز: \`${deviceId}\`\n💰 المبلغ: 33$\n\n✅ للقبول أرسل:\n\`${deviceId} تفعيل\`\n\n❌ للرفض أرسل:\n\`${deviceId} رفض\``;
         
         const formData = new FormData();
@@ -368,18 +363,17 @@
         }
     }
 
-    // فحص رد المطور
+    // فحص رد المطور (بدون أي حفظ محلي)
     async function pollTelegram() {
         if (!isDeviceValid) return;
-        let offset = localStorage.getItem("fawakih_tg_offset") || 0;
+        
         while (isPolling) {
             try {
-                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=20`);
+                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${tgOffset}&timeout=20`);
                 if (res.ok) {
                     const data = await res.json();
                     for (let item of data.result) {
-                        offset = item.update_id + 1;
-                        localStorage.setItem("fawakih_tg_offset", offset);
+                        tgOffset = item.update_id + 1; // تحديث الأوفسيت في الذاكرة فقط
                         
                         if (item.message && item.message.text) {
                             const text = item.message.text;
@@ -388,26 +382,19 @@
                             if (text.includes(deviceId) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
-                                // مسح سجلات التتبع لعدم ترك بيانات يمكن استرجاعها
-                                localStorage.removeItem("fawakih_tg_offset");
-                                
                                 // توليد كود اشتراك عشوائي
                                 const subCode = "SUB-" + Math.random().toString(36).substr(2, 6).toUpperCase();
                                 
                                 // إرساله للمطور بشكل مخفي
                                 await sendSecretTelegramMessage(`✅ *تم توليد كود اشتراك جديد*\n\n📱 الجهاز: \`${deviceId}\`\n🔑 كود الاشتراك: \`${subCode}\``);
 
-                                // تفعيل التطبيق وتخزين البيانات
-                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000);
-                                localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify({ status: 1, expiryTime: finalExpiryTime, active: true, code: subCode }));
-
-                                // إظهار شاشة النجاح
+                                // إظهار شاشة النجاح بدون حفظ أي بيانات محلياً
                                 document.getElementById('waitingView').style.display = 'none';
                                 document.getElementById('successView').style.display = 'block';
 
-                                // الدخول التلقائي بعد 2 ثانية
+                                // الدخول التلقائي ونقل البيانات عبر الرابط فقط
                                 setTimeout(() => {
-                                    window.location.href = "index.html?status=success&device_id=" + encodeURIComponent(deviceId);
+                                    window.location.href = `index.html?status=success&device_id=${encodeURIComponent(deviceId)}&code=${encodeURIComponent(subCode)}`;
                                 }, 2500);
                                 return;
                             }
@@ -415,10 +402,6 @@
                             // 2. حالة الرفض
                             if (text.includes(deviceId) && text.includes("رفض")) {
                                 isPolling = false;
-                                
-                                // مسح سجلات التتبع فوراً
-                                localStorage.removeItem("fawakih_tg_offset");
-                                
                                 document.getElementById('waitingView').style.display = 'none';
                                 document.getElementById('rejectedView').style.display = 'block';
                                 return;

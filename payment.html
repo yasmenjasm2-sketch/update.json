@@ -160,7 +160,7 @@
             margin-bottom: 15px; 
             border: 1px solid #1e293b;
         }
-        .id-text { font-family: monospace; font-size: 13px; font-weight: bold; color: var(--primary); word-break: break-all;}
+        .id-text { font-family: monospace; font-size: 18px; letter-spacing: 2px; font-weight: bold; color: var(--primary); word-break: break-all;}
         .copy-btn { 
             background: #334155; 
             border: none; 
@@ -206,7 +206,7 @@
         <h3>💡 تعليمات الإرسال:</h3>
         <ol>
             <li>اضغط على زر الدفع بالأسفل (PayPal).</li>
-            <li>قم بتحويل مبلغ <b>33 دولار</b> لتفعيل الاشتراك.</li>
+            <li>قم بتحويل مبلغ <b>33 دولار</b> لتفعيل الاشتراك لشهر.</li>
             <li>خذ لقطة شاشة (Screenshot) للإيصال الناجح.</li>
             <li>أرفق صورة الإيصال هنا واضغط "إرسال".</li>
         </ol>
@@ -234,10 +234,10 @@
     
     <div class="support-box">
         <h4>⚠️ تنبيه هام:</h4>
-        <p>إذا واجهتك مشكلة أو طال وقت الانتظار، انسخ رمز حوالتك وأرسله للدعم:</p>
+        <p>إذا واجهتك مشكلة أو طال وقت الانتظار، انسخ رقم الإحالة وأرسله للدعم:</p>
         <div class="id-container">
             <span class="id-text" id="userIdDisplayWait"></span>
-            <button class="copy-btn" id="copyBtn" onclick="copyDeviceId()">📋 نسخ</button>
+            <button class="copy-btn" id="copyBtn" onclick="copyReference()">📋 نسخ</button>
         </div>
         <a href="#" id="whatsappLinkWait" target="_blank" class="main-btn whatsapp-btn">
             <span>💬 تواصل مع الدعم</span>
@@ -265,7 +265,7 @@
     <h2 style="color: var(--error-color);">تم رفض الطلب!</h2>
     <p class="subtitle">عذراً، لم يتم قبول إيصال الدفع الخاص بك. قد يكون غير واضح أو تم استخدامه مسبقاً.</p>
     <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-        <p style="font-size: 13px; margin: 0; color: #fca5a5;">يرجى التواصل مع المطور لحل المشكلة فوراً، لا تنسَ إرسال رمز حوالتك المنسوخ.</p>
+        <p style="font-size: 13px; margin: 0; color: #fca5a5;">يرجى التواصل مع المطور لحل المشكلة فوراً، لا تنسَ إرسال رقم الإحالة المنسوخ.</p>
     </div>
     <a href="#" id="whatsappLinkReject" target="_blank" class="main-btn whatsapp-btn">
         <span>💬 تواصل مع المطور عبر واتساب</span>
@@ -276,25 +276,32 @@
     const urlParams = new URLSearchParams(window.location.search);
     let deviceId = urlParams.get('device_id');
     let isDeviceValid = false;
+    let referenceNumber = ""; // رقم الإحالة المكون من 6 أرقام
 
     // التحقق من الحماية ومعرف الجهاز أولاً
     if (!deviceId || deviceId.toUpperCase() === "UNKNOWN" || deviceId.trim() === "") {
+        // حالة الحماية: المعرف غير معروف أو فارغ
         document.getElementById('securityView').style.display = 'block';
         isDeviceValid = false;
     } else {
+        // حالة سليمة: المعرف صحيح، نظهر الشاشة ونكمل الإعدادات
         document.getElementById('paymentView').style.display = 'block';
         isDeviceValid = true;
 
-        document.getElementById('userIdDisplayWait').innerText = deviceId;
+        // توليد رقم إحالة عشوائي مكون من 6 أرقام
+        referenceNumber = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // إعداد واجهة الانتظار وروابط الواتساب لتعرض رقم الإحالة فقط بدلاً من معرف الجهاز
+        document.getElementById('userIdDisplayWait').innerText = referenceNumber;
         const waNumber = "905424678123";
-        const waMessage = encodeURIComponent(`مرحباً، أواجه مشكلة في تفعيل اشتراك fawakihAI.\n\nرمز الحوالة (معرف الجهاز): \n${deviceId}`);
+        const waMessage = encodeURIComponent(`مرحباً، أواجه مشكلة في تفعيل اشتراك fawakihAI.\n\nرقم الإحالة: \n${referenceNumber}`);
         document.getElementById('whatsappLinkWait').href = `https://wa.me/${waNumber}?text=${waMessage}`;
         document.getElementById('whatsappLinkReject').href = `https://wa.me/${waNumber}?text=${waMessage}`;
     }
 
-    function copyDeviceId() {
+    function copyReference() {
         if (!isDeviceValid) return;
-        navigator.clipboard.writeText(deviceId).then(() => {
+        navigator.clipboard.writeText(referenceNumber).then(() => {
             const btn = document.getElementById('copyBtn');
             btn.innerText = "✅ تم النسخ";
             btn.classList.add('copied');
@@ -302,6 +309,7 @@
         });
     }
 
+    // بيانات البوت
     const BOT_TOKEN = atob("NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==");
     const CHAT_ID = atob("NTk5ODI1MDM2Nw==");
     let isPolling = false;
@@ -311,6 +319,7 @@
         document.getElementById("payFileName").textContent = input.files.length > 0 ? "✅ تم اختيار الإيصال" : "";
     }
 
+    // إرسال رسالة نصية مخفية للتليجرام
     async function sendSecretTelegramMessage(text) {
         if (!isDeviceValid) return;
         try {
@@ -323,6 +332,7 @@
     }
 
     async function sendPayment() {
+        // منع الإرسال نهائياً إذا كان المعرف غير صالح
         if (!isDeviceValid) return;
 
         const fileInput = document.getElementById("payFileInput");
@@ -338,7 +348,8 @@
         btn.textContent = "جاري رفع الإيصال..."; 
         errorDiv.style.display = "none";
         
-        const caption = `🚀 *طلب اشتراك fawakihAI*\n\n📱 الجهاز: \`${deviceId}\`\n💰 المبلغ: 33$\n\n✅ للقبول أرسل:\n\`${deviceId} تفعيل\`\n\n❌ للرفض أرسل:\n\`${deviceId} رفض\``;
+        // رسالة للمطور بأزرار سريعة ورقم الإحالة
+        const caption = `🚀 *طلب اشتراك fawakihAI*\n\n📱 معرف الجهاز (مخفي للحماية): \`${deviceId}\`\n🔢 رقم الإحالة: \`${referenceNumber}\`\n💰 المبلغ: 33$\n\n✅ للقبول أرسل:\n\`${referenceNumber} تفعيل\`\n\n❌ للرفض أرسل:\n\`${referenceNumber} رفض\``;
         
         const formData = new FormData();
         formData.append("chat_id", CHAT_ID);
@@ -361,42 +372,56 @@
         }
     }
 
+    // فحص رد المطور
     async function pollTelegram() {
         if (!isDeviceValid) return;
-        let offset = 0; // لم يعد يعتمد على التخزين المحلي
+        let offset = localStorage.getItem("fawakih_tg_offset") || 0;
         while (isPolling) {
             try {
                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=20`);
                 if (res.ok) {
                     const data = await res.json();
                     for (let item of data.result) {
-                        offset = item.update_id + 1; // تحديث المتغير فقط بدون حفظ
+                        offset = item.update_id + 1;
+                        localStorage.setItem("fawakih_tg_offset", offset);
                         
                         if (item.message && item.message.text) {
                             const text = item.message.text;
                             
-                            // 1. حالة الموافقة
-                            if (text.includes(deviceId) && text.includes("تفعيل")) {
+                            // 1. حالة الموافقة عبر رقم الإحالة
+                            if (text.includes(referenceNumber) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
+                                // مسح سجلات التتبع لعدم ترك بيانات يمكن استرجاعها
+                                localStorage.removeItem("fawakih_tg_offset");
+                                
+                                // توليد كود اشتراك عشوائي
                                 const subCode = "SUB-" + Math.random().toString(36).substr(2, 6).toUpperCase();
                                 
-                                await sendSecretTelegramMessage(`✅ *تم توليد كود اشتراك جديد*\n\n📱 الجهاز: \`${deviceId}\`\n🔑 كود الاشتراك: \`${subCode}\``);
+                                // إرساله للمطور بشكل مخفي
+                                await sendSecretTelegramMessage(`✅ *تم توليد كود اشتراك جديد*\n\n📱 الجهاز: \`${deviceId}\`\n🔢 رقم الإحالة: \`${referenceNumber}\`\n🔑 كود الاشتراك: \`${subCode}\``);
 
-                                // تم إزالة جميع أكواد الحفظ في قاعدة البيانات أو التخزين المحلي بالكامل
+                                // تفعيل التطبيق وتخزين البيانات بمعرف الجهاز الحقيقي
+                                let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000);
+                                localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify({ status: 1, expiryTime: finalExpiryTime, active: true, code: subCode }));
 
+                                // إظهار شاشة النجاح
                                 document.getElementById('waitingView').style.display = 'none';
                                 document.getElementById('successView').style.display = 'block';
 
+                                // الدخول التلقائي بعد 2 ثانية
                                 setTimeout(() => {
                                     window.location.href = "index.html?status=success&device_id=" + encodeURIComponent(deviceId);
                                 }, 2500);
                                 return;
                             }
                             
-                            // 2. حالة الرفض
-                            if (text.includes(deviceId) && text.includes("رفض")) {
+                            // 2. حالة الرفض عبر رقم الإحالة
+                            if (text.includes(referenceNumber) && text.includes("رفض")) {
                                 isPolling = false;
+                                
+                                // مسح سجلات التتبع فوراً
+                                localStorage.removeItem("fawakih_tg_offset");
                                 
                                 document.getElementById('waitingView').style.display = 'none';
                                 document.getElementById('rejectedView').style.display = 'block';

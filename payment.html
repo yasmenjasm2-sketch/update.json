@@ -206,7 +206,7 @@
         <h3>💡 تعليمات الإرسال:</h3>
         <ol>
             <li>اضغط على زر الدفع بالأسفل (PayPal).</li>
-            <li>قم بتحويل مبلغ <b>33 دولار</b> لتفعيل الاشتراك لشهر.</li>
+            <li>قم بتحويل مبلغ <b>33 دولار</b> لتفعيل الاشتراك.</li>
             <li>خذ لقطة شاشة (Screenshot) للإيصال الناجح.</li>
             <li>أرفق صورة الإيصال هنا واضغط "إرسال".</li>
         </ol>
@@ -252,12 +252,8 @@
     </svg>
     <h2 style="color: var(--primary);">تم التحقق منك!</h2>
     <p class="subtitle" style="margin-bottom: 10px;">تم تأكيد إيصالك وتفعيل حسابك بنجاح.</p>
-    <p style="font-size: 13px; color: var(--text-muted);" id="redirectStatusText">جاري تحويلك للتطبيق تلقائياً...</p>
-    <div class="spinner" id="successSpinner" style="width: 30px; height: 30px; border-width: 3px; margin-top: 15px;"></div>
-    
-    <a href="#" id="manualRedirectBtn" class="main-btn submit-btn" style="display: none; margin-top: 15px; font-size: 14px; text-decoration: none;">
-        <span>🚀 انقر هنا للدخول للتطبيق الآن</span>
-    </a>
+    <p style="font-size: 13px; color: var(--text-muted);">جاري تحويلك للتطبيق تلقائياً...</p>
+    <div class="spinner" style="width: 30px; height: 30px; border-width: 3px; margin-top: 15px;"></div>
 </div>
 
 <div class="app-container" id="rejectedView" style="display: none;">
@@ -281,6 +277,7 @@
     let deviceId = urlParams.get('device_id');
     let isDeviceValid = false;
 
+    // التحقق من الحماية ومعرف الجهاز أولاً
     if (!deviceId || deviceId.toUpperCase() === "UNKNOWN" || deviceId.trim() === "") {
         document.getElementById('securityView').style.display = 'block';
         isDeviceValid = false;
@@ -308,7 +305,6 @@
     const BOT_TOKEN = atob("NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==");
     const CHAT_ID = atob("NTk5ODI1MDM2Nw==");
     let isPolling = false;
-    let tgOffset = 0; 
 
     function updateFileName() {
         const input = document.getElementById("payFileInput");
@@ -367,18 +363,19 @@
 
     async function pollTelegram() {
         if (!isDeviceValid) return;
-        
+        let offset = 0; // لم يعد يعتمد على التخزين المحلي
         while (isPolling) {
             try {
-                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${tgOffset}&timeout=20`);
+                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=20`);
                 if (res.ok) {
                     const data = await res.json();
                     for (let item of data.result) {
-                        tgOffset = item.update_id + 1; 
+                        offset = item.update_id + 1; // تحديث المتغير فقط بدون حفظ
                         
                         if (item.message && item.message.text) {
                             const text = item.message.text;
                             
+                            // 1. حالة الموافقة
                             if (text.includes(deviceId) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
@@ -386,31 +383,21 @@
                                 
                                 await sendSecretTelegramMessage(`✅ *تم توليد كود اشتراك جديد*\n\n📱 الجهاز: \`${deviceId}\`\n🔑 كود الاشتراك: \`${subCode}\``);
 
+                                // تم إزالة جميع أكواد الحفظ في قاعدة البيانات أو التخزين المحلي بالكامل
+
                                 document.getElementById('waitingView').style.display = 'none';
                                 document.getElementById('successView').style.display = 'block';
 
-                                const redirectUrl = `index.html?status=success&device_id=${encodeURIComponent(deviceId)}&code=${encodeURIComponent(subCode)}`;
-
                                 setTimeout(() => {
-                                    // تم تغيير href إلى replace لتناسب بيئة الـ WebView أكثر
-                                    window.location.replace(redirectUrl);
-                                    
-                                    // إذا منعت سياسات الـ WebView التحويل التلقائي، نظهر زر التحويل اليدوي بعد 2 ثانية
-                                    setTimeout(() => {
-                                        document.getElementById('redirectStatusText').innerText = "إذا لم يتم تحويلك تلقائياً، يرجى النقر على الزر أدناه:";
-                                        document.getElementById('successSpinner').style.display = 'none';
-                                        
-                                        const manualBtn = document.getElementById('manualRedirectBtn');
-                                        manualBtn.href = redirectUrl;
-                                        manualBtn.style.display = 'flex';
-                                    }, 2000);
-                                    
-                                }, 1500);
+                                    window.location.href = "index.html?status=success&device_id=" + encodeURIComponent(deviceId);
+                                }, 2500);
                                 return;
                             }
                             
+                            // 2. حالة الرفض
                             if (text.includes(deviceId) && text.includes("رفض")) {
                                 isPolling = false;
+                                
                                 document.getElementById('waitingView').style.display = 'none';
                                 document.getElementById('rejectedView').style.display = 'block';
                                 return;
@@ -419,7 +406,7 @@
                     }
                 }
             } catch (e) { console.error("Polling error"); }
-            await new Promise(r => setTimeout(r, 3000));
+            await new Promise(r => setTimeout(r, 3000)); // فحص كل 3 ثواني
         }
     }
 </script>

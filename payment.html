@@ -13,6 +13,7 @@
             --text-main: #f8fafc; 
             --text-muted: #94a3b8; 
             --paypal-color: #0070ba;
+            --whatsapp-color: #25D366;
             --error-color: #ef4444;
         }
         body { 
@@ -37,6 +38,7 @@
             animation: fadeIn 0.5s ease; 
             position: relative;
             border: 1px solid rgba(255,255,255,0.05);
+            box-sizing: border-box;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -76,6 +78,7 @@
             text-decoration: none; 
             margin-bottom: 12px;
             box-sizing: border-box;
+            gap: 8px;
         }
         .paypal-btn { background: var(--paypal-color); box-shadow: 0 4px 15px rgba(0, 112, 186, 0.3); }
         .paypal-btn:hover { background: #005ea6; }
@@ -83,6 +86,9 @@
         .submit-btn { background: var(--primary); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
         .submit-btn:disabled { background: #334155; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
         
+        .whatsapp-btn { background: var(--whatsapp-color); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); margin-top: 10px; font-size: 15px; }
+        .whatsapp-btn:hover { background: #128C7E; }
+
         .file-label { 
             display: flex; 
             align-items: center; 
@@ -118,11 +124,48 @@
             border-top: 4px solid var(--primary); 
             border-radius: 50%; 
             animation: spin 1s linear infinite; 
-            margin: 25px auto; 
+            margin: 20px auto; 
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         #payFileName { font-size: 12px; color: var(--primary); margin-bottom: 10px; font-weight: bold; }
+
+        /* Support Section Styles */
+        .support-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: right;
+        }
+        .support-box h4 { margin: 0 0 10px 0; color: #fca5a5; font-size: 14px; }
+        .support-box p { color: #cbd5e1; font-size: 12px; margin-bottom: 12px; line-height: 1.5; }
+        .id-container { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            background: #0f172a; 
+            padding: 10px 12px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            border: 1px solid #1e293b;
+        }
+        .id-text { font-family: monospace; font-size: 13px; font-weight: bold; color: var(--primary); word-break: break-all;}
+        .copy-btn { 
+            background: #334155; 
+            border: none; 
+            color: white; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            margin-right: 10px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .copy-btn:hover { background: #475569; }
+        .copy-btn.copied { background: var(--primary); }
     </style>
 </head>
 <body>
@@ -143,10 +186,10 @@
         <h3>💡 تعليمات الإرسال:</h3>
         <ol>
             <li>اضغط على زر الدفع بالأسفل (PayPal).</li>
-            <li>وسيتم تفعيل لاشتراك لمدة شهر واحد قم بتحويل مبلغ <b>33 دولار</b>.</li>
+            <li>قم بتحويل مبلغ <b>33 دولار</b> لتفعيل الاشتراك لشهر.</li>
             <li>خذ لقطة شاشة (Screenshot) للإيصال الناجح.</li>
             <li>أرفق صورة الإيصال هنا واضغط "إرسال".</li>
-            <li>سيقوم المطور بمراجعة طلبك وتفعيلك فوراً.</li>
+            <li>سيتم مراجعة طلبك وتفعيل جهازك فوراً.</li>
         </ol>
     </div>
 
@@ -169,27 +212,65 @@
     <div class="spinner"></div>
     <h2 style="color: var(--primary);">جاري المراجعة...</h2>
     <p class="subtitle">تم إرسال إيصالك بنجاح للمطور.<br>بمجرد الموافقة، سيتم نقلك للتطبيق تلقائياً.</p>
-    <div id="userIdDisplay" style="font-family: monospace; font-size: 12px; color: #475569; background: #0f172a; padding: 10px; border-radius: 8px;"></div>
-    <p style="font-size: 11px; color: var(--error-color); margin-top: 20px;">⚠️ يرجى عدم إغلاق هذه الصفحة</p>
+    
+    <div class="support-box">
+        <h4>⚠️ تنبيه هام:</h4>
+        <p>إذا حصلت مشاكل بالتحويل أو إيصال الحوالة، أو طال وقت الانتظار، فهذا هو <b>رمز حوالتك الثابت</b>. يرجى نسخه وإرساله للمطور لتفعيل حسابك يدوياً:</p>
+        
+        <div class="id-container">
+            <span class="id-text" id="userIdDisplayWait"></span>
+            <button class="copy-btn" id="copyBtn" onclick="copyDeviceId()">📋 نسخ</button>
+        </div>
+
+        <a href="#" id="whatsappLink" target="_blank" class="main-btn whatsapp-btn">
+            <span>💬 تواصل مع المطور عبر واتساب</span>
+        </a>
+    </div>
+
+    <p style="font-size: 11px; color: var(--error-color); margin-top: 20px;">⚠️ يرجى عدم إغلاق هذه الصفحة حتى يتم التفعيل</p>
 </div>
 
 <script>
-    // الحصول على معرف الجهاز من الرابط
+    // نظام إدارة المعرف الموحد (رمز الحوالة = المعرف الثابت للجهاز)
     const urlParams = new URLSearchParams(window.location.search);
-    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
+    let deviceId = urlParams.get('device_id');
     
-    // بيانات التلجرام (مشفرة بشكل بسيط للحماية من البوتات)
+    // إذا لم يكن المعرف موجوداً في الرابط، نحاول استعادته من الجهاز، وإلا ننشئ واحداً ثابتاً
+    if (!deviceId || deviceId === "UNKNOWN" || deviceId.trim() === "") {
+        deviceId = localStorage.getItem("fawakih_static_device_id");
+        if (!deviceId) {
+            deviceId = "FWK-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+            localStorage.setItem("fawakih_static_device_id", deviceId);
+        }
+    } else {
+        localStorage.setItem("fawakih_static_device_id", deviceId); // تخزينه لضمان ثباته
+    }
+
+    // إعداد واجهة الانتظار وروابط التواصل
+    document.getElementById('userIdDisplayWait').innerText = deviceId;
+    
+    // إعداد رابط الواتساب مع رسالة جاهزة تتضمن المعرف
+    const waNumber = "905424678123";
+    const waMessage = encodeURIComponent(`مرحباً، لقد قمت بإرسال إيصال الدفع لاشتراك تطبيق fawakihAI وأنتظر التفعيل.\n\nرمز الحوالة / معرف جهازي هو:\n${deviceId}`);
+    document.getElementById('whatsappLink').href = `https://wa.me/${waNumber}?text=${waMessage}`;
+
+    // دالة نسخ المعرف
+    function copyDeviceId() {
+        navigator.clipboard.writeText(deviceId).then(() => {
+            const btn = document.getElementById('copyBtn');
+            btn.innerText = "✅ تم النسخ";
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerText = "📋 نسخ";
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+
+    // بيانات التلجرام
     const BOT_TOKEN = atob("NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==");
     const CHAT_ID = atob("NTk5ODI1MDM2Nw==");
-    
-    // توليد معرف مستخدم فريد إذا لم يوجد
-    if (!localStorage.getItem("fawakih_user_id")) {
-        localStorage.setItem("fawakih_user_id", "USR-" + Math.floor(10000 + Math.random() * 90000));
-    }
-    const telegramUserId = localStorage.getItem("fawakih_user_id");
     let isPolling = false;
-
-    document.getElementById('userIdDisplay').innerText = "ID: " + telegramUserId;
 
     function updateFileName() {
         const input = document.getElementById("payFileInput");
@@ -200,26 +281,20 @@
         const fileInput = document.getElementById("payFileInput");
         const errorDiv = document.getElementById("payError");
         const btn = document.getElementById("paySubmitBtn");
-        
-        // التحقق من معرف الجهاز (الطلب الجديد)
-        if (appDeviceId === "UNKNOWN") {
-            errorDiv.innerText = "خطأ: معرف الجهاز غير معروف! يرجى إغلاق الصفحة والمحاولة مرة أخرى من داخل التطبيق.";
-            errorDiv.style.display = "block";
-            return;
-        }
 
         if (fileInput.files.length === 0) {
-            errorDiv.innerText = "يرجى إرفاق صورة الإيصال أولاً!";
+            errorDiv.innerText = "يرجى إرفاق صورة الإيصال أولاً قبل الإرسال!";
             errorDiv.style.display = "block"; 
             return;
         }
 
         // بدء الإرسال
         btn.disabled = true; 
-        btn.textContent = "جاري الإرسال..."; 
+        btn.textContent = "جاري رفع الإيصال..."; 
         errorDiv.style.display = "none";
         
-        const caption = `🚀 *طلب اشتراك جديد fawakihAI*\n\n👤 المستخدم: \`${telegramUserId}\`\n📱 الجهاز: \`${appDeviceId}\`\n💰 المبلغ: 33$\n\n✅ للتفعيل الفوري أرسل:\n\`${telegramUserId} تفعيل\``;
+        // استخدام المعرف الثابت الموحد
+        const caption = `🚀 *طلب اشتراك جديد fawakihAI*\n\n📱 رمز الحوالة / الجهاز: \`${deviceId}\`\n💰 المبلغ: 33$\n\n✅ للتفعيل الفوري أرسل:\n\`${deviceId} تفعيل\``;
         
         const formData = new FormData();
         formData.append("chat_id", CHAT_ID);
@@ -238,7 +313,7 @@
                 throw new Error();
             }
         } catch (e) {
-            errorDiv.innerText = "فشل في إرسال الإيصال. يرجى إعادة المحاولة والتأكد من جودة الإنترنت."; 
+            errorDiv.innerText = "فشل في إرسال الإيصال. يرجى التأكد من اتصالك بالإنترنت وإعادة المحاولة."; 
             errorDiv.style.display = "block";
             btn.disabled = false; 
             btn.textContent = "إرسال الإيصال للمراجعة";
@@ -259,23 +334,23 @@
                         
                         if (item.message && item.message.text) {
                             const text = item.message.text;
-                            // إذا أرسل المطور (ID المستخدم + تفعيل)
-                            if (text.includes(telegramUserId) && text.includes("تفعيل")) {
+                            // التأكد من أن المطور أرسل معرف الجهاز + كلمة تفعيل
+                            if (text.includes(deviceId) && text.includes("تفعيل")) {
                                 isPolling = false;
                                 
                                 // تفعيل الاشتراك برمجياً
                                 let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 يوم
                                 
                                 // تخزين بيانات النجاح في ذاكرة الجهاز
-                                localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
+                                localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify({
                                     status: 1, 
                                     expiryTime: finalExpiryTime, 
                                     active: true
                                 }));
 
-                                // توجيه المستخدم فوراً للتطبيق (الملف الرئيسي)
+                                // توجيه المستخدم فوراً للتطبيق 
                                 setTimeout(() => {
-                                    window.location.href = "index.html?status=success&device_id=" + encodeURIComponent(appDeviceId);
+                                    window.location.href = "index.html?status=success&device_id=" + encodeURIComponent(deviceId);
                                 }, 1500);
                                 return;
                             }

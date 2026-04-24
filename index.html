@@ -184,6 +184,7 @@
             margin-top: 24px; 
             font-family: monospace; 
             opacity: 0.7;
+            transition: color 0.3s ease;
         }
 
         .admin-panel {
@@ -294,7 +295,10 @@
     const REQUIRED_APP_VERSION = "3.2.6"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
-    const appDeviceId = urlParams.get('device_id') || "UNKNOWN";
+    
+    // حل ذكي للتعامل مع البصمة الفارغة لضمان السرعة
+    let rawDeviceId = urlParams.get('device_id');
+    const appDeviceId = (rawDeviceId && rawDeviceId.trim() !== "") ? rawDeviceId.trim() : "UNKNOWN";
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
 
     const isAdmin = urlParams.get('admin') === 'remas';
@@ -320,12 +324,20 @@
         }
     }
 
+    // تحديث فوري لواجهة البصمة لمنع التعليق
     if (!isBgCheck) {
-        document.getElementById('deviceDisplay').innerText = "DEVICE ID: " + appDeviceId;
+        const deviceDisplay = document.getElementById('deviceDisplay');
+        if (appDeviceId !== "UNKNOWN") {
+            deviceDisplay.innerText = "DEVICE ID: " + appDeviceId;
+        } else {
+            // في حال فشل جلب البصمة، يتم إظهار التنبيه فوراً بدلاً من بقاء "جاري الجلب"
+            deviceDisplay.innerText = "تعذر جلب البصمة - يرجى التأكد من صلاحيات التطبيق";
+            deviceDisplay.style.color = "#ef4444";
+        }
     }
 
     const vipDevices = {
-        ط
+        // تم إزالة حرف "ط" الذي كان يسبب توقف الجافاسكربت بالكامل في بعض الأجهزة
         "b2c8cdd53aba1104": { status: 1, expireAt: "2026-05-22T00:00:00" },
         "ed07df5ef76e1219": { status: 1, expireAt: "2026-05-07T02:09:49" },
     };

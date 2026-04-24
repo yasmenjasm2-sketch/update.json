@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم | الإدارة العليا</title>
+    <title>لوحة التحكم | نظام fawakihAI</title>
     <style>
         :root {
-            --bg-color: #0b1121;
-            --card-bg: #151c2c;
+            --bg: #0b1121;
+            --card: #151c2c;
             --primary: #10b981;
             --danger: #ef4444;
-            --text-main: #f8fafc;
-            --border-color: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --border: #334155;
         }
 
         body {
-            font-family: system-ui, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
             display: flex;
@@ -25,19 +26,25 @@
             align-items: center;
         }
 
-        .admin-container {
+        .container {
             width: 100%;
-            max-width: 600px;
-            background: var(--card-bg);
+            max-width: 500px;
+            background: var(--card);
             border-radius: 24px;
-            padding: 24px;
+            padding: 25px;
+            border: 1px solid var(--border);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            border: 1px solid var(--border-color);
         }
 
-        h1 { font-size: 20px; text-align: center; margin-bottom: 24px; color: var(--primary); }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
 
-        .search-box {
+        .header h1 { font-size: 22px; color: var(--primary); margin: 0; }
+        .header p { font-size: 13px; color: var(--muted); }
+
+        .search-section {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
@@ -46,150 +53,159 @@
         input {
             flex: 1;
             background: #1e293b;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
             color: white;
             outline: none;
-        }
-
-        .user-card {
-            background: #0f172a;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 15px;
-            margin-top: 15px;
-            display: none; /* يظهر عند البحث */
-        }
-
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
+            font-family: monospace;
         }
 
         .btn {
             cursor: pointer;
             border: none;
-            border-radius: 10px;
-            padding: 10px 15px;
+            border-radius: 12px;
+            padding: 12px 18px;
             font-weight: 600;
             transition: 0.2s;
             color: white;
         }
 
-        .btn-search { background: var(--primary); }
-        .btn-ban { background: var(--danger); margin-top: 10px; width: 100%; }
-        .btn-remove { background: #64748b; margin-top: 10px; width: 100%; }
+        .btn-primary { background: var(--primary); }
+        .btn-danger { background: var(--danger); width: 100%; margin-top: 10px; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); width: 100%; margin-top: 10px; color: var(--muted); }
 
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
+        .user-info {
+            background: #0f172a;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 10px;
+            display: none;
+            border-right: 4px solid var(--primary);
         }
 
-        .stat-item {
-            background: #1e293b;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
         }
 
-        .stat-item span { display: block; font-size: 18px; font-weight: bold; }
+        .info-row span:first-child { color: var(--muted); }
+        .info-row span:last-child { font-weight: 600; color: var(--text); }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .badge-active { background: rgba(16, 185, 129, 0.2); color: var(--primary); }
+        .badge-banned { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-    <h1>🛡️ لوحة التحكم في الاشتراكات</h1>
-
-    <div class="stats">
-        <div class="stat-item">المشتركين المسجلين<span id="totalUsers">0</span></div>
-        <div class="stat-item">الأكواد المستخدمة<span id="totalCodes">0</span></div>
+<div class="container">
+    <div class="header">
+        <h1>🛡️ لوحة الإدارة الذكية</h1>
+        <p>التحكم في بصمة الجهاز واشتراكات المستخدمين</p>
     </div>
 
-    <div class="search-box">
-        <input type="text" id="targetId" placeholder="أدخل Device ID للمستخدم...">
-        <button class="btn btn-search" onclick="searchUser()">بحث</button>
+    <div class="search-section">
+        <input type="text" id="targetId" placeholder="أدخل Device ID هنا...">
+        <button class="btn btn-primary" onclick="findUser()">بحث</button>
     </div>
 
-    <div id="resultCard" class="user-card">
-        <div style="display:flex; justify-content: space-between; align-items: center;">
-            <strong id="displayId" style="font-size: 13px; color: var(--primary);"></strong>
-            <span id="displayStatus" class="status-badge"></span>
+    <div id="userCard" class="user-info">
+        <div class="info-row">
+            <span>حالة الجهاز:</span>
+            <span id="statusBadge" class="badge"></span>
         </div>
-        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
-        <p style="font-size: 14px; margin: 5px 0;">الكود المستخدم: <span id="displayCode" style="color:var(--primary)"></span></p>
-        <p style="font-size: 14px; margin: 5px 0;">ينتهي في: <span id="displayExpiry"></span></p>
+        <div class="info-row">
+            <span>الكود المستخدم:</span>
+            <span id="resCode">---</span>
+        </div>
+        <div class="info-row">
+            <span>تاريخ الانتهاء:</span>
+            <span id="resExpiry">---</span>
+        </div>
         
-        <button class="btn btn-ban" onclick="toggleBan()">حظر الجهاز (BAN)</button>
-        <button class="btn btn-remove" onclick="removeSubscription()">إزالة الاشتراك نهائياً</button>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">
+        
+        <button id="banBtn" class="btn btn-danger" onclick="toggleBan()">حظر المستخدم فوراً</button>
+        <button class="btn btn-outline" onclick="resetUser()">إعادة تعيين (حذف الاشتراك)</button>
+    </div>
+
+    <div id="noData" style="display:none; text-align:center; color:var(--danger); font-size:14px; margin-top:10px;">
+        ⚠️ لم يتم العثور على أي بيانات لهذا الجهاز.
     </div>
 </div>
 
 <script>
-    // تحديث الإحصائيات عند الفتح
-    function updateStats() {
-        let userCount = 0;
-        let codeCount = 0;
-        for (let i = 0; i < localStorage.length; i++) {
-            if (localStorage.key(i).startsWith("DEVICE_DB_")) userCount++;
-            if (localStorage.key(i).startsWith("CODE_USED_")) codeCount++;
-        }
-        document.getElementById('totalUsers').innerText = userCount;
-        document.getElementById('totalCodes').innerText = codeCount;
-    }
+    function findUser() {
+        const deviceId = document.getElementById('targetId').value.trim();
+        const rawData = localStorage.getItem("DEVICE_DB_" + deviceId);
+        const card = document.getElementById('userCard');
+        const noData = document.getElementById('noData');
 
-    function searchUser() {
-        const id = document.getElementById('targetId').value.trim();
-        const data = localStorage.getItem("DEVICE_DB_" + id);
-        const card = document.getElementById('resultCard');
-
-        if (data) {
-            const user = JSON.parse(data);
+        if (rawData) {
+            const data = JSON.parse(rawData);
             card.style.display = 'block';
-            document.getElementById('displayId').innerText = id;
-            document.getElementById('displayCode').innerText = user.code || "بدون كود";
-            document.getElementById('displayStatus').innerText = (user.status === 2) ? "محظور" : "نشط";
-            document.getElementById('displayStatus').style.background = (user.status === 2) ? "var(--danger)" : "var(--primary)";
-            document.getElementById('displayExpiry').innerText = new Date(user.expiryTime).toLocaleString('ar-EG');
+            noData.style.display = 'none';
+
+            // تحديث الواجهة
+            document.getElementById('resCode').innerText = data.code || "تفعيل تلقائي";
+            document.getElementById('resExpiry').innerText = new Date(data.expiryTime).toLocaleString('ar-EG');
+            
+            const badge = document.getElementById('statusBadge');
+            const banBtn = document.getElementById('banBtn');
+            
+            if (data.status === 2) {
+                badge.innerText = "محظور";
+                badge.className = "badge badge-banned";
+                banBtn.innerText = "إلغاء الحظر عن الجهاز";
+                banBtn.style.background = "var(--primary)";
+            } else {
+                badge.innerText = "نشط";
+                badge.className = "badge badge-active";
+                banBtn.innerText = "حظر المستخدم فوراً";
+                banBtn.style.background = "var(--danger)";
+            }
         } else {
-            alert("هذا الجهاز غير مسجل في قاعدة البيانات المحلية.");
             card.style.display = 'none';
+            noData.style.display = 'block';
         }
     }
 
     function toggleBan() {
-        const id = document.getElementById('displayId').innerText;
-        let data = JSON.parse(localStorage.getItem("DEVICE_DB_" + id));
+        const deviceId = document.getElementById('targetId').value.trim();
+        let data = JSON.parse(localStorage.getItem("DEVICE_DB_" + deviceId));
         
-        // إذا كان نشط نجعله محظور (2) وإذا كان محظور نعيده نشط (1)
+        // تبديل الحالة بين 1 (نشط) و 2 (محظور)
         data.status = (data.status === 2) ? 1 : 2;
-        localStorage.setItem("DEVICE_DB_" + id, JSON.stringify(data));
         
-        alert(data.status === 2 ? "تم حظر الجهاز بنجاح" : "تم إلغاء الحظر");
-        searchUser(); // تحديث الواجهة
+        localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify(data));
+        alert(data.status === 2 ? "تم حظر الجهاز بنجاح!" : "تم إلغاء الحظر.");
+        findUser(); // تحديث العرض
     }
 
-    function removeSubscription() {
-        if (!confirm("هل أنت متأكد من حذف بيانات الاشتراك لهذا الجهاز؟")) return;
+    function resetUser() {
+        if (!confirm("هل أنت متأكد؟ سيتم حذف اشتراك هذا الجهاز تماماً وسيطلب منه كود جديد عند الدخول.")) return;
         
-        const id = document.getElementById('displayId').innerText;
-        const user = JSON.parse(localStorage.getItem("DEVICE_DB_" + id));
+        const deviceId = document.getElementById('targetId').value.trim();
+        const data = JSON.parse(localStorage.getItem("DEVICE_DB_" + deviceId));
         
-        if (user && user.code) {
-            localStorage.removeItem("CODE_USED_" + user.code); // تحرير الكود للاستخدام مرة أخرى
+        if (data && data.code) {
+            localStorage.removeItem("CODE_USED_" + data.code);
         }
-        localStorage.removeItem("DEVICE_DB_" + id);
+        localStorage.removeItem("DEVICE_DB_" + deviceId);
         
-        alert("تمت إزالة الاشتراك بنجاح.");
-        document.getElementById('resultCard').style.display = 'none';
-        updateStats();
+        alert("تم مسح بيانات الجهاز.");
+        document.getElementById('userCard').style.display = 'none';
+        document.getElementById('targetId').value = '';
     }
-
-    window.onload = updateStats;
 </script>
 
 </body>

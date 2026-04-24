@@ -2,201 +2,195 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>لوحة الإدارة | النظام المحمي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | الإدارة العليا</title>
     <style>
         :root {
             --bg-color: #0b1121;
             --card-bg: #151c2c;
-            --primary: #ef4444; /* لون أحمر لتمييز لوحة الإدارة */
-            --primary-dark: #b91c1c;
+            --primary: #10b981;
+            --danger: #ef4444;
             --text-main: #f8fafc;
-            --text-muted: #94a3b8;
             --border-color: #334155;
-            --success: #10b981;
         }
 
-        body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            margin: 0; 
+        body {
+            font-family: system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .admin-container {
-            max-width: 800px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
             background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
+        h1 { font-size: 20px; text-align: center; margin-bottom: 24px; color: var(--primary); }
 
-        .header h1 { margin: 0; color: var(--primary); }
-        .header p { color: var(--text-muted); margin-top: 5px; }
-
-        .section {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 20px;
+        .search-box {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
-        .section h2 { margin-top: 0; font-size: 18px; color: var(--text-main); border-bottom: 1px solid #334155; padding-bottom: 10px; }
-
-        .refund-card {
-            background: #0f172a;
-            padding: 15px;
+        input {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            margin-bottom: 10px;
-            font-size: 14px;
-            border-right: 4px solid var(--primary);
-        }
-        .refund-card strong { color: var(--success); }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            padding: 12px;
+            color: white;
+            outline: none;
         }
 
-        button {
-            padding: 12px 20px;
+        .user-card {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none; /* يظهر عند البحث */
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn {
+            cursor: pointer;
             border: none;
             border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
+            padding: 10px 15px;
+            font-weight: 600;
             transition: 0.2s;
             color: white;
-            flex: 1;
-            min-width: 150px;
         }
 
-        .btn-ban { background: linear-gradient(135deg, #ef4444, #b91c1c); }
-        .btn-logout { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .btn-update { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        
-        button:active { transform: scale(0.96); }
+        .btn-search { background: var(--primary); }
+        .btn-ban { background: var(--danger); margin-top: 10px; width: 100%; }
+        .btn-remove { background: #64748b; margin-top: 10px; width: 100%; }
 
-        .data-list {
-            font-family: monospace;
-            background: #0b1121;
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #1e293b;
             padding: 15px;
-            border-radius: 8px;
-            color: var(--success);
-            font-size: 14px;
-            overflow-x: auto;
+            border-radius: 12px;
+            text-align: center;
         }
+
+        .stat-item span { display: block; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="admin-container">
-    <div class="header">
-        <h1>🛡️ لوحة تحكم الإدارة</h1>
-        <p>نظام إدارة المشتركين والأوامر المباشرة</p>
+    <h1>🛡️ لوحة التحكم في الاشتراكات</h1>
+
+    <div class="stats">
+        <div class="stat-item">المشتركين المسجلين<span id="totalUsers">0</span></div>
+        <div class="stat-item">الأكواد المستخدمة<span id="totalCodes">0</span></div>
     </div>
 
-    <!-- قسم استقبال الطلبات (كما هو في الكود الأصلي) -->
-    <div class="section">
-        <h2>📥 بيانات الاسترداد المستلمة</h2>
-        <div id="refundsList">
-            <div style="color: var(--text-muted); text-align: center;">في انتظار الطلبات...</div>
-        </div>
+    <div class="search-box">
+        <input type="text" id="targetId" placeholder="أدخل Device ID للمستخدم...">
+        <button class="btn btn-search" onclick="searchUser()">بحث</button>
     </div>
 
-    <!-- قسم إرسال الأوامر للتطبيق -->
-    <div class="section">
-        <h2>⚡ إرسال أوامر للتطبيق (App Commands)</h2>
-        <div class="btn-group">
-            <button class="btn-ban" onclick="sendCommand('ban')">حظر المستخدم الحالي</button>
-            <button class="btn-logout" onclick="sendCommand('logout')">تسجيل خروج إجباري</button>
-            <button class="btn-update" onclick="sendCommand('update')">طلب تحديث التطبيق</button>
+    <div id="resultCard" class="user-card">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <strong id="displayId" style="font-size: 13px; color: var(--primary);"></strong>
+            <span id="displayStatus" class="status-badge"></span>
         </div>
-    </div>
-
-    <!-- قسم عرض البيانات الثابتة للمراجعة -->
-    <div class="section">
-        <h2>🔑 الأكواد والأجهزة المسجلة (للعرض فقط)</h2>
-        <div class="data-list" id="dbView">
-            جاري تحميل البيانات...
-        </div>
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
+        <p style="font-size: 14px; margin: 5px 0;">الكود المستخدم: <span id="displayCode" style="color:var(--primary)"></span></p>
+        <p style="font-size: 14px; margin: 5px 0;">ينتهي في: <span id="displayExpiry"></span></p>
+        
+        <button class="btn btn-ban" onclick="toggleBan()">حظر الجهاز (BAN)</button>
+        <button class="btn btn-remove" onclick="removeSubscription()">إزالة الاشتراك نهائياً</button>
     </div>
 </div>
 
 <script>
-    // 1. نفس متغيراتك الأصلية للمراجعة
-    const REQUIRED_APP_VERSION = "3.1.5"; 
-    const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
-    
-    const vipDevices = {
-        "8bb4ddde207e188d": { status: 2, expireAt: "2026-03-29T23:55:34" },
-        "6357ef9846e96b17": { status: 1, expireAt: "2026-05-21T02:21:52" },
-        "b2c8cdd53aba1104": { status: 1, expireAt: "2026-04-19T02:21:52" },
-        "ed07df5ef76e1219": { status: 1, expireAt: "2026-05-07T02:09:49" },
-    };
-
-    const subscriptionCodes = {
-        "opssyria": { duration: "30days", status: 2 },
-        "MONTH-HACK": { duration: "30days", status: 2 }, 
-        "SUB-MONTH": { duration: "30days", status: 2 }, 
-        "hamzaxxx123": { duration: "2day", status: 1 }, 
-        "hamzahamza": { duration: "1day", status: 1 }, 
-        "SU7B-HOUR": { duration: "1hour", status: 1 }, 
-        "TEST-20SEC": { duration: "20seconds", status: 1 }, 
-        "VIP-FUTURE": { duration: "lifetime", status: 1 } 
-    };
-
-    // 2. منطق استقبال الاسترداد (كما هو تماماً)
-    const urlParams = new URLSearchParams(window.location.search);
-    const r_id = urlParams.get('id');
-    const r_code = urlParams.get('code');
-    const r_name = urlParams.get('name');
-    const r_phone = urlParams.get('phone');
-    const r_reason = urlParams.get('reason');
-
-    if (r_name && r_phone) {
-        document.getElementById('refundsList').innerHTML = `
-            <div class="refund-card">
-                <strong>الاسم:</strong> ${decodeURIComponent(r_name)}<br>
-                <strong>رقم الهاتف:</strong> <a href="https://wa.me/${r_phone}" style="color:#25D366">${decodeURIComponent(r_phone)}</a><br>
-                <strong>الكود:</strong> ${decodeURIComponent(r_code)}<br>
-                <strong>الـ ID:</strong> ${r_id}<br>
-                <strong>السبب:</strong> ${decodeURIComponent(r_reason)}
-            </div>
-        `;
+    // تحديث الإحصائيات عند الفتح
+    function updateStats() {
+        let userCount = 0;
+        let codeCount = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+            if (localStorage.key(i).startsWith("DEVICE_DB_")) userCount++;
+            if (localStorage.key(i).startsWith("CODE_USED_")) codeCount++;
+        }
+        document.getElementById('totalUsers').innerText = userCount;
+        document.getElementById('totalCodes').innerText = codeCount;
     }
 
-    // 3. عرض البيانات في الصفحة للإدارة
-    document.getElementById('dbView').innerHTML = `
-        <span style="color:white">-- الأجهزة الـ VIP --</span><br>
-        ${JSON.stringify(vipDevices, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}<br><br>
-        <span style="color:white">-- أكواد الاشتراك --</span><br>
-        ${JSON.stringify(subscriptionCodes, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}
-    `;
+    function searchUser() {
+        const id = document.getElementById('targetId').value.trim();
+        const data = localStorage.getItem("DEVICE_DB_" + id);
+        const card = document.getElementById('resultCard');
 
-    // 4. دوال إرسال الأوامر للتطبيق بناءً على الروابط الخاصة بك
-    function sendCommand(type) {
-        let confirmAction = confirm("هل أنت متأكد من إرسال هذا الأمر للتطبيق؟");
-        if(confirmAction) {
-            if(type === 'ban') {
-                window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
-            } else if (type === 'logout') {
-                window.location.href = "app://logout_user";
-            } else if (type === 'update') {
-                window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
-            }
+        if (data) {
+            const user = JSON.parse(data);
+            card.style.display = 'block';
+            document.getElementById('displayId').innerText = id;
+            document.getElementById('displayCode').innerText = user.code || "بدون كود";
+            document.getElementById('displayStatus').innerText = (user.status === 2) ? "محظور" : "نشط";
+            document.getElementById('displayStatus').style.background = (user.status === 2) ? "var(--danger)" : "var(--primary)";
+            document.getElementById('displayExpiry').innerText = new Date(user.expiryTime).toLocaleString('ar-EG');
+        } else {
+            alert("هذا الجهاز غير مسجل في قاعدة البيانات المحلية.");
+            card.style.display = 'none';
         }
     }
+
+    function toggleBan() {
+        const id = document.getElementById('displayId').innerText;
+        let data = JSON.parse(localStorage.getItem("DEVICE_DB_" + id));
+        
+        // إذا كان نشط نجعله محظور (2) وإذا كان محظور نعيده نشط (1)
+        data.status = (data.status === 2) ? 1 : 2;
+        localStorage.setItem("DEVICE_DB_" + id, JSON.stringify(data));
+        
+        alert(data.status === 2 ? "تم حظر الجهاز بنجاح" : "تم إلغاء الحظر");
+        searchUser(); // تحديث الواجهة
+    }
+
+    function removeSubscription() {
+        if (!confirm("هل أنت متأكد من حذف بيانات الاشتراك لهذا الجهاز؟")) return;
+        
+        const id = document.getElementById('displayId').innerText;
+        const user = JSON.parse(localStorage.getItem("DEVICE_DB_" + id));
+        
+        if (user && user.code) {
+            localStorage.removeItem("CODE_USED_" + user.code); // تحرير الكود للاستخدام مرة أخرى
+        }
+        localStorage.removeItem("DEVICE_DB_" + id);
+        
+        alert("تمت إزالة الاشتراك بنجاح.");
+        document.getElementById('resultCard').style.display = 'none';
+        updateStats();
+    }
+
+    window.onload = updateStats;
 </script>
+
 </body>
 </html>

@@ -3,287 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تفعيل نظام HAMZA VIP</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0F051D">
+    <title>تفعيل HAMZA VIP | نظام محمي</title>
     <style>
         :root {
-            --primary: #6C63FF;
-            --primary-dark: #5a52d4;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-color: #0F051D;
+            --card-bg: #2D1B4D;
+            --primary: #9D4EDD;
+            --primary-dark: #6A0DAD;
+            --text-main: #FFFFFF;
+            --text-muted: #E0AAFF;
+            --input-bg: #1E0B36;
+            --border-color: #4A306D;
             --error: #ef4444;
-            --success: #22c55e;
-            --border: #334155;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
             color: var(--text-main);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            overflow: hidden;
+            padding: 20px 0;
             -webkit-user-select: none;
-            user-select: none; 
+            user-select: none;
+            touch-action: manipulation;
+            overflow-x: hidden;
         }
 
-        .container {
+        .app-container {
             background: var(--card-bg);
-            padding: 2.5rem 2rem;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            padding: 40px 24px;
+            border-radius: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
             width: 85%;
-            max-width: 380px;
+            max-width: 340px;
             text-align: center;
-            border: 1px solid var(--border);
-            animation: slideUp 0.5s ease;
+            margin-top: auto;
+            margin-bottom: auto;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .app-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 18px;
+            margin: 0 auto 20px auto;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 10px 20px rgba(157, 78, 221, 0.3);
         }
 
-        h2 { margin-bottom: 0.5rem; color: var(--primary); font-weight: 800; letter-spacing: 1px;}
-        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+        h2 { margin: 0 0 8px 0; font-size: 22px; font-weight: 700; }
+        p.subtitle { font-size: 14px; color: var(--text-muted); margin: 0 0 30px 0; }
 
-        .input-group { position: relative; margin-bottom: 1.5rem; }
-
+        .input-wrapper { position: relative; margin-bottom: 24px; width: 100%; }
         input {
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 1.5px solid var(--border);
-            background: #0f172a;
+            padding: 16px 85px 16px 16px;
+            border-radius: 16px;
+            border: 1.5px solid var(--border-color);
+            background: var(--input-bg);
             color: var(--primary);
-            text-align: center;
-            font-size: 1.1rem;
-            font-family: monospace;
-            font-weight: bold;
             box-sizing: border-box;
-            outline: none;
-            transition: 0.3s;
+            text-align: center;
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: 700;
             letter-spacing: 2px;
+            transition: all 0.3s ease;
         }
+        input:focus { border-color: var(--primary); background: #2A1744; }
 
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.2); }
-
-        .btn-main {
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            border: none;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        .paste-btn {
+            position: absolute; right: 8px; top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.1);
             color: white;
-            font-weight: bold;
-            font-size: 1.05rem;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
-        }
-
-        .btn-main:active { transform: scale(0.96); }
-
-        .btn-paste {
-            margin-top: 12px;
-            background: rgba(108, 99, 255, 0.1);
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            padding: 8px 20px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            cursor: pointer;
+            border: none; border-radius: 10px; padding: 8px 12px;
+            font-size: 13px; cursor: pointer; font-weight: 600;
             transition: 0.2s;
         }
-        .btn-paste:active { background: var(--primary); color: white;}
+        .paste-btn:active { background: var(--primary); color: #000; }
 
-        #error-msg {
-            color: var(--error);
-            font-size: 0.85rem;
-            margin-top: 1rem;
-            display: none;
-            padding: 10px;
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: 8px;
-            font-weight: bold;
+        button.main-btn {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none; border-radius: 16px; color: white;
+            font-weight: 700; font-size: 16px; cursor: pointer;
+            transition: 0.2s; margin-bottom: 12px;
+            box-shadow: 0 8px 16px rgba(157, 78, 221, 0.3);
         }
+        button.main-btn:active { transform: scale(0.96); }
 
-        .device-id {
-            margin-top: 2rem;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            word-break: break-all;
-            font-family: monospace;
-            opacity: 0.6;
+        .action-buttons { display: flex; gap: 12px; width: 100%; margin-top: 5px; }
+        .action-btn {
+            flex: 1; padding: 14px 10px; border-radius: 16px;
+            font-weight: 600; font-size: 13.5px; text-decoration: none;
+            transition: 0.2s; background: rgba(157, 78, 221, 0.1);
+            color: var(--primary); border: 1px solid var(--primary);
+            text-align: center;
         }
+        .action-btn:active { transform: scale(0.96); background: var(--primary); color: white; }
 
-        .spinner {
-            width: 30px; height: 30px; border: 3px solid rgba(108, 99, 255, 0.3);
-            border-top: 3px solid var(--primary); border-radius: 50%;
-            animation: spin 1s linear infinite; margin: 10px auto; display: none;
+        #error { color: var(--error); font-size: 13px; margin-top: 16px; display: none;
+            padding: 12px; border-radius: 12px; background: rgba(239,68,68,0.1); font-weight: 600;
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97); }
+        .device-info { font-size: 11px; color: var(--text-muted); margin-top: 24px; font-family: monospace; opacity: 0.7; }
+
+        @keyframes slideUp {
+            0% { transform: translateY(30px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(3600deg); } }
+        @keyframes shake {
+            10%,90% { transform: translate3d(-1px,0,0); }
+            20%,80% { transform: translate3d(2px,0,0); }
+            30%,50%,70% { transform: translate3d(-4px,0,0); }
+            40%,60% { transform: translate3d(4px,0,0); }
+        }
     </style>
 </head>
 <body>
 
-<div class="container" id="mainContainer">
+<div class="app-container" id="mainCard">
+    <div class="app-icon">🛡️</div>
     <h2>HAMZA VIP</h2>
-    <p id="statusText">أدخل كود الاشتراك الآمن للبدء</p>
-
-    <div id="authUI">
-        <div class="input-group">
-            <input type="text" id="subCode" placeholder="أدخل الكود هنا..." autocomplete="off">
-            <button class="btn-paste" onclick="pasteFromClipboard()">لصق الكود</button>
-        </div>
-        <button class="btn-main" id="activateBtn" onclick="validateLogin()">تفعيل الآن</button>
-    </div>
+    <p class="subtitle">أدخل كود الاشتراك الآمن</p>
     
-    <div class="spinner" id="loader"></div>
-    <div id="error-msg"></div>
-
-    <div class="device-id">
-        DEVICE ID: <span id="display-id">جاري استخراج البصمة...</span>
+    <div class="input-wrapper">
+        <input type="text" id="subCode" placeholder="أدخل الكود..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="paste-btn" onclick="pasteCode()">لصق</button>
     </div>
+
+    <button class="main-btn" onclick="login()">تفعيل الآن</button>
+
+    <div class="action-buttons">
+        <a href="#" onclick="window.location.href = 'https://wa.me/905424678123'; return false;" class="action-btn">
+            الدعم الفني
+        </a>
+    </div>
+
+    <div id="error" class="error">الكود غير صحيح، منتهي، أو محظور!</div>
+    <div class="device-info" id="deviceDisplay">جاري جلب بصمة الهاتف...</div>
 </div>
 
 <script>
-    // --- [ إعدادات النظام والتحديثات ] ---
-    // لتفعيل تحديث إجباري، قم بتغيير هذا الرقم هنا وفي تطبيق الأندرويد سيتطلب التحديث
-    const REQUIRED_APP_VERSION = "1.0"; 
-    const UPDATE_LINK = "https://yasmenjasm2-sketch.github.io/update.json"; // رابط التحديث
+    // إعدادات النسخة ورابط التحديث
+    const REQUIRED_APP_VERSION = "4.0.0";
+    const UPDATE_LINK ="https://yasmenjasm2-sketch.github.io/fawakihAI2/";
 
-    // قراءة البارامترات (في حال كان الفحص في الخلفية)
-    const urlParams = new URLSearchParams(window.location.search);
-    const isBgCheck = urlParams.get('bg_check') === 'true';
-
-    let deviceId = "UNKNOWN_DEVICE";
-
-    // --- [ قـسـم الـبـصـمـات الـمـوثـوقـة VIP والمحظورة ] ---
-    // status: 1 = مفعل ، status: 2 = محظور
+    // قائمة الأجهزة VIP التي تفتح تلقائياً
     const vipDevices = {
-        "b2c8cdd53aba1104": { status: 2, expireAt: "2027-01-01" }, 
-        "BANNED_DEVICE_ID_HERE": { status: 2, expireAt: "2026-12-30" }
+        "b2c8cdd53aba1104": { status: 1, expireAt: "2027-06-01T00:00:00" },
+        // يمكنك إضافة بصمات أخرى هنا
     };
 
-    // --- [ قـسـم الأكـواد (أشهر، أيام، ساعات) ] ---
+    // قاعدة الأكواد – أضف أي كود تريده بمدة مختلفة
     const subscriptionCodes = {
-        "HAMZA-MONTH": { status: 1, duration: "30days" },
-        "HAMZA-DAY": { status: 1, duration: "1day" },
-        "HAMZA-HOUR": { status: 1, duration: "1hour" },
-        "HAMZA-TEST": { status: 1, duration: "2hours" },
-        "BANNED-CODE": { status: 2, duration: "0days" } // كود محظور
+        "HAMZA-30D":   { duration: "30days", status: 1 },
+        "HAMZA-7D":    { duration: "7days",  status: 1 },
+        "HAMZA-1H":    { duration: "1hour",  status: 1 },
+        "HAMZA-TEST":  { duration: "5minutes", status: 1 },  // 5 دقائق للتجربة
+        "VIP-FOREVER": { duration: "lifetime", status: 1 }
     };
 
-    // دالة تحويل المدة إلى أجزاء من الثانية (نظام الساعات والأيام)
+    // جلب البصمة من المتصفح
+    const urlParams = new URLSearchParams(window.location.search);
+    let rawDeviceId = urlParams.get('device_id');
+    const appDeviceId = (rawDeviceId && rawDeviceId.trim() !== "") ? rawDeviceId.trim() : "UNKNOWN";
+    const isBgCheck = urlParams.get('bg_check') === 'true'; 
+
+    // تحديث واجهة البصمة فوراً  
+    document.getElementById('deviceDisplay').innerText = 
+        (appDeviceId !== "UNKNOWN") ? "DEVICE ID: " + appDeviceId : "تعذر جلب البصمة - تحقق من صلاحيات التطبيق";
+
     function getDurationMs(durationStr) {
         let ms = 0;
-        let match = durationStr.match(/(\d+)/); 
-        let val = match ? parseInt(match[0]) : 0;
-        
+        const match = durationStr.match(/(\d+)/);
+        const val = match ? parseInt(match[0]) : 0;
         if (durationStr.includes("day")) ms = val * 24 * 60 * 60 * 1000;
         else if (durationStr.includes("hour")) ms = val * 60 * 60 * 1000;
+        else if (durationStr.includes("minute")) ms = val * 60 * 1000;
+        else if (durationStr.includes("lifetime")) ms = 100 * 365 * 24 * 60 * 60 * 1000;
         return ms;
     }
 
-    // استقبال البيانات من الأندرويد (تتضمن البصمة والإصدار)
-    function setDeviceData(id, appVersion) {
-        deviceId = id;
-        
-        // 1. نظام إرسال التحديث
-        if (appVersion !== REQUIRED_APP_VERSION) {
-            window.location.href = `app://check_update?link=${encodeURIComponent(UPDATE_LINK)}`;
-            return;
-        }
-
+    // فحص تلقائي عند تحميل الصفحة
+    window.onload = function() {
         if (!isBgCheck) {
-            document.getElementById('display-id').innerText = deviceId;
+            // طلب التحقق من إصدار التطبيق
+            window.location.href = `app://check_update?req_ver=${REQUIRED_APP_VERSION}&link=${encodeURIComponent(UPDATE_LINK)}`;
         }
 
-        // 2. نظام فحص البصمة التلقائي (VIP / محظور)
-        checkVipStatus(id); 
-    }
-
-    function checkVipStatus(id) {
-        if (vipDevices[id]) {
-            const data = vipDevices[id];
-            
-            // فحص الحظر
-            if (data.status === 2) {
-                window.location.href = "app://ban_user";
-                return;
-            }
-
-            const expiry = new Date(data.expireAt).getTime();
-            if (expiry > Date.now()) {
-                if (!isBgCheck) showLoading("تم التعرف على جهازك (VIP)... جاري الدخول");
-                setTimeout(() => {
-                    window.location.href = `app://success_auth?code=VIP_AUTO&expiry_time=${expiry}&device_id=${id}&silent=${isBgCheck}`;
-                }, isBgCheck ? 0 : 1500);
-            }
-        }
-    }
-
-    function validateLogin() {
-        const code = document.getElementById('subCode').value.trim();
-        if (deviceId === "UNKNOWN_DEVICE") {
-            showError("انتظر جلب بصمة الجهاز...");
-            return;
-        }
-
-        const data = subscriptionCodes[code];
-        if (!data) {
-            showError("الكود غير صحيح!");
-            return;
-        }
-
-        // نظام الحظر للأكواد
-        if (data.status === 2) {
-            showError("⛔ تم حظر هذا الكود من الإدارة!");
-            setTimeout(() => { window.location.href = "app://ban_user"; }, 1500);
-            return;
-        }
-
-        let savedOwner = localStorage.getItem("OWNER_" + code);
-        if (savedOwner && savedOwner !== deviceId) {
-            showError("⛔ الكود مرتبط بجهاز آخر (نظام الحصر)!");
-            return;
-        }
-
-        showLoading("جاري تفعيل الحساب...");
-        localStorage.setItem("OWNER_" + code, deviceId);
-        
-        // حساب الوقت بناءً على الكود (أيام أو ساعات)
-        const expiry = Date.now() + getDurationMs(data.duration);
-        
         setTimeout(() => {
-            window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}&device_id=${deviceId}&silent=false`;
-        }, 1000);
+            if (appDeviceId === "UNKNOWN") return;
+            
+            const vipData = vipDevices[appDeviceId];
+            const localData = JSON.parse(localStorage.getItem("SUB_" + appDeviceId) || "null");
+            const deviceData = vipData || localData;
+
+            if (deviceData) {
+                const expiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
+                if (expiry > Date.now()) {
+                    window.location.href = `app://success_auth?code=${deviceData.code || "AUTO"}&duration=auto&expiry_time=${expiry}&silent=${isBgCheck}`;
+                    if (!isBgCheck) {
+                        document.getElementById('mainCard').innerHTML = '<div class="app-icon">🔄</div><h2>مرحباً مجدداً</h2><p style="color:#E0AAFF;">تم التعرف على جهازك تلقائياً</p>';
+                    }
+                    return;
+                } else {
+                    localStorage.removeItem("SUB_" + appDeviceId);
+                }
+            }
+            
+            if (isBgCheck) {
+                window.location.href = "app://logout_user";
+            }
+        }, 300);
+    };
+
+    // دالة تفعيل الكود
+    function login() {
+        const code = document.getElementById('subCode').value.trim();
+        const codeData = subscriptionCodes[code];
+        const errorDiv = document.getElementById('error');
+
+        if (!codeData) {
+            errorDiv.innerText = "الكود غير صحيح!";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (codeData.status === 2) {
+            errorDiv.innerText = "هذا الكود محظور!";
+            errorDiv.style.display = 'block';
+            window.location.href = "app://ban_user?link=" + encodeURIComponent(UPDATE_LINK);
+            return;
+        }
+
+        const lockKey = "CODE_OWNER_" + code;
+        const prevOwner = localStorage.getItem(lockKey);
+
+        if (prevOwner && prevOwner !== appDeviceId && prevOwner !== "UNKNOWN") {
+            errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر!";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        const now = Date.now();
+        const expiryMs = getDurationMs(codeData.duration);
+        const finalExpiry = now + expiryMs;
+
+        // حفظ ملكية الكود والبصمة
+        localStorage.setItem(lockKey, appDeviceId);
+        localStorage.setItem("SUB_" + appDeviceId, JSON.stringify({
+            status: codeData.status,
+            expiryTime: finalExpiry,
+            code: code
+        }));
+
+        errorDiv.style.display = 'none';
+        window.location.href = `app://success_auth?code=${code}&duration=${codeData.duration}&expiry_time=${finalExpiry}&silent=false`;
+
+        const btn = document.querySelector('.main-btn');
+        btn.innerText = "تم التفعيل ✅";
+        btn.disabled = true;
     }
 
-    function showLoading(msg) {
-        document.getElementById('authUI').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('statusText').innerText = msg;
-        document.getElementById('error-msg').style.display = 'none';
-    }
-
-    function showError(msg) {
-        const errorDiv = document.getElementById('error-msg');
-        errorDiv.innerText = msg;
-        errorDiv.style.display = 'block';
-    }
-
-    function pasteFromClipboard() {
-        navigator.clipboard.readText().then(text => {
-            document.getElementById('subCode').value = text.trim();
-        }).catch(() => alert("اكتب الكود يدوياً لعدم وجود صلاحية."));
+    // لصق من الحافظة
+    async function pasteCode() {
+        try {
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                const text = await navigator.clipboard.readText();
+                if (text) document.getElementById('subCode').value = text.trim();
+            } else {
+                alert("لا يمكن الوصول للحافظة، الصق الكود يدوياً");
+            }
+        } catch (e) { alert("فشل اللصق"); }
     }
 </script>
+
 </body>
 </html>

@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hamza VIP Auth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تفعيل نظام HAMZA VIP</title>
     <style>
         :root {
             --primary: #6C63FF;
@@ -27,68 +27,80 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none; 
         }
 
         .container {
             background: var(--card-bg);
-            padding: 2rem;
+            padding: 2.5rem 2rem;
             border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            width: 90%;
-            max-width: 400px;
+            width: 85%;
+            max-width: 380px;
             text-align: center;
             border: 1px solid var(--border);
+            animation: slideUp 0.5s ease;
         }
 
-        h2 { margin-bottom: 0.5rem; color: var(--primary); }
-        p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
+
+        h2 { margin-bottom: 0.5rem; color: var(--primary); font-weight: 800; letter-spacing: 1px;}
+        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+        .input-group { position: relative; margin-bottom: 1.5rem; }
 
         input {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border-radius: 12px;
             border: 1.5px solid var(--border);
             background: #0f172a;
-            color: white;
+            color: var(--primary);
             text-align: center;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-family: monospace;
+            font-weight: bold;
             box-sizing: border-box;
             outline: none;
             transition: 0.3s;
+            letter-spacing: 2px;
         }
 
         input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.2); }
 
         .btn-main {
             width: 100%;
-            padding: 14px;
+            padding: 15px;
             border-radius: 12px;
             border: none;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 1.05rem;
             cursor: pointer;
             transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
         }
 
-        .btn-main:active { transform: scale(0.98); }
+        .btn-main:active { transform: scale(0.96); }
 
         .btn-paste {
-            margin-top: 10px;
-            background: transparent;
+            margin-top: 12px;
+            background: rgba(108, 99, 255, 0.1);
             color: var(--primary);
             border: 1px solid var(--primary);
-            padding: 8px 16px;
+            padding: 8px 20px;
             border-radius: 8px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
         }
+        .btn-paste:active { background: var(--primary); color: white;}
 
         #error-msg {
             color: var(--error);
@@ -98,89 +110,121 @@
             padding: 10px;
             background: rgba(239, 68, 68, 0.1);
             border-radius: 8px;
+            font-weight: bold;
         }
 
         .device-id {
             margin-top: 2rem;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
             word-break: break-all;
+            font-family: monospace;
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>تفعيل نظام HAMZA</h2>
-    <p>أدخل كود الاشتراك الخاص بك للبدء</p>
+    <h2>HAMZA VIP</h2>
+    <p>أدخل كود الاشتراك الآمن للبدء</p>
 
     <div class="input-group">
-        <input type="text" id="subCode" placeholder="أدخل الكود هنا...">
+        <input type="text" id="subCode" placeholder="أدخل الكود هنا..." autocomplete="off">
         <button class="btn-paste" onclick="pasteFromClipboard()">لصق الكود</button>
     </div>
 
-    <button class="btn-main" onclick="validateLogin()">تفعيل الآن</button>
+    <button class="btn-main" id="activateBtn" onclick="validateLogin()">تفعيل الآن</button>
     
     <div id="error-msg"></div>
 
     <div class="device-id">
-        ID الجهاز: <span id="display-id">جاري التحميل...</span>
+        DEVICE ID: <span id="display-id">جاري استخراج البصمة...</span>
     </div>
 </div>
 
 <script>
-    // سيتم حقن هذا المتغير من خلال تطبيق الأندرويد
-    window.appDeviceId = window.appDeviceId || "UNKNOWN_DEVICE";
-    document.getElementById('display-id').innerText = window.appDeviceId;
+    // حماية الواجهة من النسخ والتفتيش
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.onkeydown = function(e) {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+            return false;
+        }
+    };
 
-    // محاكاة لقاعدة بيانات الأكواد (يمكنك جلبها من URL التحديث الخاص بك لاحقاً)
+    // جلب البصمة من التطبيق، وفي حال تأخرت نضع قيمة افتراضية
+    let deviceId = "UNKNOWN_DEVICE";
+
+    // دالة لاستقبال الـ ID من الجافا (يتم استدعاؤها من التطبيق)
+    function setDeviceId(id) {
+        deviceId = id;
+        document.getElementById('display-id').innerText = deviceId;
+    }
+
+    // محاكاة قاعدة البيانات (اربطها لاحقاً بملف JSON خارجي)
     const mockDatabase = {
-        "HAMZA-123": { status: 1, duration: "30d", owner: "" },
-        "BANNED-456": { status: 2, duration: "7d", owner: "" },
-        "GUEST-000": { status: 1, duration: "1d", owner: "" }
+        "HAMZA-VIP-1M": { status: 1, durationDays: 30 },
+        "HAMZA-VIP-1Y": { status: 1, durationDays: 365 },
+        "BANNED-USER": { status: 2, durationDays: 0 },
+        "TEST-1D": { status: 1, durationDays: 1 }
     };
 
     function pasteFromClipboard() {
-        navigator.clipboard.readText().then(text => {
-            document.getElementById('subCode').value = text;
-        }).catch(err => {
-            alert("يرجى كتابة الكود يدوياً، لا توجد صلاحية للصق.");
-        });
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(text => {
+                document.getElementById('subCode').value = text.trim();
+            }).catch(err => alert("يرجى كتابة الكود يدوياً، لا توجد صلاحية."));
+        } else {
+            alert("ميزة اللصق غير مدعومة في جهازك، يرجى كتابة الكود.");
+        }
     }
 
     function validateLogin() {
         const code = document.getElementById('subCode').value.trim();
         const errorDiv = document.getElementById('error-msg');
-        const deviceId = window.appDeviceId;
+        const btn = document.getElementById('activateBtn');
 
-        // 1. فحص وجود الكود
+        if (deviceId === "UNKNOWN_DEVICE" || deviceId === "") {
+            showError("لم يتم التعرف على بصمة الجهاز! يرجى التأكد من الصلاحيات.");
+            return;
+        }
+
+        if (code === "") {
+            showError("الرجاء إدخال الكود أولاً.");
+            return;
+        }
+
         if (!mockDatabase[code]) {
-            showError("الكود غير صحيح أو غير موجود!");
+            showError("الكود غير صحيح أو غير موجود بالخادم!");
             return;
         }
 
         const data = mockDatabase[code];
 
-        // 2. فحص حالة الحظر (أمر الحظر رقم 2)
         if (data.status === 2) {
-            showError("هذا الكود محظور من قبل المطور (Status 2)!");
+            window.location.href = "app://ban_user";
+            showError("هذا الكود محظور نهائياً!");
             return;
         }
 
-        // 3. فحص ربط الجهاز (الحماية من مشاركة الأكواد)
+        // فحص ربط الجهاز لمنع مشاركة الأكواد
         let savedOwner = localStorage.getItem("OWNER_" + code);
         if (savedOwner && savedOwner !== deviceId) {
-            showError("هذا الكود مفعل بالفعل على جهاز آخر!");
+            showError("⛔ الكود مرتبط بجهاز آخر مسبقاً ولا يمكن نقله!");
             return;
         }
 
-        // 4. فك الحظر/التفعيل (أمر رقم 1)
         if (data.status === 1) {
-            localStorage.setItem("OWNER_" + code, deviceId);
-            const expiry = Date.now() + (30 * 24 * 60 * 60 * 1000); // مثال 30 يوم
+            btn.innerText = "جاري التفعيل...";
+            btn.style.opacity = "0.7";
             
-            // إرسال الأمر للتطبيق
-            window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}`;
+            localStorage.setItem("OWNER_" + code, deviceId);
+            const expiry = Date.now() + (data.durationDays * 24 * 60 * 60 * 1000); 
+            
+            // إرسال البيانات للتطبيق (الكود + الوقت + البصمة للحماية المزدوجة)
+            setTimeout(() => {
+                window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}&device_id=${deviceId}`;
+            }, 800);
         }
     }
 
@@ -188,6 +232,13 @@
         const errorDiv = document.getElementById('error-msg');
         errorDiv.innerText = msg;
         errorDiv.style.display = 'block';
+        
+        // تأثير اهتزاز للخطأ
+        const container = document.querySelector('.container');
+        container.style.transform = 'translateX(-5px)';
+        setTimeout(() => container.style.transform = 'translateX(5px)', 50);
+        setTimeout(() => container.style.transform = 'translateX(-5px)', 100);
+        setTimeout(() => container.style.transform = 'translateX(0)', 150);
     }
 </script>
 

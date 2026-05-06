@@ -153,41 +153,81 @@
 </div>
 
 <script>
-    // --- [ قـسـم الـبـصـمـات الـمـوثـوقـة VIP ] ---
-    // هنا تضع الـ IDs التي تريد تفعيلها تلقائياً بدون كود
-    const vipDevices = {
-        "b2c8cdd53aba1104": { status: 2, expireAt: "2027-01-01" }, 
-        "ضع_هنا_ID_جهاز_آخر": { status: 1, expireAt: "2026-12-30" }
-    };
+    // --- [ إعدادات النظام والتحديثات ] ---
+    // لتفعيل تحديث إجباري، قم بتغيير هذا الرقم هنا وفي تطبيق الأندرويد سيتطلب التحديث
+    const REQUIRED_APP_VERSION = "1.0"; 
+    const UPDATE_LINK = "https://yasmenjasm2-sketch.github.io/update.json"; // رابط التحديث
+
+    // قراءة البارامترات (في حال كان الفحص في الخلفية)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isBgCheck = urlParams.get('bg_check') === 'true';
 
     let deviceId = "UNKNOWN_DEVICE";
 
-    // دالة استقبال الـ ID من الجافا وتدشين الفحص التلقائي
-    function setDeviceId(id) {
-        deviceId = id;
-        document.getElementById('display-id').innerText = deviceId;
-        checkVipStatus(id); // فحص إذا كان الجهاز VIP فور التعرف عليه
+    // --- [ قـسـم الـبـصـمـات الـمـوثـوقـة VIP والمحظورة ] ---
+    // status: 1 = مفعل ، status: 2 = محظور
+    const vipDevices = {
+        "b2c8cdd53aba1104": { status: 2, expireAt: "2027-01-01" }, 
+        "BANNED_DEVICE_ID_HERE": { status: 2, expireAt: "2026-12-30" }
+    };
+
+    // --- [ قـسـم الأكـواد (أشهر، أيام، ساعات) ] ---
+    const subscriptionCodes = {
+        "HAMZA-MONTH": { status: 1, duration: "30days" },
+        "HAMZA-DAY": { status: 1, duration: "1day" },
+        "HAMZA-HOUR": { status: 1, duration: "1hour" },
+        "HAMZA-TEST": { status: 1, duration: "2hours" },
+        "BANNED-CODE": { status: 2, duration: "0days" } // كود محظور
+    };
+
+    // دالة تحويل المدة إلى أجزاء من الثانية (نظام الساعات والأيام)
+    function getDurationMs(durationStr) {
+        let ms = 0;
+        let match = durationStr.match(/(\d+)/); 
+        let val = match ? parseInt(match[0]) : 0;
+        
+        if (durationStr.includes("day")) ms = val * 24 * 60 * 60 * 1000;
+        else if (durationStr.includes("hour")) ms = val * 60 * 60 * 1000;
+        return ms;
     }
 
-    // فحص البصمة في قائمة الـ VIP
+    // استقبال البيانات من الأندرويد (تتضمن البصمة والإصدار)
+    function setDeviceData(id, appVersion) {
+        deviceId = id;
+        
+        // 1. نظام إرسال التحديث
+        if (appVersion !== REQUIRED_APP_VERSION) {
+            window.location.href = `app://check_update?link=${encodeURIComponent(UPDATE_LINK)}`;
+            return;
+        }
+
+        if (!isBgCheck) {
+            document.getElementById('display-id').innerText = deviceId;
+        }
+
+        // 2. نظام فحص البصمة التلقائي (VIP / محظور)
+        checkVipStatus(id); 
+    }
+
     function checkVipStatus(id) {
         if (vipDevices[id]) {
             const data = vipDevices[id];
-            const expiry = new Date(data.expireAt).getTime();
             
+            // فحص الحظر
+            if (data.status === 2) {
+                window.location.href = "app://ban_user";
+                return;
+            }
+
+            const expiry = new Date(data.expireAt).getTime();
             if (expiry > Date.now()) {
-                showLoading("تم التعرف على جهازك (VIP)... جاري الدخول");
+                if (!isBgCheck) showLoading("تم التعرف على جهازك (VIP)... جاري الدخول");
                 setTimeout(() => {
-                    window.location.href = `app://success_auth?code=VIP_AUTO&expiry_time=${expiry}&device_id=${id}`;
-                }, 1500);
+                    window.location.href = `app://success_auth?code=VIP_AUTO&expiry_time=${expiry}&device_id=${id}&silent=${isBgCheck}`;
+                }, isBgCheck ? 0 : 1500);
             }
         }
     }
-
-    const mockDatabase = {
-        "HAMZA-VIP-1M": { status: 1, durationDays: 30 },
-        "HAMZA-VIP-1Y": { status: 1, durationDays: 365 }
-    };
 
     function validateLogin() {
         const code = document.getElementById('subCode').value.trim();
@@ -196,24 +236,33 @@
             return;
         }
 
-        const data = mockDatabase[code];
+        const data = subscriptionCodes[code];
         if (!data) {
             showError("الكود غير صحيح!");
             return;
         }
 
+        // نظام الحظر للأكواد
+        if (data.status === 2) {
+            showError("⛔ تم حظر هذا الكود من الإدارة!");
+            setTimeout(() => { window.location.href = "app://ban_user"; }, 1500);
+            return;
+        }
+
         let savedOwner = localStorage.getItem("OWNER_" + code);
         if (savedOwner && savedOwner !== deviceId) {
-            showError("⛔ الكود مرتبط بجهاز آخر!");
+            showError("⛔ الكود مرتبط بجهاز آخر (نظام الحصر)!");
             return;
         }
 
         showLoading("جاري تفعيل الحساب...");
         localStorage.setItem("OWNER_" + code, deviceId);
-        const expiry = Date.now() + (data.durationDays * 24 * 60 * 60 * 1000);
+        
+        // حساب الوقت بناءً على الكود (أيام أو ساعات)
+        const expiry = Date.now() + getDurationMs(data.duration);
         
         setTimeout(() => {
-            window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}&device_id=${deviceId}`;
+            window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}&device_id=${deviceId}&silent=false`;
         }, 1000);
     }
 

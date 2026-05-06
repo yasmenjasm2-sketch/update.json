@@ -153,32 +153,26 @@
 </div>
 
 <script>
-    // إعدادات النسخة ورابط التحديث
     const REQUIRED_APP_VERSION = "2.1.0";
     const UPDATE_LINK ="https://yasmenjasm2-sketch.github.io/fawakihAI2/";
 
-    // قائمة الأجهزة VIP التي تفتح تلقائياً
     const vipDevices = {
         "b2c8cdd53aba1104": { status: 2, expireAt: "2026-06-01T00:00:00" },
-        // يمكنك إضافة بصمات أخرى هنا
     };
 
-    // قاعدة الأكواد – أضف أي كود تريده بمدة مختلفة
     const subscriptionCodes = {
         "HAMZA-30D":   { duration: "30days", status: 1 },
         "HAMZA-7D":    { duration: "7days",  status: 1 },
         "HAMZA-1H":    { duration: "30days",  status: 1 },
-        "HAMZA-TEST":  { duration: "5minutes", status: 1 },  // 5 دقائق للتجربة
+        "HAMZA-TEST":  { duration: "5minutes", status: 1 },
         "VIP-FOREVER": { duration: "30days", status: 1 }
     };
 
-    // جلب البصمة من المتصفح
     const urlParams = new URLSearchParams(window.location.search);
     let rawDeviceId = urlParams.get('device_id');
     const appDeviceId = (rawDeviceId && rawDeviceId.trim() !== "") ? rawDeviceId.trim() : "UNKNOWN";
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
 
-    // تحديث واجهة البصمة فوراً  
     document.getElementById('deviceDisplay').innerText = 
         (appDeviceId !== "UNKNOWN") ? "DEVICE ID: " + appDeviceId : "تعذر جلب البصمة - تحقق من صلاحيات التطبيق";
 
@@ -193,18 +187,35 @@
         return ms;
     }
 
-    // فحص تلقائي عند تحميل الصفحة
     window.onload = function() {
-        if (!isBgCheck) {
-            // طلب التحقق من إصدار التطبيق
-            window.location.href = `app://check_update?req_ver=${REQUIRED_APP_VERSION}&link=${encodeURIComponent(UPDATE_LINK)}`;
-        }
+        // نرسل أمر التحديث دائماً حتى في الخلفية لتحديث التطبيق إجبارياً إن لزم الأمر
+        window.location.href = `app://check_update?req_ver=${REQUIRED_APP_VERSION}&link=${encodeURIComponent(UPDATE_LINK)}`;
 
         setTimeout(() => {
             if (appDeviceId === "UNKNOWN") return;
             
             const vipData = vipDevices[appDeviceId];
             const localData = JSON.parse(localStorage.getItem("SUB_" + appDeviceId) || "null");
+            
+            // تحقق صارم من السيرفر: هل تم حظر الكود أو حذفه بينما التطبيق يعمل؟
+            if (localData && localData.code) {
+                const liveCode = subscriptionCodes[localData.code];
+                
+                // إذا الكود أصبح محظور (Status 2) أو بصمة الـ VIP أصبحت محظورة
+                if ((liveCode && liveCode.status === 2) || (vipData && vipData.status === 2)) {
+                    localStorage.removeItem("SUB_" + appDeviceId);
+                    window.location.href = "app://ban_user?link=" + encodeURIComponent(UPDATE_LINK);
+                    return;
+                }
+                
+                // إذا تم حذف الكود من السكربت نهائياً
+                if (!liveCode && !vipData) {
+                    localStorage.removeItem("SUB_" + appDeviceId);
+                    window.location.href = "app://logout_user";
+                    return;
+                }
+            }
+
             const deviceData = vipData || localData;
 
             if (deviceData) {
@@ -226,7 +237,6 @@
         }, 300);
     };
 
-    // دالة تفعيل الكود
     function login() {
         const code = document.getElementById('subCode').value.trim();
         const codeData = subscriptionCodes[code];
@@ -258,7 +268,6 @@
         const expiryMs = getDurationMs(codeData.duration);
         const finalExpiry = now + expiryMs;
 
-        // حفظ ملكية الكود والبصمة
         localStorage.setItem(lockKey, appDeviceId);
         localStorage.setItem("SUB_" + appDeviceId, JSON.stringify({
             status: codeData.status,
@@ -274,7 +283,6 @@
         btn.disabled = true;
     }
 
-    // لصق من الحافظة
     async function pasteCode() {
         try {
             if (navigator.clipboard && navigator.clipboard.readText) {
@@ -286,6 +294,5 @@
         } catch (e) { alert("فشل اللصق"); }
     }
 </script>
-
 </body>
 </html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hamza VIP Auth</title>
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-dark: #5a52d4;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+            --success: #22c55e;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        h2 { margin-bottom: 0.5rem; color: var(--primary); }
+        p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border);
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.2); }
+
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-main:active { transform: scale(0.98); }
+
+        .btn-paste {
+            margin-top: 10px;
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        #error-msg {
+            color: var(--error);
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            display: none;
+            padding: 10px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+        }
+
+        .device-id {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>تفعيل نظام HAMZA</h2>
+    <p>أدخل كود الاشتراك الخاص بك للبدء</p>
+
+    <div class="input-group">
+        <input type="text" id="subCode" placeholder="أدخل الكود هنا...">
+        <button class="btn-paste" onclick="pasteFromClipboard()">لصق الكود</button>
+    </div>
+
+    <button class="btn-main" onclick="validateLogin()">تفعيل الآن</button>
+    
+    <div id="error-msg"></div>
+
+    <div class="device-id">
+        ID الجهاز: <span id="display-id">جاري التحميل...</span>
+    </div>
+</div>
+
+<script>
+    // سيتم حقن هذا المتغير من خلال تطبيق الأندرويد
+    window.appDeviceId = window.appDeviceId || "UNKNOWN_DEVICE";
+    document.getElementById('display-id').innerText = window.appDeviceId;
+
+    // محاكاة لقاعدة بيانات الأكواد (يمكنك جلبها من URL التحديث الخاص بك لاحقاً)
+    const mockDatabase = {
+        "HAMZA-123": { status: 1, duration: "30d", owner: "" },
+        "BANNED-456": { status: 2, duration: "7d", owner: "" },
+        "GUEST-000": { status: 1, duration: "1d", owner: "" }
+    };
+
+    function pasteFromClipboard() {
+        navigator.clipboard.readText().then(text => {
+            document.getElementById('subCode').value = text;
+        }).catch(err => {
+            alert("يرجى كتابة الكود يدوياً، لا توجد صلاحية للصق.");
+        });
+    }
+
+    function validateLogin() {
+        const code = document.getElementById('subCode').value.trim();
+        const errorDiv = document.getElementById('error-msg');
+        const deviceId = window.appDeviceId;
+
+        // 1. فحص وجود الكود
+        if (!mockDatabase[code]) {
+            showError("الكود غير صحيح أو غير موجود!");
+            return;
+        }
+
+        const data = mockDatabase[code];
+
+        // 2. فحص حالة الحظر (أمر الحظر رقم 2)
+        if (data.status === 2) {
+            showError("هذا الكود محظور من قبل المطور (Status 2)!");
+            return;
+        }
+
+        // 3. فحص ربط الجهاز (الحماية من مشاركة الأكواد)
+        let savedOwner = localStorage.getItem("OWNER_" + code);
+        if (savedOwner && savedOwner !== deviceId) {
+            showError("هذا الكود مفعل بالفعل على جهاز آخر!");
+            return;
+        }
+
+        // 4. فك الحظر/التفعيل (أمر رقم 1)
+        if (data.status === 1) {
+            localStorage.setItem("OWNER_" + code, deviceId);
+            const expiry = Date.now() + (30 * 24 * 60 * 60 * 1000); // مثال 30 يوم
+            
+            // إرسال الأمر للتطبيق
+            window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}`;
+        }
+    }
+
+    function showError(msg) {
+        const errorDiv = document.getElementById('error-msg');
+        errorDiv.innerText = msg;
+        errorDiv.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>

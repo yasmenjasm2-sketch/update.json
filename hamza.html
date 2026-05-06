@@ -159,7 +159,7 @@
 
     // قائمة الأجهزة VIP التي تفتح تلقائياً
     const vipDevices = {
-        "b2c8cdd53aba1104": { status: 1, expireAt: "2027-06-01T00:00:00" },
+        "": { status: 1, expireAt: "2027-06-01T00:00:00" },
         // يمكنك إضافة بصمات أخرى هنا
     };
 
@@ -167,9 +167,9 @@
     const subscriptionCodes = {
         "HAMZA-30D":   { duration: "30days", status: 1 },
         "HAMZA-7D":    { duration: "7days",  status: 1 },
-        "HAMZA-1H":    { duration: "1hour",  status: 1 },
+        "HAMZA-1H":    { duration: "30days",  status: 1 },
         "HAMZA-TEST":  { duration: "5minutes", status: 1 },  // 5 دقائق للتجربة
-        "VIP-FOREVER": { duration: "lifetime", status: 1 }
+        "VIP-FOREVER": { duration: "30days", status: 1 }
     };
 
     // جلب البصمة من المتصفح

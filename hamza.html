@@ -121,21 +121,30 @@
             font-family: monospace;
             opacity: 0.6;
         }
+
+        .spinner {
+            width: 30px; height: 30px; border: 3px solid rgba(108, 99, 255, 0.3);
+            border-top: 3px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 10px auto; display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(3600deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer">
     <h2>HAMZA VIP</h2>
-    <p>أدخل كود الاشتراك الآمن للبدء</p>
+    <p id="statusText">أدخل كود الاشتراك الآمن للبدء</p>
 
-    <div class="input-group">
-        <input type="text" id="subCode" placeholder="أدخل الكود هنا..." autocomplete="off">
-        <button class="btn-paste" onclick="pasteFromClipboard()">لصق الكود</button>
+    <div id="authUI">
+        <div class="input-group">
+            <input type="text" id="subCode" placeholder="أدخل الكود هنا..." autocomplete="off">
+            <button class="btn-paste" onclick="pasteFromClipboard()">لصق الكود</button>
+        </div>
+        <button class="btn-main" id="activateBtn" onclick="validateLogin()">تفعيل الآن</button>
     </div>
-
-    <button class="btn-main" id="activateBtn" onclick="validateLogin()">تفعيل الآن</button>
     
+    <div class="spinner" id="loader"></div>
     <div id="error-msg"></div>
 
     <div class="device-id">
@@ -144,103 +153,88 @@
 </div>
 
 <script>
-    // حماية الواجهة من النسخ والتفتيش
-    document.addEventListener('contextmenu', event => event.preventDefault());
-    document.onkeydown = function(e) {
-        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-            return false;
-        }
+    // --- [ قـسـم الـبـصـمـات الـمـوثـوقـة VIP ] ---
+    // هنا تضع الـ IDs التي تريد تفعيلها تلقائياً بدون كود
+    const vipDevices = {
+        "b2c8cdd53aba1104": { status: 1, expireAt: "2027-01-01" }, 
+        "ضع_هنا_ID_جهاز_آخر": { status: 1, expireAt: "2026-12-30" }
     };
 
-    // جلب البصمة من التطبيق، وفي حال تأخرت نضع قيمة افتراضية
     let deviceId = "UNKNOWN_DEVICE";
 
-    // دالة لاستقبال الـ ID من الجافا (يتم استدعاؤها من التطبيق)
+    // دالة استقبال الـ ID من الجافا وتدشين الفحص التلقائي
     function setDeviceId(id) {
         deviceId = id;
         document.getElementById('display-id').innerText = deviceId;
+        checkVipStatus(id); // فحص إذا كان الجهاز VIP فور التعرف عليه
     }
 
-    // محاكاة قاعدة البيانات (اربطها لاحقاً بملف JSON خارجي)
-    const mockDatabase = {
-        "HAMZA-VIP-1M": { status: 1, durationDays: 30 },
-        "HAMZA-VIP-1Y": { status: 1, durationDays: 365 },
-        "BANNED-USER": { status: 2, durationDays: 0 },
-        "TEST-1D": { status: 1, durationDays: 1 }
-    };
-
-    function pasteFromClipboard() {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-            navigator.clipboard.readText().then(text => {
-                document.getElementById('subCode').value = text.trim();
-            }).catch(err => alert("يرجى كتابة الكود يدوياً، لا توجد صلاحية."));
-        } else {
-            alert("ميزة اللصق غير مدعومة في جهازك، يرجى كتابة الكود.");
+    // فحص البصمة في قائمة الـ VIP
+    function checkVipStatus(id) {
+        if (vipDevices[id]) {
+            const data = vipDevices[id];
+            const expiry = new Date(data.expireAt).getTime();
+            
+            if (expiry > Date.now()) {
+                showLoading("تم التعرف على جهازك (VIP)... جاري الدخول");
+                setTimeout(() => {
+                    window.location.href = `app://success_auth?code=VIP_AUTO&expiry_time=${expiry}&device_id=${id}`;
+                }, 1500);
+            }
         }
     }
+
+    const mockDatabase = {
+        "HAMZA-VIP-1M": { status: 1, durationDays: 30 },
+        "HAMZA-VIP-1Y": { status: 1, durationDays: 365 }
+    };
 
     function validateLogin() {
         const code = document.getElementById('subCode').value.trim();
-        const errorDiv = document.getElementById('error-msg');
-        const btn = document.getElementById('activateBtn');
-
-        if (deviceId === "UNKNOWN_DEVICE" || deviceId === "") {
-            showError("لم يتم التعرف على بصمة الجهاز! يرجى التأكد من الصلاحيات.");
-            return;
-        }
-
-        if (code === "") {
-            showError("الرجاء إدخال الكود أولاً.");
-            return;
-        }
-
-        if (!mockDatabase[code]) {
-            showError("الكود غير صحيح أو غير موجود بالخادم!");
+        if (deviceId === "UNKNOWN_DEVICE") {
+            showError("انتظر جلب بصمة الجهاز...");
             return;
         }
 
         const data = mockDatabase[code];
-
-        if (data.status === 2) {
-            window.location.href = "app://ban_user";
-            showError("هذا الكود محظور نهائياً!");
+        if (!data) {
+            showError("الكود غير صحيح!");
             return;
         }
 
-        // فحص ربط الجهاز لمنع مشاركة الأكواد
         let savedOwner = localStorage.getItem("OWNER_" + code);
         if (savedOwner && savedOwner !== deviceId) {
-            showError("⛔ الكود مرتبط بجهاز آخر مسبقاً ولا يمكن نقله!");
+            showError("⛔ الكود مرتبط بجهاز آخر!");
             return;
         }
 
-        if (data.status === 1) {
-            btn.innerText = "جاري التفعيل...";
-            btn.style.opacity = "0.7";
-            
-            localStorage.setItem("OWNER_" + code, deviceId);
-            const expiry = Date.now() + (data.durationDays * 24 * 60 * 60 * 1000); 
-            
-            // إرسال البيانات للتطبيق (الكود + الوقت + البصمة للحماية المزدوجة)
-            setTimeout(() => {
-                window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}&device_id=${deviceId}`;
-            }, 800);
-        }
+        showLoading("جاري تفعيل الحساب...");
+        localStorage.setItem("OWNER_" + code, deviceId);
+        const expiry = Date.now() + (data.durationDays * 24 * 60 * 60 * 1000);
+        
+        setTimeout(() => {
+            window.location.href = `app://success_auth?code=${code}&expiry_time=${expiry}&device_id=${deviceId}`;
+        }, 1000);
+    }
+
+    function showLoading(msg) {
+        document.getElementById('authUI').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('statusText').innerText = msg;
+        document.getElementById('error-msg').style.display = 'none';
     }
 
     function showError(msg) {
         const errorDiv = document.getElementById('error-msg');
         errorDiv.innerText = msg;
         errorDiv.style.display = 'block';
-        
-        // تأثير اهتزاز للخطأ
-        const container = document.querySelector('.container');
-        container.style.transform = 'translateX(-5px)';
-        setTimeout(() => container.style.transform = 'translateX(5px)', 50);
-        setTimeout(() => container.style.transform = 'translateX(-5px)', 100);
-        setTimeout(() => container.style.transform = 'translateX(0)', 150);
+    }
+
+    function pasteFromClipboard() {
+        navigator.clipboard.readText().then(text => {
+            document.getElementById('subCode').value = text.trim();
+        }).catch(() => alert("اكتب الكود يدوياً لعدم وجود صلاحية."));
     }
 </script>
-
 </body>
 </html>

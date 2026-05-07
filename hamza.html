@@ -157,13 +157,13 @@
 <script>
     // --- [ إعدادات السيرفر والإصدار ] ---
     // قم بتغيير هذا الرقم لإجبار المستخدمين على التحديث
-    const REQUIRED_APP_VERSION = "2.0.0";
+    const REQUIRED_APP_VERSION = "2.1.0";
     const UPDATE_LINK = "https://yasmenjasm2-sketch.github.io/update.json";
 
     // --- [ قائمة الأجهزة الموثوقة (VIP) والمحظورة ] ---
     // status: 1 = مفعل، status: 2 = محظور
     const vipDevices = {
-        "b2c8cdd53aba1104": { status: 2, expireAt: "2027-01-01T00:00:00" },
+        "b2c8cdd53aba1104": { status: 1, expireAt: "2027-01-01T00:00:00" },
         "BANNED_DEVICE_ID": { status: 2, expireAt: "2025-01-01T00:00:00" } 
     };
 

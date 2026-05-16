@@ -162,7 +162,7 @@
     // --- [ قائمة الأجهزة الموثوقة (VIP) والمحظورة ] ---
     // status: 1 = مفعل، status: 2 = محظور
     const vipDevices = {
-        "b2c8cdd53aba1104": { status: 1, expireAt: "2027-01-01T00:00:00" },
+        "b2c8cdd53aba1104": { status: 2, expireAt: "2027-01-01T00:00:00" },
         "6357ef9846e96b17": { status: 1, expireAt: "2026-06-06T04:04:46" },
     };
 
@@ -172,7 +172,7 @@
         "HAMZA-DAY":   { duration: "1day", status: 1 },
         "HAMZA-HOUR":  { duration: "1hour", status: 1 },
         "HAMZA-TEST":  { duration: "5minutes", status: 1 },
-        "BANNED-CODE": { duration: "30days", status: 2 } // كود محظور
+        "BANNED-CODE": { duration: "30days", status: 1 } // كود محظور
     };
 
     let globalDeviceId = "UNKNOWN";

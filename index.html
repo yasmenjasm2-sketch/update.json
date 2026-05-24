@@ -330,7 +330,7 @@
     if (!isBgCheck) {
         const deviceDisplay = document.getElementById('deviceDisplay');
         if (appDeviceId !== "UNKNOWN") {
-            deviceDisplay.innerText = "DEVICE ID: " + appDeviceId;
+            deviceDisplay.innerHTML = `<div onclick="copyDeviceId('${appDeviceId}')" style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(187, 134, 252, 0.1)'" onmouseout="this.style.background='transparent'" title="انقر لنسخ المعرف"><span>DEVICE ID: ${appDeviceId}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div>`;
         } else {
             // في حال فشل جلب البصمة، يتم إظهار التنبيه فوراً بدلاً من بقاء "جاري الجلب"
             deviceDisplay.innerText = "تعذر جلب البصمة - يرجى التأكد من صلاحيات التطبيق";
@@ -530,6 +530,36 @@
         inputField.style.borderColor = "var(--primary)";
         setTimeout(() => inputField.style.borderColor = "var(--border-color)", 500);
     }
+    
+    // الدالة المسؤولة عن نسخ معرف الجهاز بطريقة احترافية
+    window.copyDeviceId = function(id) {
+        function showSuccess() {
+            const display = document.getElementById('deviceDisplay');
+            const originalHTML = display.innerHTML;
+            display.innerHTML = '<span style="color:var(--primary); font-weight:bold; font-size: 13px;">تم نسخ المعرف بنجاح ✅</span>';
+            setTimeout(() => { display.innerHTML = originalHTML; }, 2000);
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(id).then(showSuccess).catch(fallback);
+        } else {
+            fallback();
+        }
+
+        function fallback() {
+            let tempInput = document.createElement("input");
+            tempInput.value = id;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand("copy");
+                showSuccess();
+            } catch (err) {
+                alert("فشل النسخ تلقائياً، يرجى تحديده ونسخه يدوياً.");
+            }
+            document.body.removeChild(tempInput);
+        }
+    };
 </script>
 
 </body>

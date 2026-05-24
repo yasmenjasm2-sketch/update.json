@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الإحالة | Hagan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* إعدادات المتغيرات والألوان (Dark Mode & Neon) */
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --secondary-gradient: linear-gradient(135deg, #10b981, #3b82f6);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* حاوية التصميم الزجاجي */
+        .dashboard-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--glass-shadow);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* رأس اللوحة */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        /* قسم الإحصائيات */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-value { font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
+        .stat-label { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
+
+        /* قسم رابط الإحالة */
+        .referral-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .referral-section h3 { margin-bottom: 20px; font-size: 1.5rem; }
+
+        .link-box {
+            display: flex;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .link-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            padding: 15px 20px;
+            font-size: 1rem;
+            outline: none;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .copy-btn {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn:hover { opacity: 0.9; }
+
+        /* أزرار المشاركة */
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .share-btn {
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            text-decoration: none;
+        }
+
+        .share-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .btn-tg { background: linear-gradient(135deg, #0088cc, #00bfff); }
+        .btn-wa { background: linear-gradient(135deg, #25D366, #128C7E); }
+
+        /* إشعارات النسخ */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #10b981;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        /* تجاوب الشاشة (Responsive) */
+        @media (max-width: 600px) {
+            .dashboard-container { padding: 20px; }
+            .link-box { flex-direction: column; }
+            .copy-btn { padding: 15px; justify-content: center; }
+            .share-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>نظام الإحالة الذكي</h1>
+            <p>شارك رابطك الخاص واكسب النقاط والمكافآت مع كل تسجيل جديد</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fa-solid fa-users"></i>
+                <div class="stat-value" id="referralsCount">0</div>
+                <div class="stat-label">إجمالي الإحالات</div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-coins"></i>
+                <div class="stat-value" id="pointsCount">0</div>
+                <div class="stat-label">النقاط المكتسبة</div>
+            </div>
+        </div>
+
+        <div class="referral-section">
+            <h3><i class="fa-solid fa-link" style="color: #3b82f6; margin-left: 10px;"></i>رابط الإحالة الخاص بك</h3>
+            <div class="link-box">
+                <input type="text" id="referralLink" readonly value="جاري التحميل...">
+                <button class="copy-btn" onclick="copyToClipboard()">
+                    <i class="fa-regular fa-copy"></i> نسخ الرابط
+                </button>
+            </div>
+
+            <div class="share-buttons">
+                <a href="#" class="share-btn btn-tg" id="shareTg" target="_blank">
+                    <i class="fa-brands fa-telegram"></i> مشاركة عبر تيليجرام
+                </a>
+                <a href="#" class="share-btn btn-wa" id="shareWa" target="_blank">
+                    <i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"><i class="fa-solid fa-check-circle"></i> تم نسخ الرابط بنجاح!</div>
+
+    <script type="module">
+        // استدعاء مكتبات Firebase إصدار 10
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // إعدادات قاعدة البيانات الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3eRFHDhOtKlli3KA8vUyE1--C5F47UYw",
+            databaseURL: "https://chatapi-1ca71-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "chatapi-1ca71",
+            storageBucket: "chatapi-1ca71.firebasestorage.app"
+        };
+
+        // تهيئة التطبيق وقاعدة البيانات
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // نظام ذكي لإنشاء معرف مستخدم وهمي للاختبار إذا لم يكن مسجلاً الدخول
+        function getOrInitializeUser() {
+            let userId = localStorage.getItem('hagan_user_id');
+            if (!userId) {
+                // إنشاء ID عشوائي وكود إحالة للمستخدم الجديد
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('hagan_user_id', userId);
+                
+                const initialData = {
+                    referralCode: 'REF-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                    referralsCount: 0,
+                    points: 0,
+                    createdAt: Date.now()
+                };
+                
+                // حفظ البيانات في Firebase
+                set(ref(db, 'users/' + userId), initialData);
+            }
+            return userId;
+        }
+
+        const currentUserId = getOrInitializeUser();
+        const userRef = ref(db, 'users/' + currentUserId);
+
+        // جلب البيانات لحظياً (Real-time Listener)
+        onValue(userRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                // تحديث واجهة المستخدم
+                document.getElementById('referralsCount').innerText = data.referralsCount || 0;
+                document.getElementById('pointsCount').innerText = data.points || 0;
+                
+                // تجهيز الرابط (يمكنك تغيير النطاق الأساسي لاحقاً)
+                const baseUrl = window.location.origin + window.location.pathname;
+                const fullLink = `${baseUrl}?ref=${data.referralCode}`;
+                document.getElementById('referralLink').value = fullLink;
+
+                // تحديث أزرار المشاركة
+                const shareText = encodeURIComponent("انضم إلينا في تطبيق Hagan عبر رابطي الخاص واحصل على مكافأة!");
+                const linkEncoded = encodeURIComponent(fullLink);
+                
+                document.getElementById('shareTg').href = `https://t.me/share/url?url=${linkEncoded}&text=${shareText}`;
+                document.getElementById('shareWa').href = `https://api.whatsapp.com/send?text=${shareText} ${linkEncoded}`;
+            }
+        });
+
+        // دالة لنسخ الرابط
+        window.copyToClipboard = function() {
+            const linkInput = document.getElementById('referralLink');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // للهواتف المحمولة
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                showToast();
+            });
+        }
+
+        // إظهار إشعار النسخ
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+    </script>
+</body>
+</html>

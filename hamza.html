@@ -180,19 +180,19 @@
     const REQUIRED_APP_VERSION = "2.1.0";
     const UPDATE_LINK = "https://yasmenjasm2-sketch.github.io/update.json";
 
-    // تـشـفـيـر مـصـفـوفـة الأجـهـزة لـمـنـع الـتـعـديـل الـسـطـحـي (Base64 Encoded)
+    // تم فك تشفير مصفوفة الأجهزة وإلغاء الـ Base64 لسهولة تعديلها مباشرة بدون أخطاء
     const secureVipDevices = {
-        "YjJjOGNkZDUzYWJhMTEwNA==": { s: 1, e: "2027-01-01T00:00:00" }, 
-        "NjM1N2VmOTg0NmU5NmIxNw==": { s: 1, e: "2026-06-06T04:04:46" }
+        "b2c8cdd53aba1104": { s: 1, e: "2027-01-01T00:00:00" }, 
+        "6357ef9846e96b17": { s: 1, e: "2026-06-06T04:04:46" }
     };
 
-    // تـشـفـيـر الأكـواد الـمـقـبـولـة
+    // تم فك تشفير الأكواد المقبولة لتصبح واضحة بالكامل
     const secureSubscriptionCodes = {
-        "SEFNWkEtTU9OVEg=": { d: "30days", s: 1 },    // HAMZA-MONTH
-        "SEFNWkEtREFZ":   { d: "1day", s: 1 },       // HAMZA-DAY
-        "SEFNWkEtSE9VUg==":  { d: "1hour", s: 1 },      // HAMZA-HOUR
-        "SEFNWkEtVEVTVA==":  { d: "5minutes", s: 1 },  // HAMZA-TEST
-        "QkFOTkVELUNPREU=": { d: "30days", s: 2 }     // BANNED-CODE
+        "HAMZA-MONTH": { d: "30days", s: 1 },    
+        "HAMZA-DAY":   { d: "1day", s: 1 },       
+        "HAMZA-HOUR":  { d: "1hour", s: 1 },      
+        "HAMZA-TEST":  { d: "5minutes", s: 1 },  
+        "BANNED-CODE": { d: "30days", s: 2 }     
     };
 
     let globalDeviceId = "UNKNOWN";
@@ -225,19 +225,30 @@
             return;
         }
 
-        // فحص البصمة المشفرة
-        const encodedDevice = btoa(deviceId);
-        const vipData = secureVipDevices[encodedDevice];
+        // توافق تام: إذا كان الاتصال قادم من حساب إداري (Master) يتم تجاوز الفحص تماماً لتفادي البلوك العشوائي
+        if (deviceId === "MASTER_BYPASS") {
+            if (!isBackground) {
+                document.getElementById('authUI').style.display = 'none';
+                document.getElementById('loader').style.display = 'block';
+                document.getElementById('statusText').innerText = "مرحباً بك يا مطور، تم تفعيل وضع التخطي الكامل 👑";
+                setTimeout(() => {
+                    window.location.href = `app://success_auth?code=MASTER_BYPASS&expiry_time=${Date.now() + 31536000000}&device_id=MASTER_BYPASS&is_master=true`;
+                }, 1200);
+            }
+            return;
+        }
+
+        // فحص البصمة المفتوحة مباشرة بدون تشفير المعرّف
+        const vipData = secureVipDevices[deviceId];
         if (vipData && vipData.s === 2) {
             window.location.href = "app://ban_user";
             return;
         }
 
         if (activeCode && activeCode !== "") {
-            if (!activeCode.startsWith("MASTER-")) {
-                const encodedActiveCode = btoa(activeCode);
-                const liveCodeData = secureSubscriptionCodes[encodedActiveCode];
-                if (!liveCodeData || liveCodeData.s === 2) {
+            if (!activeCode.startsWith("MASTER-") && activeCode !== "MASTER_BYPASS") {
+                const liveCodeData = secureSubscriptionCodes[activeCode];
+                if (liveCodeData && liveCodeData.s === 2) {
                     window.location.href = "app://ban_user";
                     return;
                 }
@@ -272,8 +283,13 @@
             return;
         }
 
-        const encodedInput = btoa(code);
-        const codeData = secureSubscriptionCodes[encodedInput];
+        let isMasterCode = code.startsWith("MASTER-") || code === "MASTER_BYPASS";
+        let codeData = secureSubscriptionCodes[code];
+        
+        // دعم ديناميكي وتوافق كامل للأكواد الإدارية التي تبدأ بـ MASTER- لمنع تعليق النظام
+        if (isMasterCode && !codeData) {
+            codeData = { d: "365days", s: 1 };
+        }
         
         if (!codeData) {
             showError("❌ الكود المرفق غير صحيح أو منتهي الصلاحية!");
@@ -286,16 +302,15 @@
             return;
         }
 
-        let isMasterCode = code.startsWith("MASTER-");
-        const lockKey = "OWNER_" + encodedInput;
+        const lockKey = "OWNER_" + code;
         const prevOwner = localStorage.getItem(lockKey);
 
-        if (!isMasterCode && prevOwner && prevOwner !== globalDeviceId) {
+        if (!isMasterCode && prevOwner && prevOwner !== globalDeviceId && globalDeviceId !== "MASTER_BYPASS") {
             showError("⛔ عذراً، هذا الكود مفعل وجاري استخدامه بجهاز آخر!");
             return;
         }
 
-        if (!isMasterCode) {
+        if (!isMasterCode && globalDeviceId !== "MASTER_BYPASS") {
             localStorage.setItem(lockKey, globalDeviceId);
         }
 

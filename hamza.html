@@ -120,34 +120,80 @@
         }
         button.main-btn:active { transform: scale(0.97); filter: brightness(1.2); }
 
-        /* إضافة تنسيقات زر ورقم الواتساب الاحترافية */
-        .whatsapp-section { 
-            display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 5px; 
-        }
-        .wa-btn {
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; padding: 14px; border-radius: 16px;
+        /* تعديلات زر الواتساب الاحترافي */
+        .whatsapp-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.2s ease;
             background: linear-gradient(135deg, #25D366, #128C7E);
-            color: #FFFFFF; font-weight: 700; font-size: 15px; text-decoration: none;
+            color: white;
+            border: none;
             box-shadow: 0 8px 20px rgba(37, 211, 102, 0.25);
-            transition: all 0.2s ease; box-sizing: border-box;
+            margin-top: 5px;
+            box-sizing: border-box;
         }
-        .wa-btn:active { transform: scale(0.96); filter: brightness(1.1); }
-        .wa-number-container {
-            display: flex; align-items: center; justify-content: space-between;
-            background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3);
-            padding: 12px 16px; border-radius: 16px; cursor: pointer;
-            transition: all 0.2s ease; box-sizing: border-box;
-        }
-        .wa-number-container:active { transform: scale(0.96); background: rgba(37, 211, 102, 0.2); }
-        .wa-number { color: #FFFFFF; font-family: monospace; font-size: 16px; font-weight: 700; letter-spacing: 1.5px; }
-        .copy-hint { font-size: 12.5px; color: #25D366; font-weight: 700; transition: all 0.3s ease; }
+        .whatsapp-btn:active { transform: scale(0.96); filter: brightness(1.1); box-shadow: 0 4px 10px rgba(37, 211, 102, 0.2); }
+        .whatsapp-btn svg { width: 22px; height: 22px; fill: currentColor; }
 
         #error { color: var(--error); font-size: 13px; margin-top: 16px; display: none;
             padding: 12px; border-radius: 14px; background: rgba(255, 71, 87, 0.15); font-weight: 600;
             border: 1px solid rgba(255, 71, 87, 0.3); animation: shake 0.4s ease; }
             
-        .device-info { font-size: 12px; color: var(--text-muted); margin-top: 24px; font-family: monospace; opacity: 0.6; letter-spacing: 0.5px;}
+        /* تعديلات معرّف الجهاز القابل للنسخ */
+        .device-info-container {
+            margin-top: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(157, 78, 221, 0.1);
+            padding: 10px 16px;
+            border-radius: 14px;
+            border: 1px dashed var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .device-info-container:hover { background: rgba(157, 78, 221, 0.2); border-color: var(--primary); }
+        .device-info-container:active { transform: scale(0.95); }
+        .device-text { font-size: 12px; color: var(--text-muted); font-family: monospace; letter-spacing: 0.5px; }
+        .copy-icon { font-size: 14px; opacity: 0.8; }
+        
+        .tooltip {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 8px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, top 0.2s ease;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(157, 78, 221, 0.4);
+        }
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%; left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--primary) transparent transparent transparent;
+        }
+        .tooltip.show { opacity: 1; top: -40px; }
 
         .loader {
             display: none; width: 32px; height: 32px;
@@ -177,34 +223,31 @@
 
         <button class="main-btn" onclick="login()">تفعيل النظام الآن</button>
 
-        <!-- قسم الدعم الفني الجديد لواتساب -->
-        <div class="whatsapp-section">
-            <a href="https://wa.me/905424678123" target="_blank" class="wa-btn">
-                الدعم الفني عبر واتساب 💬
-            </a>
-            <div class="wa-number-container" onclick="copyWaNumber()">
-                <span class="wa-number" dir="ltr">+90 542 467 81 23</span>
-                <span class="copy-hint" id="copyHint">انسخ الرقم 📋</span>
-            </div>
-        </div>
+        <a href="https://wa.me/905424678123" target="_blank" class="whatsapp-btn">
+            <svg viewBox="0 0 24 24"><path d="M12.013 0C5.385 0 0 5.378 0 12.006c0 2.115.548 4.17 1.593 5.986L.045 23.957l6.126-1.602c1.737.95 3.69 1.45 5.842 1.45 6.627 0 12.013-5.378 12.013-12.006S17.653 0 12.013 0zm4.248 17.202c-.173.486-1.002.934-1.428 1.003-.424.07-.942.105-1.57-.098-.795-.256-2.222-.888-4.238-2.903-2.015-2.014-2.656-3.447-2.91-4.24-.202-.63-.166-1.15.097-1.57.068-.425.517-1.254 1.002-1.427.24-.088.5-.028.718.17l.955 1.13c.204.24.238.56.096.84-.047.093-.243.344-.45.552-.206.21-.424.434-.236.758.19.324.846 1.393 1.914 2.355.952.86 1.996 1.5 2.32 1.69.324.19.648.156.858-.05.21-.208.462-.404.554-.5.28-.29.6-.255.84-.05l1.13.954c.198.217.258.477.17.717z"/></svg>
+            تواصل عبر واتساب
+        </a>
     </div>
 
     <div class="loader" id="loader"></div>
     <div id="error" class="error"></div>
-    <div class="device-info" id="deviceDisplay">جاري الاتصال بالسيرفر الداخلي...</div>
+    
+    <div class="device-info-container" id="deviceContainer" onclick="copyDeviceId()">
+        <div class="tooltip" id="copyTooltip">تم النسخ! ✓</div>
+        <span class="device-text" id="deviceDisplay">جاري الاتصال بالسيرفر...</span>
+        <span class="copy-icon">📋</span>
+    </div>
 </div>
 
 <script>
     const REQUIRED_APP_VERSION = "2.1.0";
     const UPDATE_LINK = "https://yasmenjasm2-sketch.github.io/update.json";
 
-    // تم فك تشفير مصفوفة الأجهزة وإلغاء الـ Base64 لسهولة تعديلها مباشرة بدون أخطاء
     const secureVipDevices = {
         "b2c8cdd53aba1104": { s: 1, e: "2027-01-01T00:00:00" }, 
         "6357ef9846e96b17": { s: 1, e: "2026-06-06T04:04:46" }
     };
 
-    // تم فك تشفير الأكواد المقبولة لتصبح واضحة بالكامل
     const secureSubscriptionCodes = {
         "HAMZA-MONTH": { d: "30days", s: 1 },    
         "HAMZA-DAY":   { d: "1day", s: 1 },       
@@ -231,6 +274,37 @@
         err.style.display = 'block';
     }
 
+    // دالة النسخ الاحترافية
+    function copyDeviceId() {
+        if (globalDeviceId === "UNKNOWN" || globalDeviceId === "جاري الاتصال بالسيرفر...") return;
+        
+        // محاولة النسخ
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(globalDeviceId).then(() => {
+                showTooltip();
+            });
+        } else {
+            // بديل للمتصفحات القديمة أو الويب فيو
+            const textArea = document.createElement("textarea");
+            textArea.value = globalDeviceId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showTooltip();
+            } catch (err) { }
+            document.body.removeChild(textArea);
+        }
+    }
+
+    function showTooltip() {
+        const tooltip = document.getElementById('copyTooltip');
+        tooltip.classList.add('show');
+        setTimeout(() => {
+            tooltip.classList.remove('show');
+        }, 2000);
+    }
+
     function verifySession(deviceId, appVersion, activeCode, isBackground) {
         globalDeviceId = deviceId;
         
@@ -243,7 +317,6 @@
             return;
         }
 
-        // توافق تام: إذا كان الاتصال قادم من حساب إداري (Master) يتم تجاوز الفحص تماماً لتفادي البلوك العشوائي
         if (deviceId === "MASTER_BYPASS") {
             if (!isBackground) {
                 document.getElementById('authUI').style.display = 'none';
@@ -256,7 +329,6 @@
             return;
         }
 
-        // فحص البصمة المفتوحة مباشرة بدون تشفير المعرّف
         const vipData = secureVipDevices[deviceId];
         if (vipData && vipData.s === 2) {
             window.location.href = "app://ban_user";
@@ -304,7 +376,6 @@
         let isMasterCode = code.startsWith("MASTER-") || code === "MASTER_BYPASS";
         let codeData = secureSubscriptionCodes[code];
         
-        // دعم ديناميكي وتوافق كامل للأكواد الإدارية التي تبدأ بـ MASTER- لمنع تعليق النظام
         if (isMasterCode && !codeData) {
             codeData = { d: "365days", s: 1 };
         }
@@ -353,22 +424,6 @@
                 alert("يرجى لصق الكود يدوياً لعدم اكتمال صلاحيات متصفح النظام الداخلي.");
             }
         } catch (e) { alert("فشلت عملية اللصق التلقائي."); }
-    }
-
-    // دالة نسخ رقم الواتساب بضغطة زر
-    function copyWaNumber() {
-        const number = "+905424678123";
-        navigator.clipboard.writeText(number).then(() => {
-            const hint = document.getElementById('copyHint');
-            hint.innerText = "تم النسخ! ✔️";
-            hint.style.color = "#FFFFFF";
-            setTimeout(() => { 
-                hint.innerText = "انسخ الرقم 📋"; 
-                hint.style.color = "#25D366";
-            }, 2000);
-        }).catch(() => {
-            alert("فشل النسخ التلقائي، يرجى نسخ الرقم يدوياً: " + number);
-        });
     }
 </script>
 </body>

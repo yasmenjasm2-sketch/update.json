@@ -120,15 +120,28 @@
         }
         button.main-btn:active { transform: scale(0.97); filter: brightness(1.2); }
 
-        .action-buttons { display: flex; gap: 12px; width: 100%; margin-top: 5px; }
-        .action-btn {
-            flex: 1; padding: 14px 10px; border-radius: 16px;
-            font-weight: 700; font-size: 14px; text-decoration: none;
-            transition: all 0.2s ease; background: rgba(157, 78, 221, 0.12);
-            color: var(--text-muted); border: 1.5px solid var(--border-color);
-            text-align: center;
+        /* إضافة تنسيقات زر ورقم الواتساب الاحترافية */
+        .whatsapp-section { 
+            display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 5px; 
         }
-        .action-btn:active { transform: scale(0.96); background: var(--primary); color: white; border-color: var(--primary); }
+        .wa-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; padding: 14px; border-radius: 16px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: #FFFFFF; font-weight: 700; font-size: 15px; text-decoration: none;
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.25);
+            transition: all 0.2s ease; box-sizing: border-box;
+        }
+        .wa-btn:active { transform: scale(0.96); filter: brightness(1.1); }
+        .wa-number-container {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3);
+            padding: 12px 16px; border-radius: 16px; cursor: pointer;
+            transition: all 0.2s ease; box-sizing: border-box;
+        }
+        .wa-number-container:active { transform: scale(0.96); background: rgba(37, 211, 102, 0.2); }
+        .wa-number { color: #FFFFFF; font-family: monospace; font-size: 16px; font-weight: 700; letter-spacing: 1.5px; }
+        .copy-hint { font-size: 12.5px; color: #25D366; font-weight: 700; transition: all 0.3s ease; }
 
         #error { color: var(--error); font-size: 13px; margin-top: 16px; display: none;
             padding: 12px; border-radius: 14px; background: rgba(255, 71, 87, 0.15); font-weight: 600;
@@ -164,10 +177,15 @@
 
         <button class="main-btn" onclick="login()">تفعيل النظام الآن</button>
 
-        <div class="action-buttons">
-            <a href="#" onclick="window.location.href = 'https://wa.me/905424678123'; return false;" class="action-btn">
-                الدعم الفني 💬
+        <!-- قسم الدعم الفني الجديد لواتساب -->
+        <div class="whatsapp-section">
+            <a href="https://wa.me/905424678123" target="_blank" class="wa-btn">
+                الدعم الفني عبر واتساب 💬
             </a>
+            <div class="wa-number-container" onclick="copyWaNumber()">
+                <span class="wa-number" dir="ltr">+90 542 467 81 23</span>
+                <span class="copy-hint" id="copyHint">انسخ الرقم 📋</span>
+            </div>
         </div>
     </div>
 
@@ -335,6 +353,22 @@
                 alert("يرجى لصق الكود يدوياً لعدم اكتمال صلاحيات متصفح النظام الداخلي.");
             }
         } catch (e) { alert("فشلت عملية اللصق التلقائي."); }
+    }
+
+    // دالة نسخ رقم الواتساب بضغطة زر
+    function copyWaNumber() {
+        const number = "+905424678123";
+        navigator.clipboard.writeText(number).then(() => {
+            const hint = document.getElementById('copyHint');
+            hint.innerText = "تم النسخ! ✔️";
+            hint.style.color = "#FFFFFF";
+            setTimeout(() => { 
+                hint.innerText = "انسخ الرقم 📋"; 
+                hint.style.color = "#25D366";
+            }, 2000);
+        }).catch(() => {
+            alert("فشل النسخ التلقائي، يرجى نسخ الرقم يدوياً: " + number);
+        });
     }
 </script>
 </body>

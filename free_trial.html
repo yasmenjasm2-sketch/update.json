@@ -17,7 +17,7 @@
             --neon-glow: 0 0 20px rgba(255, 215, 0, 0.4);
         }
 
-        /* حظر التحديد واللمس المطول والارتداد لتبدو شاشة تطبيق حقيقية */
+        /* حظر التحديد واللمس المطول والارتداد لتبدو شاشة تطبيق حقيقية تماماً */
         * {
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
@@ -40,7 +40,7 @@
             margin: 0;
             padding: 20px 0;
             justify-content: center;
-            overscroll-behavior: none; /* منع سحب وإعادة تحميل الصفحة كالمواقع */
+            overscroll-behavior: none; /* منع سحب وإعادة تحميل الشاشة */
             overflow: hidden;
         }
 
@@ -89,6 +89,7 @@
             box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
         }
         button.main-btn:active { transform: scale(0.97); filter: brightness(1.1); }
+        button.main-btn:disabled { filter: grayscale(0.5); opacity: 0.6; cursor: not-allowed; }
 
         .loading-container { display: none; margin-top: 10px; }
         
@@ -135,11 +136,11 @@
         </svg>
     </div>
     
-    <h2>التجربة المجانية</h2>
-    <p class="subtitle" id="statusText">احصل على وصول مجاني ومؤقت لاختبار كافة مميزات التطبيق بكل أمان.</p>
+    <h2 id="mainTitle">التجربة المجانية</h2>
+    <p class="subtitle" id="statusText">جاري فحص حالة الجهاز والاتصال الآمن بقاعدة البيانات...</p>
 
-    <div id="startUI">
-        <button class="main-btn" onclick="startFreeTrial()">الدخول إلى التطبيق بشكل مجاني</button>
+    <div id="startUI" style="display: none;">
+        <button class="main-btn" id="actionBtn" onclick="startFreeTrial()">الدخول إلى التطبيق بشكل مجاني</button>
         <span onclick="goBack()" class="back-btn">العودة لتسجيل الدخول</span>
     </div>
 
@@ -162,22 +163,28 @@
 
 <script>
     let globalDeviceId = "UNKNOWN";
+    let isCheckedFromDB = false;
 
-    // دالة لاستقبال معرف الجهاز من التطبيق
+    // دالة مرنة لاستقبال البيانات من التطبيق أو واجهة الجافا الأصلية
     function verifySession(deviceId, appVersion, activeCode, isBackground) {
         if (deviceId && deviceId !== "UNKNOWN") {
             globalDeviceId = deviceId;
             localStorage.setItem("VIP_DEVICE_ID", deviceId);
+            
+            // بمجرد الحصول على المعرف، نقوم بفحصه فوراً في قاعدة البيانات لمنع التلاعب
+            if (!isCheckedFromDB) {
+                checkDeviceSubscriptionInDB(deviceId);
+            }
         }
     }
 
-    // تعزيز الأمان فور تحميل الصفحة
+    // تعزيز الحماية والأمان فور تشغيل الملف
     window.onload = function() {
-        // حظر اللمس المطول والقوائم المنبثقة نهائياً لمنع كشف الويب
+        // حظر القوائم المنبثقة واللمس المطول نهائياً لمنع كشف الويب
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('selectstart', event => event.preventDefault());
         
-        // منع اختصارات لوحة المفاتيح والـ DevTools تماماً كحماية إضافية
+        // حظر اختصارات لوحة المفاتيح وأدوات الفحص (DevTools)
         document.addEventListener('keydown', function(e) {
             if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) {
                 e.preventDefault();
@@ -185,7 +192,7 @@
             }
         });
 
-        // استدعاء مباشر ومزدوج للجسر لجلب المعرف في حال توفره فوراً
+        // محاولة جلب الـ ID بشكل مباشر وفوري عبر جسر الأندرويد لسرعة الاستجابة
         try {
             if (window.AndroidBridge && typeof window.AndroidBridge.getDeviceId === 'function') {
                 let id = window.AndroidBridge.getDeviceId();
@@ -193,41 +200,111 @@
             }
         } catch(e) {}
 
-        let savedId = localStorage.getItem("VIP_DEVICE_ID");
-        if(savedId && globalDeviceId === "UNKNOWN") globalDeviceId = savedId;
+        // إذا لم يستجب الجسر فوراً، نتحقق بعد نصف ثانية للتأكد من حالة الفحص
+        setTimeout(() => {
+            if (globalDeviceId === "UNKNOWN") {
+                let savedId = localStorage.getItem("VIP_DEVICE_ID");
+                if (savedId) {
+                    globalDeviceId = savedId;
+                    checkDeviceSubscriptionInDB(savedId);
+                } else {
+                    // إذا كان أول مرة أو تم مسح البيانات بالكامل ولم يرسل التطبيق معرفاً بعد
+                    enableNewTrialUI();
+                }
+            }
+        }, 600);
+    }
+
+    // وظيفة فحص الاشتراك داخل قاعدة البيانات للتعرف على الجهاز حتى بعد مسح البيانات
+    function checkDeviceSubscriptionInDB(deviceId) {
+        isCheckedFromDB = true;
+        
+        // نقوم بإرسال طلب فحص وهمي ذكي للتطبيق للتحقق من Firebase أو SQLite
+        // التطبيق يستقبل الإشارة عبر الـ WebView ويقوم بالرد
+        window.location.href = `app://check_trial_status?device_id=${deviceId}`;
+        
+        /* ملاحظة برمجية: يمكنك ربط هذه الدالة بـ Fetch API إذا كان لديك رابط خادم مباشر، 
+           أو الاعتماد على كود الأندرويد في التطبيق للرد على الصفحة عبر دالة (setTrialStatusFromApp) أدناه:
+        */
+        
+        // كحل حماية احتياطي متكامل بالصفحة (FallBack):
+        // إذا لم يرد التطبيق في غضون ثانية، نعتبره جهازاً جديداً ونعرض واجهة الـ 10 ثوانٍ
+        setTimeout(() => {
+            if (document.getElementById('statusText').innerText.includes("جاري فحص")) {
+                enableNewTrialUI();
+            }
+        }, 1200);
+    }
+
+    // دالة يستدعيها مطور الأندرويد من الكود الأصلي ليعلم الويب بحالة الجهاز المخزنة في Firebase
+    function setTrialStatusFromApp(isRegistered, expiryTime) {
+        if (isRegistered && expiryTime) {
+            let currentTime = Date.now();
+            if (currentTime < expiryTime) {
+                // الجهاز مفعل مسبقاً والمدة لا زالت مستمرة (تخطي العداد فوراً لمنع التلاعب بالأيام)
+                document.getElementById('startUI').style.display = 'none';
+                document.getElementById('loadingUI').style.display = 'block';
+                document.getElementById('statusText').innerText = "تم التعرف على جهازك! جاري استئناف التجربة المجانية النشطة...";
+                
+                // تحديث سريع للعداد ليعطي طابعاً احترافياً
+                updateCircleProgress(100);
+                
+                setTimeout(() => {
+                    window.location.href = `app://success_auth?code=FREE_TRIAL_VIP&expiry_time=${expiryTime}&device_id=${globalDeviceId}&save_to_db=false`;
+                }, 800);
+                return;
+            } else {
+                // التجربة انتهت بالفعل ولا يمكنه تجديدها حتى لو مسح بيانات التطبيق
+                document.getElementById('loadingUI').style.display = 'none';
+                document.getElementById('startUI').style.display = 'block';
+                document.getElementById('actionBtn').disabled = true;
+                document.getElementById('actionBtn').innerText = "انتهت الفترة التجريبية للجهاز";
+                document.getElementById('statusText').innerText = "عذراً، لقد استنفذ هذا الجهاز الفترة التجريبية المجانية المتاحة له مسبقاً.";
+                return;
+            }
+        }
+        // إذا كان الجهاز غير مسجل نهائياً في قاعدة البيانات
+        enableNewTrialUI();
+    }
+
+    function enableNewTrialUI() {
+        document.getElementById('loadingUI').style.display = 'none';
+        document.getElementById('startUI').style.display = 'block';
+        document.getElementById('statusText').innerText = "احصل على وصول مجاني ومؤقت لاختبار كافة مميزات التطبيق بكل أمان.";
+    }
+
+    function updateCircleProgress(percent) {
+        let circle = document.getElementById('progressCircle');
+        let text = document.getElementById('progressText');
+        let circleLength = 339.292;
+        text.innerText = percent + "%";
+        let offset = circleLength - (percent / 100) * circleLength;
+        circle.style.strokeDashoffset = offset;
     }
 
     function startFreeTrial() {
-        // إخفاء واجهة البداية وإظهار العداد الأنيق
         document.getElementById('startUI').style.display = 'none';
         document.getElementById('loadingUI').style.display = 'block';
         document.getElementById('statusText').innerText = "جاري تهيئة البيئة المجانية الخاصة بك...\nالرجاء الانتظار (10 ثوانٍ) وعدم إغلاق التطبيق.";
 
-        let totalTime = 10; // تعديل وقت الانتظار إلى 10 ثوانٍ بدقة
+        let totalTime = 10; // وقت الانتظار 10 ثوانٍ
         let timeLeft = totalTime;
-        let circle = document.getElementById('progressCircle');
-        let text = document.getElementById('progressText');
         
-        let circleLength = 339.292;
-
         let timerInterval = setInterval(() => {
             timeLeft--;
             
             let percent = Math.floor(((totalTime - timeLeft) / totalTime) * 100);
-            text.innerText = percent + "%";
-            
-            let offset = circleLength - (percent / 100) * circleLength;
-            circle.style.strokeDashoffset = offset;
+            updateCircleProgress(percent);
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                document.getElementById('statusText').innerText = "تم التجهيز بنجاح! جاري تحويلك...";
+                document.getElementById('statusText').innerText = "تم التجهيز بنجاح! جاري حفظ الاشتراك وتوجيهك...";
                 
                 setTimeout(() => {
-                    let expiryMs = 24 * 60 * 60 * 1000; // صلاحية الدخول المجاني (يوم واحد)
+                    let expiryMs = 24 * 60 * 60 * 1000; // صلاحية التجربة (يوم واحد مستمر في قاعدة البيانات)
                     let finalExpiry = Date.now() + expiryMs;
                     
-                    // إعادة التوجيه الفوري والآمن لداخل التطبيق مع المعرف
+                    // هنا نرسل save_to_db=true ليقوم كود الأندرويد بحفظ finalExpiry و device_id في السيرفر أو الفايربيس فوراُ
                     window.location.href = `app://success_auth?code=FREE_TRIAL_VIP&expiry_time=${finalExpiry}&device_id=${globalDeviceId}&save_to_db=true`;
                 }, 800);
             }
@@ -235,7 +312,6 @@
     }
 
     function goBack() {
-        // الرجوع الآمن بدلاً من التنقل العادي بالروابط لعدم كشف المتصفح
         window.location.href = "index.html";
     }
 </script>

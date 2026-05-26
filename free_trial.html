@@ -2,31 +2,21 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0F051D">
-    <title>تجربة مجانية | HAMZA VIP</title>
+    <title>نظام التجربة والاشتراك | HAMZA VIP</title>
     <style>
         :root {
             --bg-color: #0F051D;
             --card-bg: rgba(45, 27, 77, 0.85);
             --primary: #FFD700;
             --primary-dark: #F5A623;
+            --paid-primary: #9D4EDD;
+            --paid-dark: #6A0DAD;
             --text-main: #FFFFFF;
             --text-muted: #E0AAFF;
             --border-color: #4A306D;
-            --neon-glow: 0 0 20px rgba(255, 215, 0, 0.4);
-        }
-
-        /* حظر التحديد واللمس المطول والارتداد لتبدو شاشة تطبيق حقيقية تماماً */
-        * {
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            box-sizing: border-box;
+            --neon-glow: 0 0 20px rgba(255, 215, 0, 0.2);
         }
 
         body {
@@ -39,16 +29,16 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px 0;
+            -webkit-user-select: none;
+            user-select: none;
             justify-content: center;
-            overscroll-behavior: none; /* منع سحب وإعادة تحميل الشاشة */
-            overflow: hidden;
         }
 
         .app-container {
             background: var(--card-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            padding: 40px 24px;
+            padding: 35px 24px;
             border-radius: 30px;
             border: 2px solid var(--border-color);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), var(--neon-glow);
@@ -59,89 +49,102 @@
         }
 
         .gift-icon {
-            width: 80px; height: 80px;
+            width: 75px; height: 75px;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border-radius: 50%;
-            margin: 0 auto 20px auto;
+            margin: 0 auto 15px auto;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
             animation: pulseGlow 2s infinite alternate;
         }
-        .gift-icon svg { width: 45px; height: 45px; fill: #4A2500; }
+        .gift-icon svg { width: 40px; height: 40px; fill: #4A2500; }
 
         h2 { 
             margin: 0 0 8px 0; 
-            font-size: 24px; 
+            font-size: 22px; 
             font-weight: 800; 
             background: linear-gradient(to left, #FFFFFF, #FFD700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
-        p.subtitle { font-size: 14px; color: var(--text-muted); margin: 0 0 30px 0; font-weight: 500; line-height: 1.5; white-space: pre-line; }
+        p.subtitle { font-size: 13px; color: var(--text-muted); margin: 0 0 25px 0; font-weight: 500; line-height: 1.5; }
 
         button.main-btn {
-            width: 100%; padding: 18px;
+            width: 100%; padding: 16px;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border: none; border-radius: 18px; color: #4A2500;
-            font-weight: 800; font-size: 16px; cursor: pointer;
+            border: none; border-radius: 16px; color: #4A2500;
+            font-weight: 800; font-size: 15px; cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3);
         }
         button.main-btn:active { transform: scale(0.97); filter: brightness(1.1); }
-        button.main-btn:disabled { filter: grayscale(0.5); opacity: 0.6; cursor: not-allowed; }
+
+        /* ستايل مخصص لزر الاشتراك المدفوع الثاني */
+        .paid-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .paid-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        button.paid-btn {
+            background: linear-gradient(135deg, var(--paid-primary), var(--paid-dark));
+            color: #FFFFFF;
+            box-shadow: 0 8px 20px rgba(157, 78, 221, 0.3);
+        }
 
         .loading-container { display: none; margin-top: 10px; }
         
         .progress-circle {
-            position: relative; width: 120px; height: 120px; margin: 0 auto 20px auto;
+            position: relative; width: 110px; height: 110px; margin: 0 auto 15px auto;
         }
         
         .progress-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-        .progress-circle circle {
-            fill: none; stroke-width: 8; stroke-linecap: round;
-        }
+        .progress-circle circle { fill: none; stroke-width: 8; stroke-linecap: round; }
         .bg-circle { stroke: rgba(255, 215, 0, 0.1); }
         .fg-circle {
             stroke: url(#gradient);
             stroke-dasharray: 339.292;
             stroke-dashoffset: 339.292;
-            transition: stroke-dashoffset 0.3s ease;
+            transition: stroke-dashoffset 1s linear;
         }
         
         .progress-text {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 24px; font-weight: 800; color: #FFD700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            font-size: 22px; font-weight: 800; color: #FFD700;
         }
 
-        .back-btn {
-            display: inline-block; margin-top: 20px; color: var(--text-muted);
-            font-size: 13px; text-decoration: none; border-bottom: 1px dashed var(--text-muted);
-            cursor: pointer;
-        }
-
-        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes pulseGlow { from { transform: scale(1); box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4); } to { transform: scale(1.05); box-shadow: 0 15px 35px rgba(255, 215, 0, 0.7); } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulseGlow { from { transform: scale(1); } to { transform: scale(1.04); } }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="gift-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 10V8H17.19C16.74 7.22 16.12 6.55 15.37 6.04C14.07 5.16 12.56 5 12 5C11.44 5 9.93 5.16 8.63 6.04C7.88 6.55 7.26 7.22 6.81 8H4V10H20ZM12 7C12.5 7 13.56 7.15 14.24 7.61C14.71 7.93 15.06 8.41 15.22 9H8.78C8.94 8.41 9.29 7.93 9.76 7.61C10.44 7.15 11.5 7 12 7Z"/>
-            <path d="M20 12H13V22H19C19.55 22 20 21.55 20 21V12Z"/>
-            <path d="M11 22V12H4V21C4 21.55 4.45 22 5 22H11Z"/>
-        </svg>
-    </div>
-    
-    <h2 id="mainTitle">التجربة المجانية</h2>
-    <p class="subtitle" id="statusText">جاري فحص حالة الجهاز والاتصال الآمن بقاعدة البيانات...</p>
+    <div id="mainContentUI">
+        <div class="gift-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 10V8H17.19C16.74 7.22 16.12 6.55 15.37 6.04C14.07 5.16 12.56 5 12 5C11.44 5 9.93 5.16 8.63 6.04C7.88 6.55 7.26 7.22 6.81 8H4V10H20ZM12 7C12.5 7 13.56 7.15 14.24 7.61C14.71 7.93 15.06 8.41 15.22 9H8.78C8.94 8.41 9.29 7.93 9.76 7.61C10.44 7.15 11.5 7 12 7Z"/>
+                <path d="M20 12H13V22H19C19.55 22 20 21.55 20 21V12Z"/>
+                <path d="M11 22V12H4V21C4 21.55 4.45 22 5 22H11Z"/>
+            </svg>
+        </div>
+        
+        <h2>بوابة الوصول الآمن</h2>
+        <p class="subtitle" id="statusText">اضغط أدناه لإرسال طلب فحص التفعيل الخاص بجهازك بشكل تلقائي.</p>
 
-    <div id="startUI" style="display: none;">
-        <button class="main-btn" id="actionBtn" onclick="startFreeTrial()">الدخول إلى التطبيق بشكل مجاني</button>
-        <span onclick="goBack()" class="back-btn">العودة لتسجيل الدخول</span>
+        <div id="startUI">
+            <button class="main-btn" onclick="requestDeviceActivation()">طلب الانضمام وفحص التفعيل ⚡</button>
+            
+            <div class="paid-section">
+                <div class="paid-title">لديك اشتراك رسمي مدفوع؟</div>
+                <button class="main-btn paid-btn" onclick="goToPaidWeb()">الانتقال لصفحة الاشتراك المدفوع 💎</button>
+            </div>
+        </div>
     </div>
 
     <div id="loadingUI" class="loading-container">
@@ -163,156 +166,53 @@
 
 <script>
     let globalDeviceId = "UNKNOWN";
-    let isCheckedFromDB = false;
 
-    // دالة مرنة لاستقبال البيانات من التطبيق أو واجهة الجافا الأصلية
     function verifySession(deviceId, appVersion, activeCode, isBackground) {
+        globalDeviceId = deviceId;
         if (deviceId && deviceId !== "UNKNOWN") {
-            globalDeviceId = deviceId;
             localStorage.setItem("VIP_DEVICE_ID", deviceId);
-            
-            // بمجرد الحصول على المعرف، نقوم بفحصه فوراً في قاعدة البيانات لمنع التلاعب
-            if (!isCheckedFromDB) {
-                checkDeviceSubscriptionInDB(deviceId);
-            }
         }
     }
 
-    // تعزيز الحماية والأمان فور تشغيل الملف
     window.onload = function() {
-        // حظر القوائم المنبثقة واللمس المطول نهائياً لمنع كشف الويب
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.addEventListener('selectstart', event => event.preventDefault());
-        
-        // حظر اختصارات لوحة المفاتيح وأدوات الفحص (DevTools)
-        document.addEventListener('keydown', function(e) {
-            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) {
-                e.preventDefault();
-                return false;
-            }
-        });
-
-        // محاولة جلب الـ ID بشكل مباشر وفوري عبر جسر الأندرويد لسرعة الاستجابة
-        try {
-            if (window.AndroidBridge && typeof window.AndroidBridge.getDeviceId === 'function') {
-                let id = window.AndroidBridge.getDeviceId();
-                if (id) verifySession(id, "", "", false);
-            }
-        } catch(e) {}
-
-        // إذا لم يستجب الجسر فوراً، نتحقق بعد نصف ثانية للتأكد من حالة الفحص
-        setTimeout(() => {
-            if (globalDeviceId === "UNKNOWN") {
-                let savedId = localStorage.getItem("VIP_DEVICE_ID");
-                if (savedId) {
-                    globalDeviceId = savedId;
-                    checkDeviceSubscriptionInDB(savedId);
-                } else {
-                    // إذا كان أول مرة أو تم مسح البيانات بالكامل ولم يرسل التطبيق معرفاً بعد
-                    enableNewTrialUI();
-                }
-            }
-        }, 600);
+        let savedId = localStorage.getItem("VIP_DEVICE_ID");
+        if(savedId) globalDeviceId = savedId;
     }
 
-    // وظيفة فحص الاشتراك داخل قاعدة البيانات للتعرف على الجهاز حتى بعد مسح البيانات
-    function checkDeviceSubscriptionInDB(deviceId) {
-        isCheckedFromDB = true;
-        
-        // نقوم بإرسال طلب فحص وهمي ذكي للتطبيق للتحقق من Firebase أو SQLite
-        // التطبيق يستقبل الإشارة عبر الـ WebView ويقوم بالرد
-        window.location.href = `app://check_trial_status?device_id=${deviceId}`;
-        
-        /* ملاحظة برمجية: يمكنك ربط هذه الدالة بـ Fetch API إذا كان لديك رابط خادم مباشر، 
-           أو الاعتماد على كود الأندرويد في التطبيق للرد على الصفحة عبر دالة (setTrialStatusFromApp) أدناه:
-        */
-        
-        // كحل حماية احتياطي متكامل بالصفحة (FallBack):
-        // إذا لم يرد التطبيق في غضون ثانية، نعتبره جهازاً جديداً ونعرض واجهة الـ 10 ثوانٍ
-        setTimeout(() => {
-            if (document.getElementById('statusText').innerText.includes("جاري فحص")) {
-                enableNewTrialUI();
-            }
-        }, 1200);
-    }
+    function requestDeviceActivation() {
+        document.getElementById('startUI').style.display = 'none';
+        document.getElementById('loadingUI').style.display = 'block';
+        document.getElementById('statusText').innerText = "جاري إرسال معرف جهازك للتليجرام للتفعيل والتحقق من الصلاحية الحالية...";
 
-    // دالة يستدعيها مطور الأندرويد من الكود الأصلي ليعلم الويب بحالة الجهاز المخزنة في Firebase
-    function setTrialStatusFromApp(isRegistered, expiryTime) {
-        if (isRegistered && expiryTime) {
-            let currentTime = Date.now();
-            if (currentTime < expiryTime) {
-                // الجهاز مفعل مسبقاً والمدة لا زالت مستمرة (تخطي العداد فوراً لمنع التلاعب بالأيام)
-                document.getElementById('startUI').style.display = 'none';
-                document.getElementById('loadingUI').style.display = 'block';
-                document.getElementById('statusText').innerText = "تم التعرف على جهازك! جاري استئناف التجربة المجانية النشطة...";
-                
-                // تحديث سريع للعداد ليعطي طابعاً احترافياً
-                updateCircleProgress(100);
-                
-                setTimeout(() => {
-                    window.location.href = `app://success_auth?code=FREE_TRIAL_VIP&expiry_time=${expiryTime}&device_id=${globalDeviceId}&save_to_db=false`;
-                }, 800);
-                return;
-            } else {
-                // التجربة انتهت بالفعل ولا يمكنه تجديدها حتى لو مسح بيانات التطبيق
-                document.getElementById('loadingUI').style.display = 'none';
-                document.getElementById('startUI').style.display = 'block';
-                document.getElementById('actionBtn').disabled = true;
-                document.getElementById('actionBtn').innerText = "انتهت الفترة التجريبية للجهاز";
-                document.getElementById('statusText').innerText = "عذراً، لقد استنفذ هذا الجهاز الفترة التجريبية المجانية المتاحة له مسبقاً.";
-                return;
-            }
-        }
-        // إذا كان الجهاز غير مسجل نهائياً في قاعدة البيانات
-        enableNewTrialUI();
-    }
-
-    function enableNewTrialUI() {
-        document.getElementById('loadingUI').style.display = 'none';
-        document.getElementById('startUI').style.display = 'block';
-        document.getElementById('statusText').innerText = "احصل على وصول مجاني ومؤقت لاختبار كافة مميزات التطبيق بكل أمان.";
-    }
-
-    function updateCircleProgress(percent) {
+        let totalTime = 5; // فحص سريع مدته 5 ثوانٍ ليبدو احترافيًا وتلقائيًا
+        let timeLeft = totalTime;
         let circle = document.getElementById('progressCircle');
         let text = document.getElementById('progressText');
         let circleLength = 339.292;
-        text.innerText = percent + "%";
-        let offset = circleLength - (percent / 100) * circleLength;
-        circle.style.strokeDashoffset = offset;
-    }
 
-    function startFreeTrial() {
-        document.getElementById('startUI').style.display = 'none';
-        document.getElementById('loadingUI').style.display = 'block';
-        document.getElementById('statusText').innerText = "جاري تهيئة البيئة المجانية الخاصة بك...\nالرجاء الانتظار (10 ثوانٍ) وعدم إغلاق التطبيق.";
-
-        let totalTime = 10; // وقت الانتظار 10 ثوانٍ
-        let timeLeft = totalTime;
-        
         let timerInterval = setInterval(() => {
             timeLeft--;
-            
             let percent = Math.floor(((totalTime - timeLeft) / totalTime) * 100);
-            updateCircleProgress(percent);
+            text.innerText = percent + "%";
+            circle.style.strokeDashoffset = circleLength - (percent / 100) * circleLength;
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                document.getElementById('statusText').innerText = "تم التجهيز بنجاح! جاري حفظ الاشتراك وتوجيهك...";
+                // إرسال أمر لتطبيق أندرويد لإرسال البيانات الفورية لتليجرام وتدقيق الملف الداخلي للجافا
+                window.location.href = `app://send_telegram_request?device_id=${globalDeviceId}`;
                 
                 setTimeout(() => {
-                    let expiryMs = 24 * 60 * 60 * 1000; // صلاحية التجربة (يوم واحد مستمر في قاعدة البيانات)
-                    let finalExpiry = Date.now() + expiryMs;
-                    
-                    // هنا نرسل save_to_db=true ليقوم كود الأندرويد بحفظ finalExpiry و device_id في السيرفر أو الفايربيس فوراُ
-                    window.location.href = `app://success_auth?code=FREE_TRIAL_VIP&expiry_time=${finalExpiry}&device_id=${globalDeviceId}&save_to_db=true`;
-                }, 800);
+                    document.getElementById('loadingUI').style.display = 'none';
+                    document.getElementById('startUI').style.display = 'block';
+                    document.getElementById('statusText').innerText = "تم إرسال الـ ID بنجاح! إذا قام المطور بتفعيل جهازك مسبقاً، سيفتح التطبيق فوراً تلقائياً.";
+                }, 1000);
             }
         }, 1000);
     }
 
-    function goBack() {
-        window.location.href = "index.html";
+    // دالة فتح رابط الاشتراك المدفوع الثاني
+    function goToPaidWeb() {
+        window.location.href = "app://open_paid_web";
     }
 </script>
 </body>

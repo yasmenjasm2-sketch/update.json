@@ -68,7 +68,28 @@
             -webkit-text-fill-color: transparent;
         }
         
-        p.subtitle { font-size: 13px; color: var(--text-muted); margin: 0 0 25px 0; font-weight: 500; line-height: 1.5; }
+        p.subtitle { font-size: 13px; color: var(--text-muted); margin: 0 0 20px 0; font-weight: 500; line-height: 1.5; }
+
+        /* ستايل مربع الآيدي للنسخ */
+        .device-info-container {
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255, 215, 0, 0.1);
+            padding: 10px 16px;
+            border-radius: 14px;
+            border: 1px dashed var(--primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .device-info-container:active { transform: scale(0.95); background: rgba(255, 215, 0, 0.2); }
+        .device-text { font-size: 13px; color: #FFF; font-family: monospace; letter-spacing: 0.5px; }
+        .copy-icon { font-size: 16px; }
 
         button.main-btn {
             width: 100%; padding: 16px;
@@ -80,7 +101,6 @@
         }
         button.main-btn:active { transform: scale(0.97); filter: brightness(1.1); }
 
-        /* ستايل مخصص لزر الاشتراك المدفوع الثاني */
         .paid-section {
             margin-top: 25px;
             padding-top: 20px;
@@ -110,13 +130,22 @@
             stroke: url(#gradient);
             stroke-dasharray: 339.292;
             stroke-dashoffset: 339.292;
-            transition: stroke-dashoffset 1s linear;
+            /* تمت إزالة الـ transition للتحكم بها بدقة عبر الـ JS */
         }
         
         .progress-text {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             font-size: 22px; font-weight: 800; color: #FFD700;
         }
+
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--paid-dark); color: white; padding: 10px 20px;
+            border-radius: 20px; font-size: 14px; font-weight: bold;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000;
+        }
+        .toast.show { opacity: 1; }
 
         @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes pulseGlow { from { transform: scale(1); } to { transform: scale(1.04); } }
@@ -135,9 +164,15 @@
         </div>
         
         <h2>بوابة الوصول الآمن</h2>
-        <p class="subtitle" id="statusText">اضغط أدناه لإرسال طلب فحص التفعيل الخاص بجهازك بشكل تلقائي.</p>
+        <p class="subtitle" id="statusText">أرسل معرّف جهازك للمطور ليتم إضافتك، أو اضغط لفحص التفعيل.</p>
 
         <div id="startUI">
+            <!-- مربع نسخ معرف الجهاز لتسهيل إرساله لك -->
+            <div class="device-info-container" onclick="copyDeviceId()">
+                <span class="device-text" id="deviceDisplay">جاري الاتصال...</span>
+                <span class="copy-icon">📋</span>
+            </div>
+
             <button class="main-btn" onclick="requestDeviceActivation()">طلب الانضمام وفحص التفعيل ⚡</button>
             
             <div class="paid-section">
@@ -164,50 +199,111 @@
     </div>
 </div>
 
+<div class="toast" id="toastMessage">تم نسخ المعرّف بنجاح!</div>
+
 <script>
     let globalDeviceId = "UNKNOWN";
+
+    // =========================================
+    // ⚙️ منطقة المطور: ضع معرّفات الأجهزة المسموح لها بالتجربة هنا
+    // =========================================
+    const allowedTrialDevices = {
+        "1234567890abcdef": { days: 7 }, // مثال: جهاز مسموح له بـ 7 أيام
+        "ضع_معرف_الجهاز_هنا": { days: 3 } // ضع الآيدي الخاص بالمستخدم هنا
+    };
+    // =========================================
 
     function verifySession(deviceId, appVersion, activeCode, isBackground) {
         globalDeviceId = deviceId;
         if (deviceId && deviceId !== "UNKNOWN") {
             localStorage.setItem("VIP_DEVICE_ID", deviceId);
+            document.getElementById("deviceDisplay").innerText = "ID: " + deviceId;
         }
     }
 
     window.onload = function() {
         let savedId = localStorage.getItem("VIP_DEVICE_ID");
-        if(savedId) globalDeviceId = savedId;
+        if(savedId) {
+            globalDeviceId = savedId;
+            document.getElementById("deviceDisplay").innerText = "ID: " + globalDeviceId;
+        }
+    }
+
+    function copyDeviceId() {
+        if (globalDeviceId === "UNKNOWN" || globalDeviceId.includes("جاري")) return;
+        
+        let tempInput = document.createElement("input");
+        tempInput.value = globalDeviceId;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+
+        let toast = document.getElementById("toastMessage");
+        toast.classList.add("show");
+        setTimeout(() => { toast.classList.remove("show"); }, 2000);
     }
 
     function requestDeviceActivation() {
+        if (globalDeviceId === "UNKNOWN") {
+            document.getElementById('statusText').innerText = "⚠️ انتظر قليلاً ريثما يتم الاتصال بالهاتف.";
+            return;
+        }
+
         document.getElementById('startUI').style.display = 'none';
         document.getElementById('loadingUI').style.display = 'block';
-        document.getElementById('statusText').innerText = "جاري إرسال معرف جهازك للتليجرام للتفعيل والتحقق من الصلاحية الحالية...";
+        document.getElementById('statusText').innerText = "جاري الاتصال بالسيرفر وفحص صلاحيات جهازك المسبقة...";
 
-        let totalTime = 5; // فحص سريع مدته 5 ثوانٍ ليبدو احترافيًا وتلقائيًا
-        let timeLeft = totalTime;
+        // توليد وقت عشوائي بين 10 و 20 ثانية للفحص
+        let totalDurationMs = (Math.floor(Math.random() * 11) + 10) * 1000; 
+        let startTime = Date.now();
+        
         let circle = document.getElementById('progressCircle');
         let text = document.getElementById('progressText');
         let circleLength = 339.292;
 
-        let timerInterval = setInterval(() => {
-            timeLeft--;
-            let percent = Math.floor(((totalTime - timeLeft) / totalTime) * 100);
+        // حركة دائرية ناعمة جداً
+        function updateLoader() {
+            let elapsed = Date.now() - startTime;
+            let progress = Math.min(elapsed / totalDurationMs, 1);
+            let percent = Math.floor(progress * 100);
+            
             text.innerText = percent + "%";
-            circle.style.strokeDashoffset = circleLength - (percent / 100) * circleLength;
+            circle.style.strokeDashoffset = circleLength - (progress * circleLength);
 
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                // إرسال أمر لتطبيق أندرويد لإرسال البيانات الفورية لتليجرام وتدقيق الملف الداخلي للجافا
-                window.location.href = `app://send_telegram_request?device_id=${globalDeviceId}`;
-                
-                setTimeout(() => {
-                    document.getElementById('loadingUI').style.display = 'none';
-                    document.getElementById('startUI').style.display = 'block';
-                    document.getElementById('statusText').innerText = "تم إرسال الـ ID بنجاح! إذا قام المطور بتفعيل جهازك مسبقاً، سيفتح التطبيق فوراً تلقائياً.";
-                }, 1000);
+            if (progress < 1) {
+                requestAnimationFrame(updateLoader);
+            } else {
+                finishActivationCheck();
             }
-        }, 1000);
+        }
+        
+        requestAnimationFrame(updateLoader);
+    }
+
+    function finishActivationCheck() {
+        // التحقق مما إذا كان الجهاز مضافاً من قبلك يدوياً في القائمة أعلاه
+        if (allowedTrialDevices.hasOwnProperty(globalDeviceId)) {
+            let trialData = allowedTrialDevices[globalDeviceId];
+            let expiryTime = Date.now() + (trialData.days * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('statusText').innerText = "✅ تم التحقق! جهازك مصرّح له بالدخول. جاري التفعيل...";
+            
+            setTimeout(() => {
+                // إرسال كود التفعيل لتطبيق الأندرويد لفتح التطبيق وتثبيت الاشتراك
+                window.location.href = `app://success_auth?code=MANUAL_TRIAL&expiry_time=${expiryTime}&device_id=${globalDeviceId}`;
+            }, 1000);
+
+        } else {
+            // الجهاز غير مصرّح له، يتم إرساله للتليجرام كطلب جديد
+            window.location.href = `app://send_telegram_request?device_id=${globalDeviceId}`;
+            
+            setTimeout(() => {
+                document.getElementById('loadingUI').style.display = 'none';
+                document.getElementById('startUI').style.display = 'block';
+                document.getElementById('statusText').innerText = "❌ جهازك غير مفعل. قم بنسخ المعرّف (ID) الخاص بك وأرسله للمطور لتفعيله.";
+            }, 500);
+        }
     }
 
     // دالة فتح رابط الاشتراك المدفوع الثاني

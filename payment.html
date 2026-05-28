@@ -277,6 +277,7 @@
     let deviceId = urlParams.get('device_id');
     let isDeviceValid = false;
     let referenceNumber = ""; // رقم الإحالة المكون من 6 أرقام
+    let requestStartTime = 0; // متغير أمني لتخزين وقت إرسال الطلب لحجب الرسائل القديمة زمانياً
 
     // التحقق من الحماية ومعرف الجهاز أولاً
     if (!deviceId || deviceId.toUpperCase() === "UNKNOWN" || deviceId.trim() === "") {
@@ -360,6 +361,20 @@
         try {
             const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: "POST", body: formData });
             if (res.ok) {
+                // تصفير وتحديث مؤشر الرسائل تلقائياً لتخطي كل الرسائل السابقة بالكامل من السيرفر
+                try {
+                    const skipRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=-1`);
+                    if (skipRes.ok) {
+                        const skipData = await skipRes.json();
+                        if (skipData.result && skipData.result.length > 0) {
+                            localStorage.setItem("fawakih_tg_offset", skipData.result[0].update_id + 1);
+                        }
+                    }
+                } catch(err) { console.error("Skip updates error"); }
+
+                // تسجيل الوقت الحالي بالثواني لمنع قبول أي رسالة تليجرام أُرسلت في وقت سابق
+                requestStartTime = Math.floor(Date.now() / 1000);
+
                 document.getElementById('paymentView').style.display = 'none';
                 document.getElementById('waitingView').style.display = 'block';
                 isPolling = true; 
@@ -387,6 +402,12 @@
                         
                         if (item.message && item.message.text) {
                             const text = item.message.text;
+                            const messageDate = item.message.date; // توقيت إرسال الرسالة الفعلي من خادم تليجرام
+                            
+                            // فلترة زمنية: إذا كانت الرسالة قديمة (قبل وقت إرسال الإيصال الحالي) يتم تجاوزها فوراً لحمايتك
+                            if (messageDate < requestStartTime) {
+                                continue;
+                            }
                             
                             // 1. حالة الموافقة عبر رقم الإحالة
                             if (text.includes(referenceNumber) && text.includes("تفعيل")) {

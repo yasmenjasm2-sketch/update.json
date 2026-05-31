@@ -287,18 +287,73 @@
 </div>
 
 <script>
-    document.addEventListener('contextmenu', event => event.preventDefault());
-    document.onkeydown = function(e) {
-        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-            return false;
-        }
-    };
+    // ==========================================
+    // جدار الحماية ونظام حماية الأكواد ومنع كشف الهوية والتلاعب
+    // ==========================================
+    (function() {
+        // منع القائمة اليمين تماماً واختصارات لوحة المفاتيح المتقدمة للفحص
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        
+        window.addEventListener('keydown', function(e) {
+            // حظر: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+Shift+C, Cmd+Alt+I
+            if (
+                e.keyCode === 123 || 
+                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+                (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) ||
+                (e.metaKey && e.altKey && e.keyCode === 73)
+            ) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, true);
 
+        // منع تحديد أو سحب النصوص والصور للحفاظ على الطابع التطبيقي الأصلي ومنع نسخ البيانات
+        document.addEventListener('selectstart', e => e.preventDefault());
+        window.addEventListener('dragstart', e => e.preventDefault());
+        window.addEventListener('drop', e => e.preventDefault());
+
+        // حجب وتعطيل الـ Console تماماً لقطع الطريق على قراءة المتغيرات أو الأكواد
+        const silentNoop = function() {};
+        console.log = silentNoop;
+        console.dir = silentNoop;
+        console.clear = silentNoop;
+        console.warn = silentNoop;
+        console.error = silentNoop;
+
+        // حلقة فخ المطورين (Anti-Debugger Trap): تجميد الكونسول وتشتيت أدوات الفحص التلقائي
+        setInterval(function() {
+            const t0 = performance.now();
+            debugger; 
+            const t1 = performance.now();
+            if (t1 - t0 > 100) {
+                // إذا تم فتح أدوات المطورين، يتم تصفير الصفحة فوراً وتحويلها لحماية النظام
+                document.body.innerHTML = "";
+                window.location.href = "about:blank";
+            }
+        }, 400);
+
+        // مراقبة وحماية عناصر الصفحة الحساسة من التعديل عبر أدوات التعديل (DOM Tampering Protection)
+        const elementObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                // إعادة تحميل الصفحة لحمايتها فور رصد أي تغيير خارجي على العناصر
+                window.location.reload();
+            });
+        });
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            const targetNode = document.getElementById('mainCard');
+            if(targetNode) {
+                elementObserver.observe(targetNode, { attributes: true, childList: true, characterData: true, subtree: true });
+            }
+        });
+    })();
+
+    // الحفاظ التام على شيفرة المفاتيح القديمة ومنع تعديلها من الكونسول عبر التجميد الآمن
     const REQUIRED_APP_VERSION = "3.4.6"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     
-    // حل ذكي للتعامل مع البصمة الفارغة لضمان السرعة
     let rawDeviceId = urlParams.get('device_id');
     const appDeviceId = (rawDeviceId && rawDeviceId.trim() !== "") ? rawDeviceId.trim() : "UNKNOWN";
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
@@ -326,25 +381,21 @@
         }
     }
 
-    // تحديث فوري لواجهة البصمة لمنع التعليق
     if (!isBgCheck) {
         const deviceDisplay = document.getElementById('deviceDisplay');
         if (appDeviceId !== "UNKNOWN") {
             deviceDisplay.innerHTML = `<div onclick="copyDeviceId('${appDeviceId}')" style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(187, 134, 252, 0.1)'" onmouseout="this.style.background='transparent'" title="انقر لنسخ المعرف"><span>DEVICE ID: ${appDeviceId}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div>`;
         } else {
-            // في حال فشل جلب البصمة، يتم إظهار التنبيه فوراً بدلاً من بقاء "جاري الجلب"
             deviceDisplay.innerText = "تعذر جلب البصمة - يرجى التأكد من صلاحيات التطبيق";
             deviceDisplay.style.color = "#ef4444";
         }
     }
 
     const vipDevices = {
-        // تم إزالة حرف "ط" الذي كان يسبب توقف الجافاسكربت بالكامل في بعض الأجهزة
         "ae949adad83adb0d": { status: 1, expireAt: "2026-06-29T17:04:10" },
         "6357ef9846e96b17": { status: 1, expireAt: "2026-10-28T11:18:55" },
         "4b1b404208b8efdf": { status: 1, expireAt: "2026-06-20T23:13:40" },
         "3a9b5294e99f3adb": { status: 1, expireAt: "2026-06-27T03:17:36" },
-        "b2c8cdd53aba1104": { status: 1, expireAt: "2026-05-31T11:49:32" },
     };
 
     const subscriptionCodes = {
@@ -356,8 +407,11 @@
         "SU7B-HOUR": { duration: "1hour", status: 2 }, 
         "TEST-20SEC": { duration: "20seconds", status: 2 }, 
         "VIP-FUTURE": { duration: "lifetime", status: 2 },
-        
     };
+
+    // منع التعديل اليدوي على الكود البرمي عبر تجميد الكائنات برمجياً فورياً بعد الإسناد
+    Object.freeze(vipDevices);
+    Object.freeze(subscriptionCodes);
 
     function getDurationMs(durationStr) {
         let ms = 0; let match = durationStr.match(/(\d+)/); let val = match ? parseInt(match[0]) : 0;
@@ -478,10 +532,8 @@
     }
 
     function fallbackPaste() {
-        // التحقق من عدم وجود نافذة مسبقاً
         if (document.getElementById('customPromptBox')) return;
 
-        // إنشاء نافذة منبثقة احترافية تتناسب مع تصميم القالب لإخفاء الرابط المزعج
         let overlay = document.createElement('div');
         overlay.id = 'customPromptBox';
         overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity 0.3s;';
@@ -501,7 +553,6 @@
         overlay.appendChild(box);
         document.body.appendChild(overlay);
 
-        // تفعيل حركة الظهور (Animation)
         setTimeout(() => {
             overlay.style.opacity = '1';
             box.style.transform = 'translateY(0)';
@@ -531,7 +582,6 @@
         setTimeout(() => inputField.style.borderColor = "var(--border-color)", 500);
     }
     
-    // الدالة المسؤولة عن نسخ معرف الجهاز بطريقة احترافية
     window.copyDeviceId = function(id) {
         function showSuccess() {
             const display = document.getElementById('deviceDisplay');

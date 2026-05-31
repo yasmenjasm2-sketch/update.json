@@ -2,25 +2,29 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1A0B2E">
+    <meta name="format-detection" content="telephone=no">
     
     <title>تفعيل الاشتراك | نظام محمي</title>
     <style>
         :root {
-            /* تم تعديل الألوان هنا لتتطابق مع تطبيق Fawakih AI 
-            */
-            --bg-color: #1A0B2E;       /* خلفية التطبيق البنفسجية الداكنة */
-            --card-bg: #2D1B4D;        /* خلفية البطاقة */
-            --primary: #BB86FC;        /* اللون الأرجواني المضيء (مثل زر Yalla) */
-            --primary-dark: #9368E6;   /* تدرج اللون الأرجواني */
-            --text-main: #FFFFFF;      /* لون النص الأساسي */
-            --text-muted: #E0AAFF;     /* لون النصوص الفرعية */
-            --input-bg: #1E0B36;       /* خلفية حقل الإدخال */
-            --border-color: #4A306D;   /* لون حواف حقل الإدخال */
+            --bg-color: #1A0B2E;       
+            --card-bg: #2D1B4D;        
+            --primary: #BB86FC;        
+            --primary-dark: #9368E6;   
+            --text-main: #FFFFFF;      
+            --text-muted: #E0AAFF;     
+            --input-bg: #1E0B36;       
+            --border-color: #4A306D;   
+        }
+
+        /* إخفاء شريط التمرير بالكامل ليبدو كتطبيق */
+        ::-webkit-scrollbar {
+            display: none;
         }
 
         body { 
@@ -31,6 +35,7 @@
             flex-direction: column;
             align-items: center; 
             min-height: 100vh; 
+            min-height: -webkit-fill-available;
             margin: 0; 
             padding: 20px 0;
             -webkit-user-select: none;
@@ -39,7 +44,13 @@
             -webkit-user-drag: none; 
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
+            overflow: hidden; /* لمنع السحب والنزول كالمواقع */
+            overscroll-behavior-y: none;
+        }
+
+        html {
+            height: -webkit-fill-available;
+            overscroll-behavior-y: none;
         }
 
         .app-container { 
@@ -132,7 +143,6 @@
         }
         button.main-btn:active { transform: scale(0.96); box-shadow: 0 4px 8px rgba(187, 134, 252, 0.2); }
         
-        /* تنسيقات الأزرار السفلية (واتساب وبايبال) */
         .action-buttons-container {
             display: flex;
             gap: 12px;
@@ -199,6 +209,8 @@
             padding: 20px;
             margin-top: 40px;
             text-align: right;
+            position: absolute;
+            bottom: 20px;
         }
 
         .admin-panel h3 {
@@ -309,7 +321,9 @@
         }, true);
 
         // منع تحديد أو سحب النصوص والصور للحفاظ على الطابع التطبيقي الأصلي ومنع نسخ البيانات
-        document.addEventListener('selectstart', e => e.preventDefault());
+        document.addEventListener('selectstart', e => {
+            if(e.target.tagName !== 'INPUT') e.preventDefault();
+        });
         window.addEventListener('dragstart', e => e.preventDefault());
         window.addEventListener('drop', e => e.preventDefault());
 
@@ -321,32 +335,19 @@
         console.warn = silentNoop;
         console.error = silentNoop;
 
-        // حلقة فخ المطورين (Anti-Debugger Trap): تجميد الكونسول وتشتيت أدوات الفحص التلقائي
+        // حلقة فخ المطورين (Anti-Debugger Trap) 
         setInterval(function() {
             const t0 = performance.now();
             debugger; 
             const t1 = performance.now();
             if (t1 - t0 > 100) {
-                // إذا تم فتح أدوات المطورين، يتم تصفير الصفحة فوراً وتحويلها لحماية النظام
                 document.body.innerHTML = "";
                 window.location.href = "about:blank";
             }
         }, 400);
 
-        // مراقبة وحماية عناصر الصفحة الحساسة من التعديل عبر أدوات التعديل (DOM Tampering Protection)
-        const elementObserver = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                // إعادة تحميل الصفحة لحمايتها فور رصد أي تغيير خارجي على العناصر
-                window.location.reload();
-            });
-        });
-        
-        document.addEventListener("DOMContentLoaded", function() {
-            const targetNode = document.getElementById('mainCard');
-            if(targetNode) {
-                elementObserver.observe(targetNode, { attributes: true, childList: true, characterData: true, subtree: true });
-            }
-        });
+        // تم إزالة MutationObserver الذي كان يسبب مشكلة تكرار التحديث عند ظهور رسالة الخطأ
+        // هذا هو السبب الرئيسي لرمشة الشاشة (Flickering) في الفيديو
     })();
 
     // الحفاظ التام على شيفرة المفاتيح القديمة ومنع تعديلها من الكونسول عبر التجميد الآمن
@@ -481,6 +482,12 @@
         const subCode = document.getElementById('subCode').value.trim();
         const codeData = subscriptionCodes[subCode];
         const errorDiv = document.getElementById('error');
+
+        // إخفاء رسالة الخطأ أولاً وإعادة تشغيل الحركة
+        errorDiv.style.display = 'none';
+        errorDiv.style.animation = 'none';
+        errorDiv.offsetHeight; // Trigger reflow
+        errorDiv.style.animation = null; 
 
         if (codeData) {
             if (codeData.status === 2) {

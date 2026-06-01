@@ -64,22 +64,6 @@
         }
         @keyframes appAppear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* تأثير احترافي وتصغير لصورة الإعلان مع أنيميشن متحرك */
-        .animated-hero-image {
-            width: 80%;
-            max-width: 250px;
-            display: block;
-            margin: 0 auto 22px auto;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            animation: floatingHero 4s ease-in-out infinite;
-        }
-        @keyframes floatingHero {
-            0% { transform: translateY(0px) scale(1); box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 10px rgba(16, 185, 129, 0.1); }
-            50% { transform: translateY(-8px) scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.6), 0 0 25px rgba(16, 185, 129, 0.3); }
-            100% { transform: translateY(0px) scale(1); box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 10px rgba(16, 185, 129, 0.1); }
-        }
-
         /* تأثير التدرج اللوني المتحرك المطلوب للنصوص (أحمر غامق وأزرق غامق) */
         .animated-gradient-text {
             background: linear-gradient(270deg, #8B0000, #00008B, #8B0000);
@@ -339,8 +323,7 @@
 </div>
 
 <div class="app-container" id="methodSelectionView" style="display: none;">
-    
-    <img src="fame.jpg" alt="إعلان التطبيق" class="animated-hero-image">
+    <img src="fame.jpg" alt="إعلان التطبيق" style="width: 100%; border-radius: 18px; margin-bottom: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: block;">
     
     <h2 class="animated-gradient-text">تفعيل نظام fawakihAI</h2>
     <p class="subtitle" style="color: #e2e8f0;">اختر وسيلة الدفع المناسبة لتأكيد التحويل الإلكتروني الآمن وتأهيل حسابك للعمل الفوري الذكي بـ (<span style="color: #ffd700; font-weight: 800; font-size: 15px; text-shadow: 0 0 10px rgba(255,215,0,0.5);">33 دولار / شهرياً</span>)</p>
@@ -728,3 +711,13 @@
                                 showView('rejectedView');
                                 return;
                             }
+                        }
+                    }
+                }
+            } catch (e) { console.error("Secure polling cycle active."); }
+            await new Promise(r => setTimeout(r, 2500));
+        }
+    }
+</script>
+</body>
+</html>

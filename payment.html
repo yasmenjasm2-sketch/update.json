@@ -64,6 +64,21 @@
         }
         @keyframes appAppear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* تأثير التدرج اللوني المتحرك المطلوب للنصوص (أحمر غامق وأزرق غامق) */
+        .animated-gradient-text {
+            background: linear-gradient(270deg, #8B0000, #00008B, #8B0000);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientTextMove 4s ease infinite;
+            font-weight: 900;
+        }
+        @keyframes gradientTextMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .paypal-logo-svg { width: 130px; margin: 10px auto 25px auto; pointer-events: none; display: block; filter: drop-shadow(0 4px 10px rgba(0,112,186,0.2)); }
         .usdt-logo-svg { width: 75px; height: 75px; margin-bottom: 20px; pointer-events: none; filter: drop-shadow(0 4px 12px var(--usdt-glow)); }
         .status-icon { width: 85px; height: 85px; margin-bottom: 20px; animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
@@ -71,62 +86,6 @@
 
         h2 { margin: 10px 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 30px; line-height: 1.6; padding: 0 10px; }
-
-        /* --- الإضافات الجمالية المطلوبة --- */
-        
-        /* صورة الإعلان */
-        .ad-banner {
-            width: 100%;
-            height: auto;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            animation: appAppear 0.8s ease;
-        }
-
-        /* التدرج اللوني المتحرك (أزرق غامق وأحمر غامق) مع إضاءة خلفية خفيفة للوضوح */
-        .animated-gradient-text {
-            background: linear-gradient(270deg, #1e3a8a, #991b1b, #1e3a8a);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 4s ease infinite;
-            display: inline-block;
-            filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
-        }
-        .animated-gradient-text-subtitle {
-            background: linear-gradient(270deg, #3b82f6, #ef4444, #3b82f6);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 4s ease infinite;
-        }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* الكلمات المهمة المميزة (تفعيل / 33 دولار) */
-        .highlight-text {
-            color: #fbbf24 !important;
-            -webkit-text-fill-color: #fbbf24 !important;
-            font-weight: 900;
-            text-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
-            background: none;
-            letter-spacing: 0.5px;
-        }
-
-        /* الشروحات الإضافية تحت طرق الدفع */
-        .method-hint {
-            display: block;
-            font-size: 11.5px;
-            color: #34d399;
-            margin-top: 4px;
-            font-weight: 600;
-        }
-        /* ------------------------------- */
 
         /* بطاقات اختيار الدفع الفاخرة */
         .method-card {
@@ -364,24 +323,24 @@
 </div>
 
 <div class="app-container" id="methodSelectionView" style="display: none;">
-    <img src="fame.jpg" alt="واجهة إعلانية" class="ad-banner">
-
-    <h2 class="animated-gradient-text"><span class="highlight-text">تفعيل نظام fawakihAI</span></h2>
-    <p class="subtitle animated-gradient-text-subtitle">اختر وسيلة الدفع المناسبة لتأكيد التحويل الإلكتروني الآمن وتأهيل حسابك للعمل الفوري الذكي (<span class="highlight-text">33 دولار</span> / شهرياً)</p>
+    <img src="fame.jpg" alt="إعلان التطبيق" style="width: 100%; border-radius: 18px; margin-bottom: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: block;">
+    
+    <h2 class="animated-gradient-text">تفعيل نظام fawakihAI</h2>
+    <p class="subtitle" style="color: #e2e8f0;">اختر وسيلة الدفع المناسبة لتأكيد التحويل الإلكتروني الآمن وتأهيل حسابك للعمل الفوري الذكي بـ (<span style="color: #ffd700; font-weight: 800; font-size: 15px; text-shadow: 0 0 10px rgba(255,215,0,0.5);">33 دولار / شهرياً</span>)</p>
 
     <div class="method-card paypal-card" onclick="showView('paypalView')">
         <div class="method-icon paypal-icon">P</div>
         <div class="method-details">
-            <h3 class="animated-gradient-text">بوابة الدفع PayPal</h3>
-            <p>معالجة فورية وتلقائية عبر البطاقات البنكية <span class="method-hint">✔️ آمن وموثوق ومتاح لجميع دول العالم</span></p>
+            <h3>بوابة الدفع <span style="color: #00bfff;">PayPal</span></h3>
+            <p>معالجة فورية وتلقائية عبر البطاقات البنكية</p>
         </div>
     </div>
 
     <div class="method-card usdt-card" onclick="showView('usdtView')">
         <div class="method-icon usdt-icon">₮</div>
         <div class="method-details">
-            <h3 class="animated-gradient-text">العملات الرقمية USDT</h3>
-            <p>تحويل آمن مشفر عبر شبكة ترون (TRC20) <span class="method-hint">✔️ الخيار الأسرع والأنسب بدون عمولات إضافية</span></p>
+            <h3>العملات الرقمية <span style="color: #4ade80;">USDT</span></h3>
+            <p>تحويل آمن مشفر عبر شبكة ترون (TRC20)</p>
         </div>
     </div>
 </div>
@@ -398,14 +357,14 @@
     </div>
 
     <h2>دفع آمن بواسطة PayPal</h2>
-    <p class="subtitle">قم بالتحويل مباشرة إلى المطور لاستيفاء شروط الاشتراك المعزز.</p>
+    <p class="subtitle" style="color: #cbd5e1;">قم بالتحويل مباشرة إلى المطور لاستيفاء شروط الاشتراك المعزز.</p>
 
     <div class="instructions paypal-inst">
         <h3>💡 خطوات إنهاء التفعيل:</h3>
         <ol>
             <li>اضغط على الزر الأزرق بالأسفل للانتقال لـ PayPal.</li>
-            <li>قم بتحويل القيمة الثابتة بالكامل وهي <b class="highlight-text">33 دولار</b>.</li>
-            <li>بعد اتمام التحويل التقط صورة كاملة (Screenshot) واضحة للإيصال.</li>
+            <li>قم بتحويل القيمة الثابتة بالكامل وهي <b style="color: #ffd700; font-size: 15px;">33 دولار</b>.</li>
+            <li>بعد اتمام التحويل التقط <b style="color: #38bdf8;">صورة كاملة (Screenshot)</b> واضحة للإيصال.</li>
             <li>قم بإرفاق الصورة في الحقل المخصص بالأسفل ثم اضغط إرسال.</li>
         </ol>
     </div>
@@ -435,7 +394,7 @@
     </svg>
 
     <h2 style="color: var(--usdt-color);">تحويل رقمي USDT (TRC-20)</h2>
-    <p class="subtitle">امسح الكود أو انسخ عنوان المحفظة بدقة تامة لإرسال القيمة المحددة.</p>
+    <p class="subtitle" style="color: #cbd5e1;">امسح الكود أو انسخ عنوان المحفظة بدقة تامة لإرسال القيمة المحددة.</p>
     
     <div class="qr-container">
         <img src="1000167317.jpg" alt="USDT QR Code" class="qr-img">
@@ -449,9 +408,9 @@
     <div class="instructions usdt-inst">
         <h3>⚠️ ضوابط وشروط بالغة الأهمية:</h3>
         <ol>
-            <li>يجب اختيار شبكة <b>Tron (TRC20)</b> بشكل حصري ومؤكد.</li>
-            <li>أرسل القيمة الصافية <b class="highlight-text">33 USDT</b> (تأكد من احتساب رسوم شبكتك).</li>
-            <li>التقط لقطة شاشة للتحويل الناجح تظهر بوضوح رقم ومعرف المعاملة الـ **TXID**.</li>
+            <li>يجب اختيار شبكة <b style="color: #00ffff; font-size: 14px;">Tron (TRC20)</b> بشكل حصري ومؤكد.</li>
+            <li>أرسل القيمة الصافية <b style="color: #ffd700; font-size: 15px;">33 USDT</b> (تأكد من احتساب رسوم شبكتك).</li>
+            <li>التقط لقطة شاشة للتحويل الناجح تظهر بوضوح رقم ومعرف المعاملة الـ <b style="color: #ff9800; font-size: 14px;">TXID</b>.</li>
             <li>ارفع الصورة فوراً بالأسفل للتحقق البرمجي التلقائي.</li>
         </ol>
     </div>
@@ -491,8 +450,8 @@
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
         <polyline points="22 4 12 14.01 9 11.01"></polyline>
     </svg>
-    <h2 style="color: var(--primary);">تم التفعيل والتحقق بنجاح!</h2>
-    <p class="subtitle" style="margin-bottom: 15px;">تم تأكيد المعاملة المالية وتحديث ترخيص خوارزميات fawakihAI بنجاح مطلق.</p>
+    <h2 class="animated-gradient-text" style="animation: none; background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">تم التفعيل والتحقق بنجاح!</h2>
+    <p class="subtitle" style="margin-bottom: 15px;">تم تأكيد المعاملة المالية وتحديث ترخيص خوارزميات <span style="color: #4ade80; font-weight: bold;">fawakihAI</span> بنجاح مطلق.</p>
     <p style="font-size: 13px; color: #94a3b8; font-weight: 600;">جاري إعادة توجيهك إلى التطبيق بالباقة الكاملة...</p>
     <div class="spinner" style="width: 32px; height: 32px; border-width: 3px; margin-top: 20px;"></div>
 </div>

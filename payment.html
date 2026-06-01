@@ -72,6 +72,62 @@
         h2 { margin: 10px 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 30px; line-height: 1.6; padding: 0 10px; }
 
+        /* --- الإضافات الجمالية المطلوبة --- */
+        
+        /* صورة الإعلان */
+        .ad-banner {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: appAppear 0.8s ease;
+        }
+
+        /* التدرج اللوني المتحرك (أزرق غامق وأحمر غامق) مع إضاءة خلفية خفيفة للوضوح */
+        .animated-gradient-text {
+            background: linear-gradient(270deg, #1e3a8a, #991b1b, #1e3a8a);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease infinite;
+            display: inline-block;
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
+        }
+        .animated-gradient-text-subtitle {
+            background: linear-gradient(270deg, #3b82f6, #ef4444, #3b82f6);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* الكلمات المهمة المميزة (تفعيل / 33 دولار) */
+        .highlight-text {
+            color: #fbbf24 !important;
+            -webkit-text-fill-color: #fbbf24 !important;
+            font-weight: 900;
+            text-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+            background: none;
+            letter-spacing: 0.5px;
+        }
+
+        /* الشروحات الإضافية تحت طرق الدفع */
+        .method-hint {
+            display: block;
+            font-size: 11.5px;
+            color: #34d399;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        /* ------------------------------- */
+
         /* بطاقات اختيار الدفع الفاخرة */
         .method-card {
             background: rgba(30, 41, 59, 0.4);
@@ -308,22 +364,24 @@
 </div>
 
 <div class="app-container" id="methodSelectionView" style="display: none;">
-    <h2>تفعيل نظام fawakihAI</h2>
-    <p class="subtitle">اختر وسيلة الدفع المناسبة لتأكيد التحويل الإلكتروني الآمن وتأهيل حسابك للعمل الفوري الذكي (33 دولار / شهرياً)</p>
+    <img src="fame.jpg" alt="واجهة إعلانية" class="ad-banner">
+
+    <h2 class="animated-gradient-text"><span class="highlight-text">تفعيل نظام fawakihAI</span></h2>
+    <p class="subtitle animated-gradient-text-subtitle">اختر وسيلة الدفع المناسبة لتأكيد التحويل الإلكتروني الآمن وتأهيل حسابك للعمل الفوري الذكي (<span class="highlight-text">33 دولار</span> / شهرياً)</p>
 
     <div class="method-card paypal-card" onclick="showView('paypalView')">
         <div class="method-icon paypal-icon">P</div>
         <div class="method-details">
-            <h3>بوابة الدفع PayPal</h3>
-            <p>معالجة فورية وتلقائية عبر البطاقات البنكية</p>
+            <h3 class="animated-gradient-text">بوابة الدفع PayPal</h3>
+            <p>معالجة فورية وتلقائية عبر البطاقات البنكية <span class="method-hint">✔️ آمن وموثوق ومتاح لجميع دول العالم</span></p>
         </div>
     </div>
 
     <div class="method-card usdt-card" onclick="showView('usdtView')">
         <div class="method-icon usdt-icon">₮</div>
         <div class="method-details">
-            <h3>العملات الرقمية USDT</h3>
-            <p>تحويل آمن مشفر عبر شبكة ترون (TRC20)</p>
+            <h3 class="animated-gradient-text">العملات الرقمية USDT</h3>
+            <p>تحويل آمن مشفر عبر شبكة ترون (TRC20) <span class="method-hint">✔️ الخيار الأسرع والأنسب بدون عمولات إضافية</span></p>
         </div>
     </div>
 </div>
@@ -346,7 +404,7 @@
         <h3>💡 خطوات إنهاء التفعيل:</h3>
         <ol>
             <li>اضغط على الزر الأزرق بالأسفل للانتقال لـ PayPal.</li>
-            <li>قم بتحويل القيمة الثابتة بالكامل وهي <b>33 دولار</b>.</li>
+            <li>قم بتحويل القيمة الثابتة بالكامل وهي <b class="highlight-text">33 دولار</b>.</li>
             <li>بعد اتمام التحويل التقط صورة كاملة (Screenshot) واضحة للإيصال.</li>
             <li>قم بإرفاق الصورة في الحقل المخصص بالأسفل ثم اضغط إرسال.</li>
         </ol>
@@ -392,7 +450,7 @@
         <h3>⚠️ ضوابط وشروط بالغة الأهمية:</h3>
         <ol>
             <li>يجب اختيار شبكة <b>Tron (TRC20)</b> بشكل حصري ومؤكد.</li>
-            <li>أرسل القيمة الصافية <b>33 USDT</b> (تأكد من احتساب رسوم شبكتك).</li>
+            <li>أرسل القيمة الصافية <b class="highlight-text">33 USDT</b> (تأكد من احتساب رسوم شبكتك).</li>
             <li>التقط لقطة شاشة للتحويل الناجح تظهر بوضوح رقم ومعرف المعاملة الـ **TXID**.</li>
             <li>ارفع الصورة فوراً بالأسفل للتحقق البرمجي التلقائي.</li>
         </ol>

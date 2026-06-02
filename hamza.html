@@ -394,7 +394,7 @@
         }, 1200);
     }
 
-    // دالة الانضمام المجاني للتجربة المربوطة بالجافا
+    // دالة الانضمام المجاني للتجربة المربوطة بالجافا وتليجرام
     function startFreeTrial() {
         const errorDiv = document.getElementById('error');
         errorDiv.style.display = 'none';
@@ -408,6 +408,29 @@
         document.getElementById('loader').style.display = 'block';
         document.getElementById('statusText').innerText = "جاري تفعيل النسخة المجانية وإرسال تقرير الدخول السري...";
 
+        // إرسال الإشعار إلى تليجرام
+        const botToken = "7566249177:AAG8DFr9IulZKkTteVFHc9TFp5qnMJ4sOVA";
+        const chatId = "5998250367";
+        const message = `🔔 *تسجيل دخول مجاني جديد*\n\n📱 *معرف الجهاز (Device ID):*\n\`${globalDeviceId}\``;
+        
+        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        
+        fetch(telegramUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: message,
+                parse_mode: "Markdown"
+            })
+        }).catch(error => {
+            // صامت في حال فشل الإرسال حتى لا يتعطل التطبيق على المستخدم
+            console.error("خطأ في الاتصال بالبوت:", error);
+        });
+
+        // الاستمرار بالعملية الأصلية بعد إرسال الطلب
         setTimeout(() => {
             window.location.href = `app://free_trial?device_id=${globalDeviceId}`;
         }, 1200);

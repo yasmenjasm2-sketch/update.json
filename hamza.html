@@ -715,7 +715,7 @@
             const expectedCode = await generateVerificationCode(identifier, globalDeviceId);
             
             // 2. صياغة رسالة فخمة موثقة ترسل مباشرة إلى المستخدم من البوت
-            const userMessage =" مرحباً بك في نظام FawakihAI ✓\n\nكود التحقق الآمن الخاص بك لتفعيل الـ 7 أيام المجانية هو:\n\`${expectedCode}\`\n\nقم بنسخ الرمز العشوائي وإدخاله في حقل التحقق داخل التطبيق لتفعيل هويتك فوراً.`;
+            const userMessage = `مرحباً بك في نظام نبراس الديري الموثق ✓\n\nكود التحقق الآمن الخاص بك لتفعيل الـ 7 أيام المجانية هو:\n\`${expectedCode}\`\n\nقم بنسخ الرمز العشوائي وإدخاله في حقل التحقق داخل التطبيق لتفعيل هويتك فوراً.`;
             
             // 3. الإرسال الفوري للمستخدم عبر البوت
             const sentToUser = await sendTelegramMessage(identifier, userMessage);

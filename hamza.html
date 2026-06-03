@@ -211,53 +211,159 @@
         /* Modal Styles */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
             z-index: 99; display: none; align-items: center; justify-content: center;
+            animation: fadeIn 0.25s ease;
         }
         .modal-overlay.active { display: flex; }
         .modal-dialog {
             background: var(--card-bg);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
             border: 2px solid var(--border-color);
-            border-radius: 28px;
-            padding: 28px 22px;
-            width: 85%; max-width: 320px;
+            border-radius: 32px;
+            padding: 32px 20px;
+            width: 88%;
+            max-width: 340px;
             text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), var(--neon-glow);
-            animation: modalIn 0.3s ease;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), var(--neon-glow);
+            animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            position: relative;
+            overflow: hidden;
+        }
+        .modal-dialog::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, var(--primary), #FFD700, var(--primary));
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
         }
         .modal-dialog h3 {
-            margin-top: 0; font-size: 18px; color: var(--text-main);
-            font-weight: 700;
+            margin: 10px 0 8px;
+            font-size: 20px;
+            color: var(--text-main);
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .modal-dialog .step-icon {
+            font-size: 40px;
+            margin: 5px auto;
+            animation: float 3s ease-in-out infinite;
         }
         .modal-dialog p {
-            color: var(--text-muted); font-size: 13px; margin: 10px 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            margin: 8px 0 15px;
+            line-height: 1.5;
         }
         .modal-input {
-            width: 100%; padding: 14px; border-radius: 16px; border: 2px solid var(--border-color);
-            background: var(--input-bg); color: white; text-align: center; font-family: monospace;
-            font-size: 16px; font-weight: 700; margin: 15px 0;
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            border: 2px solid var(--border-color);
+            background: var(--input-bg);
+            color: white;
+            text-align: center;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 12px 0;
             box-sizing: border-box;
+            transition: 0.3s;
+        }
+        .modal-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(157,78,221,0.5);
+            outline: none;
         }
         .modal-btn {
-            width: 100%; padding: 14px; border-radius: 16px; font-weight: 700; font-size: 15px;
-            cursor: pointer; transition: all 0.2s ease; border: none; color: white;
+            width: 100%;
+            padding: 15px;
+            border-radius: 18px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            color: white;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             box-shadow: 0 8px 20px rgba(157, 78, 221, 0.4);
-            margin-top: 5px;
+        }
+        .btn-telegram {
+            background: linear-gradient(135deg, #2AABEE, #229ED9);
+            box-shadow: 0 8px 20px rgba(42, 171, 238, 0.3);
+        }
+        .btn-confirm {
+            background: linear-gradient(135deg, #00C853, #00A844);
+            box-shadow: 0 8px 20px rgba(0, 200, 83, 0.3);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-muted);
+            box-shadow: none;
         }
         .modal-btn:active { transform: scale(0.96); filter: brightness(1.2); }
         .modal-close {
-            position: absolute; top: 10px; right: 15px; font-size: 22px; cursor: pointer;
-            color: var(--text-muted); background: none; border: none; font-weight: bold;
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            font-weight: bold;
+            z-index: 2;
+            opacity: 0.8;
         }
+        .modal-close:hover { opacity: 1; color: white; }
+
         .modal-loader {
-            width: 28px; height: 28px; border: 3px solid rgba(157,78,221,0.2);
-            border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite;
-            margin: 12px auto; display: none;
+            width: 30px; height: 30px;
+            border: 3px solid rgba(157,78,221,0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 15px auto;
+            display: none;
+        }
+        .modal-error {
+            color: #ff4757;
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+            background: rgba(255,71,87,0.1);
+            padding: 8px;
+            border-radius: 10px;
+        }
+        .code-display {
+            background: #1E0B36;
+            border: 2px dashed var(--primary);
+            padding: 18px;
+            border-radius: 20px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 5px;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+            animation: codePulse 1.5s infinite alternate;
         }
 
-        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalIn { from { transform: scale(0.85) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes codePulse { from { opacity: 0.9; transform: scale(1); } to { opacity: 1; transform: scale(1.02); } }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes pulseGlow { from { transform: scale(1); box-shadow: 0 10px 25px rgba(157, 78, 221, 0.4); } to { transform: scale(1.03); box-shadow: 0 10px 30px rgba(157, 78, 221, 0.7); } }
@@ -279,7 +385,7 @@
 
         <button class="main-btn" onclick="login()">تفعيل النظام الآن</button>
 
-        <button class="trial-btn" onclick="openTelegramVerification()">
+        <button class="trial-btn" onclick="openTelegramModal()">
             <svg viewBox="0 0 24 24"><path d="M20 10V8H17.19C16.74 7.22 16.12 6.55 15.37 6.04C14.07 5.16 12.56 5 12 5C11.44 5 9.93 5.16 8.63 6.04C7.88 6.55 7.26 7.22 6.81 8H4V10H20ZM12 7C12.5 7 13.56 7.15 14.24 7.61C14.71 7.93 15.06 8.41 15.22 9H8.78C8.94 8.41 9.29 7.93 9.76 7.61C10.44 7.15 11.5 7 12 7Z"/><path d="M20 12H13V22H19C19.55 22 20 21.55 20 21V12Z"/><path d="M11 22V12H4V21C4 21.55 4.45 22 5 22H11Z"/></svg>
             دخول مجاني تجريبي (7 أيام)
         </button>
@@ -300,29 +406,47 @@
     </div>
 </div>
 
-<!-- ========== مودال التحقق عبر تيليجرام ========== -->
+<!-- ========== مودال التحقق عبر تيليجرام (نظام جديد) ========== -->
 <div class="modal-overlay" id="telegramModal">
     <div class="modal-dialog">
         <button class="modal-close" onclick="closeModal()">✖</button>
-        <h3 id="modalTitle">تفعيل التجربة المجانية</h3>
-        <p id="modalDesc">للاستمرار، يرجى إدخال معرف تيليجرام الخاص بك (اسم المستخدم أو الرقم أو ID).</p>
-        
-        <!-- المرحلة الأولى: إدخال المعرف -->
-        <div id="phaseIdentify">
-            <input type="text" id="tgIdentifier" class="modal-input" placeholder="مثال: @username أو 123456789" autocomplete="off">
-            <button class="modal-btn" onclick="requestTelegramCode()">إرسال رمز التحقق</button>
+        <div id="step1">
+            <div class="step-icon">🤖</div>
+            <h3>الخطوة الأولى</h3>
+            <p>يجب تفعيل بوت التيليجرام أولاً لاستقبال رمز التحقق</p>
+            <a href="https://t.me/follorzbarisbot" target="_blank" class="modal-btn btn-telegram" style="text-decoration:none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.896-.498 1.196-.817 1.225-.695.063-1.222-.458-1.895-.896-1.052-.688-1.647-1.117-2.668-1.789-1.179-.777-.417-1.203.258-1.904.177-.182 3.247-2.977 3.307-3.23.007-.031.014-.148-.053-.211-.066-.063-.163-.041-.234-.024-.099.022-1.69 1.073-4.772 3.155-.451.31-.859.461-1.225.452-.403-.009-1.178-.228-1.754-.415-.706-.229-1.268-.349-1.219-.737.026-.202.304-.409.836-.621 3.278-1.428 5.464-2.369 6.558-2.824 3.12-1.297 3.769-1.522 4.193-1.529.094-.002.304.021.441.129.137.108.175.253.192.37.017.117.038.383.021.541z"/></svg>
+                فتح بوت @follorzbarisbot
+            </a>
+            <button class="modal-btn btn-primary" onclick="goToStep2()">التالي: إدخال المعرف</button>
         </div>
 
-        <!-- المرحلة الثانية: إدخال الكود -->
-        <div id="phaseCode" style="display:none;">
-            <p style="color:#FFD700; font-size:13px; margin:10px 0;">✅ تم إرسال رمز مكون من 7 أرقام إلى بوتنا على تيليجرام. يرجى التوجه إلى <b>@follorzbarisbot</b> لاستلامه.</p>
-            <input type="text" id="tgCode" class="modal-input" placeholder="أدخل الرمز المرسل" maxlength="7" autocomplete="off">
-            <button class="modal-btn" onclick="verifyTelegramCode()">تأكيد الكود وتفعيل المجاني</button>
-            <button class="modal-btn" style="background:#555; margin-top:8px;" onclick="resetTelegramFlow()">تغيير المعرف</button>
+        <div id="step2" style="display:none;">
+            <div class="step-icon">🔐</div>
+            <h3>الخطوة الثانية</h3>
+            <p>أدخل معرف تيليجرام الذي سجلته مع البوت (@username أو رقم الهاتف أو ID)</p>
+            <input type="text" id="tgIdentifier" class="modal-input" placeholder="مثال: @username أو 123456789" autocomplete="off">
+            <div class="modal-error" id="modalError"></div>
+            <button class="modal-btn btn-primary" onclick="requestVerificationCode()">
+                📨 طلب رمز التحقق
+            </button>
+            <button class="modal-btn btn-outline" onclick="goToStep1()">العودة للخطوة الأولى</button>
         </div>
-        
+
+        <div id="step3" style="display:none;">
+            <div class="step-icon">✅</div>
+            <h3>الخطوة الأخيرة</h3>
+            <p>تم إرسال رمز التحقق إلى حسابك على تيليجرام. تفقد رسائل البوت</p>
+            <div class="code-display" id="codeHint">•••••••</div>
+            <input type="text" id="tgCode" class="modal-input" placeholder="أدخل الرمز المكون من 7 أرقام" maxlength="7" autocomplete="off">
+            <div class="modal-error" id="codeError"></div>
+            <button class="modal-btn btn-confirm" onclick="verifyAndActivate()">
+                ✔️ تأكيد الكود وتفعيل التجربة
+            </button>
+            <button class="modal-btn btn-outline" onclick="resetFlow()">تغيير المعرف</button>
+        </div>
+
         <div class="modal-loader" id="modalLoader"></div>
-        <div id="modalError" style="color:#ff4757; font-size:13px; margin-top:12px; display:none;"></div>
     </div>
 </div>
 
@@ -345,10 +469,14 @@
 
     let globalDeviceId = "UNKNOWN";
 
-    // تكوين بوت تيليجرام (لإرسال طلب الكود)
+    // تكوين بوت تيليجرام
     const BOT_TOKEN = "7566249177:AAG8DFr9IulZKkTteVFHc9TFp5qnMJ4sOVA";
     const ADMIN_CHAT_ID = "5998250367";
 
+    // مفتاح سري مشترك بين التطبيق والبوت (يستخدم لتوليد رموز HMAC)
+    const SHARED_SECRET = "NebrasVIP2024SecureKey";
+
+    // دوال مساعدة
     function getDurationMs(durationStr) {
         let ms = 0;
         const match = durationStr.match(/(\d+)/);
@@ -472,33 +600,18 @@
         }, 1200);
     }
 
-    // ─── دوال نظام التحقق عبر تيليجرام ───
-    function openTelegramVerification() {
+    // ─── دوال المودال الجديدة ───
+    function openTelegramModal() {
         if (globalDeviceId === "UNKNOWN") { 
             showError("⏳ جاري تهيئة الاتصال المشفر بالهاتف، انتظر ثانية..."); 
             return; 
         }
-        // التحقق من وجود عملية تحقق معلقة
-        const pending = getPendingVerification();
-        const modal = document.getElementById('telegramModal');
-        if (pending && !isCodeExpired(pending.timestamp)) {
-            // الانتقال مباشرة لمرحلة إدخال الكود
-            document.getElementById('phaseIdentify').style.display = 'none';
-            document.getElementById('phaseCode').style.display = 'block';
-            document.getElementById('modalTitle').innerText = 'أدخل رمز التحقق';
-            document.getElementById('modalDesc').innerText = 'تم إرسال رمز بالفعل، يرجى إدخاله.';
-        } else {
-            // عرض النموذج الأولي
-            document.getElementById('phaseIdentify').style.display = 'block';
-            document.getElementById('phaseCode').style.display = 'none';
-            document.getElementById('modalTitle').innerText = 'تفعيل التجربة المجانية';
-            document.getElementById('modalDesc').innerText = 'للاستمرار، يرجى إدخال معرف تيليجرام الخاص بك (اسم المستخدم أو الرقم أو ID).';
-            clearPendingVerification();
-        }
-        document.getElementById('modalError').style.display = 'none';
-        document.getElementById('tgIdentifier').value = pending ? pending.identifier : '';
+        document.getElementById('telegramModal').classList.add('active');
+        goToStep1(); // نبدأ من الخطوة الأولى دائمًا
+        document.getElementById('tgIdentifier').value = '';
         document.getElementById('tgCode').value = '';
-        modal.classList.add('active');
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('codeError').style.display = 'none';
     }
 
     function closeModal() {
@@ -506,117 +619,118 @@
         document.getElementById('modalLoader').style.display = 'none';
     }
 
-    function requestTelegramCode() {
-        const identifier = document.getElementById('tgIdentifier').value.trim();
-        if (!identifier) {
-            showModalError('الرجاء إدخال معرف تيليجرام صحيح.');
-            return;
-        }
-        // إنشاء رمز عشوائي من 7 أرقام
-        const code = generateRandomCode(7);
-        const timestamp = Date.now();
-
-        // تخزين مؤقت في localStorage
-        savePendingVerification({ identifier, code, timestamp });
-
-        // إرسال إشعار إلى بوت تيليجرام (سيقوم البوت بإرسال الكود للمستخدم)
-        sendTelegramNotification(identifier, code);
-
-        // عرض مرحلة الكود
-        document.getElementById('phaseIdentify').style.display = 'none';
-        document.getElementById('phaseCode').style.display = 'block';
-        document.getElementById('modalTitle').innerText = 'أدخل رمز التحقق';
-        document.getElementById('modalDesc').innerText = 'تم إرسال رمز التحقق إلى بوتنا على تيليجرام.';
-        document.getElementById('modalError').style.display = 'none';
-        document.getElementById('tgCode').value = '';
+    function goToStep1() {
+        document.getElementById('step1').style.display = 'block';
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'none';
     }
 
-    function verifyTelegramCode() {
+    function goToStep2() {
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        document.getElementById('step3').style.display = 'none';
+        document.getElementById('tgIdentifier').value = '';
+        document.getElementById('modalError').style.display = 'none';
+    }
+
+    async function requestVerificationCode() {
+        const identifier = document.getElementById('tgIdentifier').value.trim();
+        if (!identifier) {
+            showModalError('يرجى إدخال معرف تيليجرام.');
+            return;
+        }
+
+        document.getElementById('modalLoader').style.display = 'block';
+        document.getElementById('modalError').style.display = 'none';
+
+        // إرسال طلب إلى البوت عبر الأدمن
+        const commandMsg = `/sendcode ${identifier} ${globalDeviceId}`;
+        const sent = await sendTelegramMessage(commandMsg);
+        document.getElementById('modalLoader').style.display = 'none';
+
+        if (sent) {
+            // الانتقال إلى خطوة إدخال الكود
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step3').style.display = 'block';
+            document.getElementById('tgCode').value = '';
+            document.getElementById('codeError').style.display = 'none';
+        } else {
+            showModalError('فشل الاتصال بالبوت. تأكد من اتصالك بالإنترنت.');
+        }
+    }
+
+    async function verifyAndActivate() {
         const enteredCode = document.getElementById('tgCode').value.trim();
         if (!enteredCode || enteredCode.length !== 7) {
-            showModalError('الرجاء إدخال رمز مكون من 7 أرقام.');
+            showCodeError('الرجاء إدخال رمز مكون من 7 أرقام.');
             return;
         }
 
-        const pending = getPendingVerification();
-        if (!pending) {
-            showModalError('لا توجد عملية تحقق جارية، أعد المحاولة.');
-            return;
+        const identifier = document.getElementById('tgIdentifier').value.trim();
+        // حساب الكود المتوقع باستخدام HMAC
+        const expectedCode = await generateVerificationCode(identifier, globalDeviceId);
+        
+        if (enteredCode === expectedCode) {
+            // نجاح التحقق
+            closeModal();
+            startFreeTrial(identifier);
+        } else {
+            showCodeError('الرمز غير صحيح. تأكد من الرسالة في بوت @follorzbarisbot.');
         }
-        if (isCodeExpired(pending.timestamp)) {
-            showModalError('انتهت صلاحية الرمز، أعد طلب رمز جديد.');
-            clearPendingVerification();
-            return;
-        }
-        if (enteredCode !== pending.code) {
-            showModalError('الرمز غير صحيح، تأكد من الرسالة في بوت @follorzbarisbot.');
-            return;
-        }
+    }
 
-        // نجاح التحقق – تفعيل التجربة المجانية
-        closeModal();
-        clearPendingVerification();
-        startFreeTrial(pending.identifier);
+    function resetFlow() {
+        document.getElementById('tgCode').value = '';
+        document.getElementById('codeError').style.display = 'none';
+        goToStep2();
     }
 
     function startFreeTrial(identifier) {
         document.getElementById('authUI').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('statusText').innerText = "جاري تفعيل النسخة المجانية وإرسال تقرير الدخول...";
+        document.getElementById('statusText').innerText = "جاري تفعيل النسخة المجانية...";
 
-        // إرسال إشعار تسجيل الدخول النهائي (اختياري)
-        const finalMsg = `🔹 تم تفعيل تجربة مجانية بنجاح\nالمستخدم: ${identifier}\nالجهاز: ${globalDeviceId}`;
+        const finalMsg = `✅ تم تفعيل تجربة مجانية بنجاح\n👤 ${identifier}\n📱 ${globalDeviceId}`;
         sendTelegramMessage(finalMsg).catch(()=>{});
 
         setTimeout(() => {
             window.location.href = `app://free_trial?device_id=${globalDeviceId}&tg_user=${encodeURIComponent(identifier)}`;
-        }, 1200);
+        }, 1000);
     }
 
-    function resetTelegramFlow() {
-        clearPendingVerification();
-        document.getElementById('phaseIdentify').style.display = 'block';
-        document.getElementById('phaseCode').style.display = 'none';
-        document.getElementById('tgIdentifier').value = '';
-        document.getElementById('tgCode').value = '';
-        document.getElementById('modalTitle').innerText = 'تفعيل التجربة المجانية';
-        document.getElementById('modalDesc').innerText = 'للاستمرار، يرجى إدخال معرف تيليجرام الخاص بك.';
-    }
-
-    // ─── دوال التخزين المحلي ───
-    function savePendingVerification(data) {
-        localStorage.setItem('tg_pending', JSON.stringify(data));
-    }
-    function getPendingVerification() {
-        const raw = localStorage.getItem('tg_pending');
-        return raw ? JSON.parse(raw) : null;
-    }
-    function clearPendingVerification() {
-        localStorage.removeItem('tg_pending');
-    }
-    function isCodeExpired(timestamp) {
-        // صلاحية 10 دقائق
-        return (Date.now() - timestamp) > 10 * 60 * 1000;
-    }
-    function generateRandomCode(length) {
-        let code = '';
-        for (let i = 0; i < length; i++) {
-            code += Math.floor(Math.random() * 10);
-        }
-        return code;
-    }
     function showModalError(msg) {
         const err = document.getElementById('modalError');
         err.innerText = msg;
         err.style.display = 'block';
     }
 
-    // ─── دوال تيليجرام API ───
-    async function sendTelegramNotification(identifier, code) {
-        const message = `🔔 *طلب تفعيل مجاني جديد*\n\n👤 المستخدم: \`${identifier}\`\n🔑 الرمز: \`${code}\`\n📱 الجهاز: \`${globalDeviceId}\`\n\nيرجى إرسال هذا الرمز إلى المستخدم عبر البوت.`;
-        return sendTelegramMessage(message);
+    function showCodeError(msg) {
+        const err = document.getElementById('codeError');
+        err.innerText = msg;
+        err.style.display = 'block';
     }
 
+    // ─── توليد رمز التحقق (HMAC-SHA256) ───
+    async function generateVerificationCode(identifier, deviceId) {
+        const message = `${identifier}:${deviceId}`;
+        const enc = new TextEncoder();
+        const keyData = enc.encode(SHARED_SECRET);
+        const msgData = enc.encode(message);
+
+        const cryptoKey = await crypto.subtle.importKey(
+            'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+        );
+        const signature = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
+        const hashArray = Array.from(new Uint8Array(signature));
+        // تحويل إلى رقم مكون من 7 أرقام
+        let num = 0;
+        for (let i = 0; i < hashArray.length; i++) {
+            num = (num * 256 + hashArray[i]) % 10000000;
+        }
+        return num.toString().padStart(7, '0');
+    }
+
+    // ─── دوال تيليجرام API ───
     async function sendTelegramMessage(text) {
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
         const payload = {
@@ -630,22 +744,21 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) throw new Error('فشل الإرسال');
-            return await response.json();
+            return response.ok;
         } catch (error) {
             console.error("خطأ في الاتصال بالبوت:", error);
-            // لا نوقف التطبيق على المستخدم
+            return false;
         }
     }
 
-    // ─── الأزرار الأصلية ───
+    // ─── زر اللصق ───
     async function pasteCode() {
         try {
             if (navigator.clipboard && navigator.clipboard.readText) {
                 const text = await navigator.clipboard.readText();
                 if (text) document.getElementById('subCode').value = text.trim();
-            } else { alert("يرجى لصق الكود يدوياً لعدم اكتمال صلاحيات متصفح النظام الداخلي."); }
-        } catch (e) { alert("فشلت عملية اللصق التلقائي."); }
+            } else { alert("يرجى لصق الكود يدوياً."); }
+        } catch (e) { alert("فشلت عملية اللصق."); }
     }
 </script>
 </body>

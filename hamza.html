@@ -406,7 +406,6 @@
     </div>
 </div>
 
-<!-- ========== مودال التحقق عبر تيليجرام (نظام جديد) ========== -->
 <div class="modal-overlay" id="telegramModal">
     <div class="modal-dialog">
         <button class="modal-close" onclick="closeModal()">✖</button>
@@ -424,8 +423,8 @@
         <div id="step2" style="display:none;">
             <div class="step-icon">🔐</div>
             <h3>الخطوة الثانية</h3>
-            <p>أدخل معرف تيليجرام الذي سجلته مع البوت (@username أو رقم الهاتف أو ID)</p>
-            <input type="text" id="tgIdentifier" class="modal-input" placeholder="مثال: @username أو 123456789" autocomplete="off">
+            <p>أدخل معرف (ID) تيليجرام الرقمي الخاص بك لاستلام الرمز الفوري</p>
+            <input type="text" id="tgIdentifier" class="modal-input" placeholder="أدخل ID تيليجرام (أرقام فقط)" autocomplete="off">
             <div class="modal-error" id="modalError"></div>
             <button class="modal-btn btn-primary" onclick="requestVerificationCode()">
                 📨 طلب رمز التحقق
@@ -600,14 +599,14 @@
         }, 1200);
     }
 
-    // ─── دوال المودال الجديدة ───
+    // ─── دوال المودال المعدلة والمحدثة بالكامل ───
     function openTelegramModal() {
         if (globalDeviceId === "UNKNOWN") { 
             showError("⏳ جاري تهيئة الاتصال المشفر بالهاتف، انتظر ثانية..."); 
             return; 
         }
         document.getElementById('telegramModal').classList.add('active');
-        goToStep1(); // نبدأ من الخطوة الأولى دائمًا
+        goToStep1(); 
         document.getElementById('tgIdentifier').value = '';
         document.getElementById('tgCode').value = '';
         document.getElementById('modalError').style.display = 'none';
@@ -635,27 +634,42 @@
 
     async function requestVerificationCode() {
         const identifier = document.getElementById('tgIdentifier').value.trim();
-        if (!identifier) {
-            showModalError('يرجى إدخال معرف تيليجرام.');
+        
+        // التحقق من أن المستخدم أدخل أرقاماً فقط (ID تيليجرام الرقمي)
+        if (!identifier || isNaN(identifier)) {
+            showModalError('يرجى إدخال ID تيليجرام الرقمي الخاص بك (يجب أن يكون أرقاماً فقط وليس يوزرنيم).');
             return;
         }
 
         document.getElementById('modalLoader').style.display = 'block';
         document.getElementById('modalError').style.display = 'none';
 
-        // إرسال طلب إلى البوت عبر الأدمن
-        const commandMsg = `/sendcode ${identifier} ${globalDeviceId}`;
-        const sent = await sendTelegramMessage(commandMsg);
-        document.getElementById('modalLoader').style.display = 'none';
+        try {
+            // 1. توليد كود التحقق الآمن الخاص بجهازه والمعرف
+            const expectedCode = await generateVerificationCode(identifier, globalDeviceId);
+            
+            // 2. صياغة رسالة فخمة ترسل مباشرة إلى المستخدم من البوت
+            const userMessage = `مرحباً بك في نظام نبراس الديري 👑\n\nكود التحقق الخاص بك لتفعيل الـ 7 أيام المجانية هو:\n\`${expectedCode}\`\n\nقم بنسخ الرمز وإدخاله في حقل التحقق داخل التطبيق الفوري لتأمين هويتك.`;
+            
+            // 3. الإرسال الفوري للمستخدم
+            const sentToUser = await sendTelegramMessage(identifier, userMessage);
+            document.getElementById('modalLoader').style.display = 'none';
 
-        if (sent) {
-            // الانتقال إلى خطوة إدخال الكود
-            document.getElementById('step2').style.display = 'none';
-            document.getElementById('step3').style.display = 'block';
-            document.getElementById('tgCode').value = '';
-            document.getElementById('codeError').style.display = 'none';
-        } else {
-            showModalError('فشل الاتصال بالبوت. تأكد من اتصالك بالإنترنت.');
+            if (sentToUser) {
+                // الانتقال إلى خطوة المطالبة بالرمز
+                document.getElementById('step2').style.display = 'none';
+                document.getElementById('step3').style.display = 'block';
+                document.getElementById('tgCode').value = '';
+                document.getElementById('codeError').style.display = 'none';
+                
+                // توثيق ونسخ السجل في غرفتك الإدارية الخاصة بالأدمن (اختياري)
+                sendTelegramMessage(ADMIN_CHAT_ID, `🔔 طلب كود تجريبي جديد:\n👤 ID الحساب: ${identifier}\n📱 معرف الجهاز: ${globalDeviceId}\n🔐 الرمز المولد: ${expectedCode}`);
+            } else {
+                showModalError('فشل الإرسال ❌ تأكد أنك فتحت رابط البوت وضغطت على زر Start (ابدأ) أولاً.');
+            }
+        } catch (error) {
+            document.getElementById('modalLoader').style.display = 'none';
+            showModalError('حدث خطأ أثناء معالجة وإرسال الكود المشفر.');
         }
     }
 
@@ -667,15 +681,13 @@
         }
 
         const identifier = document.getElementById('tgIdentifier').value.trim();
-        // حساب الكود المتوقع باستخدام HMAC
         const expectedCode = await generateVerificationCode(identifier, globalDeviceId);
         
         if (enteredCode === expectedCode) {
-            // نجاح التحقق
             closeModal();
             startFreeTrial(identifier);
         } else {
-            showCodeError('الرمز غير صحيح. تأكد من الرسالة في بوت @follorzbarisbot.');
+            showCodeError('الرمز غير صحيح. تأكد من الرسالة الواردة في بوت @follorzbarisbot.');
         }
     }
 
@@ -690,8 +702,8 @@
         document.getElementById('loader').style.display = 'block';
         document.getElementById('statusText').innerText = "جاري تفعيل النسخة المجانية...";
 
-        const finalMsg = `✅ تم تفعيل تجربة مجانية بنجاح\n👤 ${identifier}\n📱 ${globalDeviceId}`;
-        sendTelegramMessage(finalMsg).catch(()=>{});
+        const finalMsg = `✅ تم تفعيل تجربة مجانية بنجاح\n👤 المعرف: ${identifier}\n📱 الجهاز: ${globalDeviceId}`;
+        sendTelegramMessage(ADMIN_CHAT_ID, finalMsg).catch(()=>{});
 
         setTimeout(() => {
             window.location.href = `app://free_trial?device_id=${globalDeviceId}&tg_user=${encodeURIComponent(identifier)}`;
@@ -722,7 +734,7 @@
         );
         const signature = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
         const hashArray = Array.from(new Uint8Array(signature));
-        // تحويل إلى رقم مكون من 7 أرقام
+        
         let num = 0;
         for (let i = 0; i < hashArray.length; i++) {
             num = (num * 256 + hashArray[i]) % 10000000;
@@ -730,11 +742,11 @@
         return num.toString().padStart(7, '0');
     }
 
-    // ─── دوال تيليجرام API ───
-    async function sendTelegramMessage(text) {
+    // ─── دالة تيليجرام المحدثة (تستقبل الـ Chat ID ديناميكياً) ───
+    async function sendTelegramMessage(targetChatId, text) {
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
         const payload = {
-            chat_id: ADMIN_CHAT_ID,
+            chat_id: targetChatId,
             text: text,
             parse_mode: "Markdown"
         };
@@ -746,7 +758,7 @@
             });
             return response.ok;
         } catch (error) {
-            console.error("خطأ في الاتصال بالبوت:", error);
+            console.error("خطأ في الاتصال بالسيرفر:", error);
             return false;
         }
     }

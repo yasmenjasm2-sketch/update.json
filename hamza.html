@@ -51,6 +51,7 @@
             text-align: center;
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             position: relative;
+            z-index: 2;
         }
 
         .app-icon {
@@ -120,7 +121,6 @@
         }
         button.main-btn:active { transform: scale(0.97); filter: brightness(1.2); }
 
-        /* زر التجربة المجانية الاحترافي */
         .trial-btn {
             display: flex;
             align-items: center;
@@ -143,7 +143,6 @@
         .trial-btn:active { transform: scale(0.96); filter: brightness(1.1); box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2); }
         .trial-btn svg { width: 22px; height: 22px; fill: currentColor; }
 
-        /* تعديلات زر الواتساب الاحترافي */
         .whatsapp-btn {
             display: flex;
             align-items: center;
@@ -209,6 +208,56 @@
             animation: spin 0.8s linear infinite; margin: 15px auto;
         }
 
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+            z-index: 99; display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-dialog {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--border-color);
+            border-radius: 28px;
+            padding: 28px 22px;
+            width: 85%; max-width: 320px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), var(--neon-glow);
+            animation: modalIn 0.3s ease;
+        }
+        .modal-dialog h3 {
+            margin-top: 0; font-size: 18px; color: var(--text-main);
+            font-weight: 700;
+        }
+        .modal-dialog p {
+            color: var(--text-muted); font-size: 13px; margin: 10px 0;
+        }
+        .modal-input {
+            width: 100%; padding: 14px; border-radius: 16px; border: 2px solid var(--border-color);
+            background: var(--input-bg); color: white; text-align: center; font-family: monospace;
+            font-size: 16px; font-weight: 700; margin: 15px 0;
+            box-sizing: border-box;
+        }
+        .modal-btn {
+            width: 100%; padding: 14px; border-radius: 16px; font-weight: 700; font-size: 15px;
+            cursor: pointer; transition: all 0.2s ease; border: none; color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            box-shadow: 0 8px 20px rgba(157, 78, 221, 0.4);
+            margin-top: 5px;
+        }
+        .modal-btn:active { transform: scale(0.96); filter: brightness(1.2); }
+        .modal-close {
+            position: absolute; top: 10px; right: 15px; font-size: 22px; cursor: pointer;
+            color: var(--text-muted); background: none; border: none; font-weight: bold;
+        }
+        .modal-loader {
+            width: 28px; height: 28px; border: 3px solid rgba(157,78,221,0.2);
+            border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite;
+            margin: 12px auto; display: none;
+        }
+
+        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes pulseGlow { from { transform: scale(1); box-shadow: 0 10px 25px rgba(157, 78, 221, 0.4); } to { transform: scale(1.03); box-shadow: 0 10px 30px rgba(157, 78, 221, 0.7); } }
@@ -230,7 +279,7 @@
 
         <button class="main-btn" onclick="login()">تفعيل النظام الآن</button>
 
-        <button class="trial-btn" onclick="startFreeTrial()">
+        <button class="trial-btn" onclick="openTelegramVerification()">
             <svg viewBox="0 0 24 24"><path d="M20 10V8H17.19C16.74 7.22 16.12 6.55 15.37 6.04C14.07 5.16 12.56 5 12 5C11.44 5 9.93 5.16 8.63 6.04C7.88 6.55 7.26 7.22 6.81 8H4V10H20ZM12 7C12.5 7 13.56 7.15 14.24 7.61C14.71 7.93 15.06 8.41 15.22 9H8.78C8.94 8.41 9.29 7.93 9.76 7.61C10.44 7.15 11.5 7 12 7Z"/><path d="M20 12H13V22H19C19.55 22 20 21.55 20 21V12Z"/><path d="M11 22V12H4V21C4 21.55 4.45 22 5 22H11Z"/></svg>
             دخول مجاني تجريبي (7 أيام)
         </button>
@@ -251,10 +300,37 @@
     </div>
 </div>
 
+<!-- ========== مودال التحقق عبر تيليجرام ========== -->
+<div class="modal-overlay" id="telegramModal">
+    <div class="modal-dialog">
+        <button class="modal-close" onclick="closeModal()">✖</button>
+        <h3 id="modalTitle">تفعيل التجربة المجانية</h3>
+        <p id="modalDesc">للاستمرار، يرجى إدخال معرف تيليجرام الخاص بك (اسم المستخدم أو الرقم أو ID).</p>
+        
+        <!-- المرحلة الأولى: إدخال المعرف -->
+        <div id="phaseIdentify">
+            <input type="text" id="tgIdentifier" class="modal-input" placeholder="مثال: @username أو 123456789" autocomplete="off">
+            <button class="modal-btn" onclick="requestTelegramCode()">إرسال رمز التحقق</button>
+        </div>
+
+        <!-- المرحلة الثانية: إدخال الكود -->
+        <div id="phaseCode" style="display:none;">
+            <p style="color:#FFD700; font-size:13px; margin:10px 0;">✅ تم إرسال رمز مكون من 7 أرقام إلى بوتنا على تيليجرام. يرجى التوجه إلى <b>@follorzbarisbot</b> لاستلامه.</p>
+            <input type="text" id="tgCode" class="modal-input" placeholder="أدخل الرمز المرسل" maxlength="7" autocomplete="off">
+            <button class="modal-btn" onclick="verifyTelegramCode()">تأكيد الكود وتفعيل المجاني</button>
+            <button class="modal-btn" style="background:#555; margin-top:8px;" onclick="resetTelegramFlow()">تغيير المعرف</button>
+        </div>
+        
+        <div class="modal-loader" id="modalLoader"></div>
+        <div id="modalError" style="color:#ff4757; font-size:13px; margin-top:12px; display:none;"></div>
+    </div>
+</div>
+
 <script>
     const REQUIRED_APP_VERSION = "2.1.1";
     const UPDATE_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
 
+    // بيانات VIP
     const secureVipDevices = {
         "6357ef9846e96b17": { s: 1, e: "2026-06-06T04:04:46" }
     };
@@ -268,6 +344,10 @@
     };
 
     let globalDeviceId = "UNKNOWN";
+
+    // تكوين بوت تيليجرام (لإرسال طلب الكود)
+    const BOT_TOKEN = "7566249177:AAG8DFr9IulZKkTteVFHc9TFp5qnMJ4sOVA";
+    const ADMIN_CHAT_ID = "5998250367";
 
     function getDurationMs(durationStr) {
         let ms = 0;
@@ -288,9 +368,7 @@
     function copyDeviceId() {
         if (globalDeviceId === "UNKNOWN" || globalDeviceId === "جاري الاتصال بالسيرفر...") return;
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(globalDeviceId).then(() => {
-                showTooltip();
-            });
+            navigator.clipboard.writeText(globalDeviceId).then(() => showTooltip());
         } else {
             const textArea = document.createElement("textarea");
             textArea.value = globalDeviceId;
@@ -394,48 +472,173 @@
         }, 1200);
     }
 
-    // دالة الانضمام المجاني للتجربة المربوطة بالجافا وتليجرام
-    function startFreeTrial() {
-        const errorDiv = document.getElementById('error');
-        errorDiv.style.display = 'none';
-
+    // ─── دوال نظام التحقق عبر تيليجرام ───
+    function openTelegramVerification() {
         if (globalDeviceId === "UNKNOWN") { 
             showError("⏳ جاري تهيئة الاتصال المشفر بالهاتف، انتظر ثانية..."); 
             return; 
         }
+        // التحقق من وجود عملية تحقق معلقة
+        const pending = getPendingVerification();
+        const modal = document.getElementById('telegramModal');
+        if (pending && !isCodeExpired(pending.timestamp)) {
+            // الانتقال مباشرة لمرحلة إدخال الكود
+            document.getElementById('phaseIdentify').style.display = 'none';
+            document.getElementById('phaseCode').style.display = 'block';
+            document.getElementById('modalTitle').innerText = 'أدخل رمز التحقق';
+            document.getElementById('modalDesc').innerText = 'تم إرسال رمز بالفعل، يرجى إدخاله.';
+        } else {
+            // عرض النموذج الأولي
+            document.getElementById('phaseIdentify').style.display = 'block';
+            document.getElementById('phaseCode').style.display = 'none';
+            document.getElementById('modalTitle').innerText = 'تفعيل التجربة المجانية';
+            document.getElementById('modalDesc').innerText = 'للاستمرار، يرجى إدخال معرف تيليجرام الخاص بك (اسم المستخدم أو الرقم أو ID).';
+            clearPendingVerification();
+        }
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('tgIdentifier').value = pending ? pending.identifier : '';
+        document.getElementById('tgCode').value = '';
+        modal.classList.add('active');
+    }
 
+    function closeModal() {
+        document.getElementById('telegramModal').classList.remove('active');
+        document.getElementById('modalLoader').style.display = 'none';
+    }
+
+    function requestTelegramCode() {
+        const identifier = document.getElementById('tgIdentifier').value.trim();
+        if (!identifier) {
+            showModalError('الرجاء إدخال معرف تيليجرام صحيح.');
+            return;
+        }
+        // إنشاء رمز عشوائي من 7 أرقام
+        const code = generateRandomCode(7);
+        const timestamp = Date.now();
+
+        // تخزين مؤقت في localStorage
+        savePendingVerification({ identifier, code, timestamp });
+
+        // إرسال إشعار إلى بوت تيليجرام (سيقوم البوت بإرسال الكود للمستخدم)
+        sendTelegramNotification(identifier, code);
+
+        // عرض مرحلة الكود
+        document.getElementById('phaseIdentify').style.display = 'none';
+        document.getElementById('phaseCode').style.display = 'block';
+        document.getElementById('modalTitle').innerText = 'أدخل رمز التحقق';
+        document.getElementById('modalDesc').innerText = 'تم إرسال رمز التحقق إلى بوتنا على تيليجرام.';
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('tgCode').value = '';
+    }
+
+    function verifyTelegramCode() {
+        const enteredCode = document.getElementById('tgCode').value.trim();
+        if (!enteredCode || enteredCode.length !== 7) {
+            showModalError('الرجاء إدخال رمز مكون من 7 أرقام.');
+            return;
+        }
+
+        const pending = getPendingVerification();
+        if (!pending) {
+            showModalError('لا توجد عملية تحقق جارية، أعد المحاولة.');
+            return;
+        }
+        if (isCodeExpired(pending.timestamp)) {
+            showModalError('انتهت صلاحية الرمز، أعد طلب رمز جديد.');
+            clearPendingVerification();
+            return;
+        }
+        if (enteredCode !== pending.code) {
+            showModalError('الرمز غير صحيح، تأكد من الرسالة في بوت @follorzbarisbot.');
+            return;
+        }
+
+        // نجاح التحقق – تفعيل التجربة المجانية
+        closeModal();
+        clearPendingVerification();
+        startFreeTrial(pending.identifier);
+    }
+
+    function startFreeTrial(identifier) {
         document.getElementById('authUI').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('statusText').innerText = "جاري تفعيل النسخة المجانية وإرسال تقرير الدخول السري...";
+        document.getElementById('statusText').innerText = "جاري تفعيل النسخة المجانية وإرسال تقرير الدخول...";
 
-        // إرسال الإشعار إلى تليجرام
-        const botToken = "7566249177:AAG8DFr9IulZKkTteVFHc9TFp5qnMJ4sOVA";
-        const chatId = "5998250367";
-        const message = `🔔 *تسجيل دخول مجاني جديد*\n\n📱 *معرف الجهاز (Device ID):*\n\`${globalDeviceId}\``;
-        
-        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-        
-        fetch(telegramUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: message,
-                parse_mode: "Markdown"
-            })
-        }).catch(error => {
-            // صامت في حال فشل الإرسال حتى لا يتعطل التطبيق على المستخدم
-            console.error("خطأ في الاتصال بالبوت:", error);
-        });
+        // إرسال إشعار تسجيل الدخول النهائي (اختياري)
+        const finalMsg = `🔹 تم تفعيل تجربة مجانية بنجاح\nالمستخدم: ${identifier}\nالجهاز: ${globalDeviceId}`;
+        sendTelegramMessage(finalMsg).catch(()=>{});
 
-        // الاستمرار بالعملية الأصلية بعد إرسال الطلب
         setTimeout(() => {
-            window.location.href = `app://free_trial?device_id=${globalDeviceId}`;
+            window.location.href = `app://free_trial?device_id=${globalDeviceId}&tg_user=${encodeURIComponent(identifier)}`;
         }, 1200);
     }
 
+    function resetTelegramFlow() {
+        clearPendingVerification();
+        document.getElementById('phaseIdentify').style.display = 'block';
+        document.getElementById('phaseCode').style.display = 'none';
+        document.getElementById('tgIdentifier').value = '';
+        document.getElementById('tgCode').value = '';
+        document.getElementById('modalTitle').innerText = 'تفعيل التجربة المجانية';
+        document.getElementById('modalDesc').innerText = 'للاستمرار، يرجى إدخال معرف تيليجرام الخاص بك.';
+    }
+
+    // ─── دوال التخزين المحلي ───
+    function savePendingVerification(data) {
+        localStorage.setItem('tg_pending', JSON.stringify(data));
+    }
+    function getPendingVerification() {
+        const raw = localStorage.getItem('tg_pending');
+        return raw ? JSON.parse(raw) : null;
+    }
+    function clearPendingVerification() {
+        localStorage.removeItem('tg_pending');
+    }
+    function isCodeExpired(timestamp) {
+        // صلاحية 10 دقائق
+        return (Date.now() - timestamp) > 10 * 60 * 1000;
+    }
+    function generateRandomCode(length) {
+        let code = '';
+        for (let i = 0; i < length; i++) {
+            code += Math.floor(Math.random() * 10);
+        }
+        return code;
+    }
+    function showModalError(msg) {
+        const err = document.getElementById('modalError');
+        err.innerText = msg;
+        err.style.display = 'block';
+    }
+
+    // ─── دوال تيليجرام API ───
+    async function sendTelegramNotification(identifier, code) {
+        const message = `🔔 *طلب تفعيل مجاني جديد*\n\n👤 المستخدم: \`${identifier}\`\n🔑 الرمز: \`${code}\`\n📱 الجهاز: \`${globalDeviceId}\`\n\nيرجى إرسال هذا الرمز إلى المستخدم عبر البوت.`;
+        return sendTelegramMessage(message);
+    }
+
+    async function sendTelegramMessage(text) {
+        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        const payload = {
+            chat_id: ADMIN_CHAT_ID,
+            text: text,
+            parse_mode: "Markdown"
+        };
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error('فشل الإرسال');
+            return await response.json();
+        } catch (error) {
+            console.error("خطأ في الاتصال بالبوت:", error);
+            // لا نوقف التطبيق على المستخدم
+        }
+    }
+
+    // ─── الأزرار الأصلية ───
     async function pasteCode() {
         try {
             if (navigator.clipboard && navigator.clipboard.readText) {

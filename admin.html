@@ -16,6 +16,7 @@
             --border-color: #4A306D;
             --danger: #FF4A4A;
             --success: #25D366;
+            --warning: #FFB703;
         }
 
         body { 
@@ -28,13 +29,13 @@
         }
 
         .dashboard-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
         header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         header h1 {
@@ -48,6 +49,16 @@
             color: var(--text-muted);
             margin: 5px 0 0 0;
             font-size: 14px;
+        }
+
+        .admin-security-card {
+            background: rgba(187, 134, 252, 0.05);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 13px;
         }
 
         .card {
@@ -102,7 +113,6 @@
         }
 
         button {
-            flex: 1;
             padding: 14px;
             border: none;
             border-radius: 12px;
@@ -113,11 +123,13 @@
         }
 
         button.btn-activate {
+            flex: 2;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
         }
 
         button.btn-ban {
+            flex: 1;
             background: rgba(255, 74, 74, 0.15);
             color: var(--danger);
             border: 1.5px solid var(--danger);
@@ -150,6 +162,7 @@
             border-bottom: 1px solid var(--border-color);
             color: #FFFFFF;
             font-family: monospace;
+            vertical-align: middle;
         }
 
         .badge {
@@ -157,27 +170,70 @@
             border-radius: 6px;
             font-weight: bold;
             font-size: 11px;
+            display: inline-block;
         }
 
         .badge-active { background: rgba(37, 211, 102, 0.2); color: var(--success); }
         .badge-banned { background: rgba(255, 74, 74, 0.2); color: var(--danger); }
 
+        /* أزرار الإجراءات داخل الجدول */
+        .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-table-stop {
+            background: rgba(255, 74, 74, 0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-table-stop:hover {
+            background: var(--danger);
+            color: #FFF;
+        }
+
+        .select-table-extend {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
         .btn-delete {
             background: transparent;
-            color: var(--danger);
+            color: #aaa;
             border: none;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             text-decoration: underline;
+            padding: 0;
+            margin-right: auto;
+        }
+        
+        .btn-delete:hover {
+            color: var(--danger);
         }
         
         .notification {
-            padding: 12px;
-            border-radius: 10px;
+            padding: 14px;
+            border-radius: 12px;
             margin-bottom: 15px;
             display: none;
             font-weight: 600;
             text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
     </style>
 
@@ -192,6 +248,11 @@
         <p>إدارة تفعيل وحظر الاشتراكات الفورية عبر الـ Device ID</p>
     </header>
 
+    <div class="admin-security-card">
+        🔒 <span style="color: var(--text-muted);">نظام الحماية والمراقبة الذاتية | جهاز الأدمن الحالي المتصل:</span> 
+        <strong id="adminDeviceDisplay" style="color: var(--primary);">جاري الفحص...</strong>
+    </div>
+
     <div id="toast" class="notification"></div>
 
     <div class="card">
@@ -203,13 +264,17 @@
         </div>
 
         <div class="form-group">
-            <label for="durationSelect">مدة الصلاحية (في حال التفعيل البدوي)</label>
+            <label for="durationSelect">مدة الصلاحية (في حال التفعيل اليدوي)</label>
             <select id="durationSelect">
                 <option value="20seconds">20 ثانية (20 Seconds)</option>
                 <option value="1hour">ساعة واحدة (1 Hour)</option>
                 <option value="1day">يوم واحد (1 Day)</option>
                 <option value="2day">يومان (2 Days)</option>
+                <option value="7days">اسبوع كامل (7 Days)</option>
                 <option value="30days" selected>شهر كامل (30 Days)</option>
+                <option value="90days">3 أشهر (90 Days)</option>
+                <option value="180days">6 أشهر (180 Days)</option>
+                <option value="365days">سنة كاملة (365 Days)</option>
                 <option value="lifetime">مدى الحياة (Lifetime)</option>
             </select>
         </div>
@@ -229,7 +294,7 @@
                         <th>Device ID</th>
                         <th>الحالة</th>
                         <th>تاريخ الانتهاء</th>
-                        <th>إجراءات</th>
+                        <th>إجراءات الإدارة السريعة</th>
                     </tr>
                 </thead>
                 <tbody id="devicesTableBody">
@@ -268,6 +333,27 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    // استخراج اسم الجهاز الحالي الذي يستعرض صفحة الأدمن للحماية
+    function detectAdminDevice() {
+        const ua = navigator.userAgent;
+        let deviceSystem = "جهاز غير معروف";
+        
+        if (/Windows/i.test(ua)) deviceSystem = "كمبيوتر Windows";
+        else if (/Android/i.test(ua)) deviceSystem = "هاتف Android";
+        else if (/iPhone|iPad|iPod/i.test(ua)) deviceSystem = "جهاز iOS (iPhone)";
+        else if (/Macintosh/i.test(ua)) deviceSystem = "جهاز Mac";
+        else if (/Linux/i.test(ua)) deviceSystem = "نظام Linux";
+
+        let browserName = "متصفح مجهول";
+        if (ua.indexOf("Chrome") > -1) browserName = "Chrome";
+        else if (ua.indexOf("Safari") > -1) browserName = "Safari";
+        else if (ua.indexOf("Firefox") > -1) browserName = "Firefox";
+        else if (ua.indexOf("Edge") > -1) browserName = "Edge";
+
+        document.getElementById('adminDeviceDisplay').innerText = `${deviceSystem} - [${browserName}]`;
+    }
+    detectAdminDevice();
+
     // دالة لربط ومزامنة أكواد الاشتراكات الجاهزة تلقائياً في الفايربيس
     function syncSubscriptionCodes() {
         database.ref('subscriptionCodes').set(subscriptionCodes)
@@ -279,29 +365,44 @@
     }
     syncSubscriptionCodes();
 
-    // تم إصلاح الخطأ البرمجي هنا بوضع قيم المتغيرات داخل علامات اقتباس نصية لإصلاح الانهيار
-    function showToast(msg, isSuccess) {
+    function showToast(msg, statusType) {
         const toast = document.getElementById('toast');
         toast.innerText = msg;
         toast.style.display = 'block';
-        toast.style.background = isSuccess ? 'rgba(37, 211, 102, 0.2)' : 'rgba(255, 74, 74, 0.2)';
-        toast.style.color = isSuccess ? 'var(--success)' : 'var(--danger)'; 
-        setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        
+        if(statusType === 'success') {
+            toast.style.background = 'rgba(37, 211, 102, 0.2)';
+            toast.style.color = 'var(--success)';
+            toast.style.border = '1px solid var(--success)';
+        } else if (statusType === 'warning') {
+            toast.style.background = 'rgba(255, 183, 3, 0.2)';
+            toast.style.color = 'var(--warning)';
+            toast.style.border = '1px solid var(--warning)';
+        } else {
+            toast.style.background = 'rgba(255, 74, 74, 0.2)';
+            toast.style.color = 'var(--danger)';
+            toast.style.border = '1px solid var(--danger)';
+        }
+        setTimeout(() => { toast.style.display = 'none'; }, 4000);
     }
 
-    // تحديث الحسابات الزمنية لتتوافق مع المدخلات الجديدة (ثواني، يومين، إلخ)
-    function getExpiryTimestamp(durationStr) {
+    // تحديث الحسابات الزمنية وتوفير كل الأيام والمدد
+    function getExpiryTimestamp(durationStr, baseTimestamp = Date.now()) {
         let ms = 0;
         if (durationStr === "20seconds") ms = 20 * 1000;
         else if (durationStr === "1hour") ms = 1 * 60 * 60 * 1000;
         else if (durationStr === "1day") ms = 24 * 60 * 60 * 1000;
         else if (durationStr === "2day") ms = 2 * 24 * 60 * 60 * 1000;
+        else if (durationStr === "7days") ms = 7 * 24 * 60 * 60 * 1000;
         else if (durationStr === "30days") ms = 30 * 24 * 60 * 60 * 1000;
+        else if (durationStr === "90days") ms = 90 * 24 * 60 * 60 * 1000;
+        else if (durationStr === "180days") ms = 180 * 24 * 60 * 60 * 1000;
+        else if (durationStr === "365days") ms = 365 * 24 * 60 * 60 * 1000;
         else if (durationStr === "lifetime") ms = 100 * 365 * 24 * 60 * 60 * 1000;
-        return Date.now() + ms;
+        return baseTimestamp + ms;
     }
 
-    // إضافة أو حظر جهاز
+    // إضافة أو حظر جهاز مع التحقق الأمني من حالة التفعيل
     function saveDevice(statusCode) {
         const devId = document.getElementById('deviceIdInput').value.trim();
         let duration = document.getElementById('durationSelect').value;
@@ -313,13 +414,34 @@
             return;
         }
 
-        // إذا قام المشرف بإدخال كود من الأكواد الجاهزة، يتم تهيئة البيانات المحددة له تلقائياً
         if (subscriptionCodes[devId]) {
             duration = subscriptionCodes[devId].duration;
             finalStatus = subscriptionCodes[devId].status;
             codeLabel = "CODE-PROMO-ACTIVATED";
         }
 
+        // خاصية التحقق: إذا كان الإجراء هو تفعيل (1)، نتحقق أولاً إن كان مفعلاً وقيد التشغيل
+        if (finalStatus === 1) {
+            database.ref('devices/' + devId).once('value').then((snapshot) => {
+                const currentData = snapshot.val();
+                
+                // إذا كان الجهاز مسجلاً مسبقاً، حالته 1، ووقت الانتهاء أكبر من الوقت الحالي (لم ينتهِ بعد)
+                if (currentData && currentData.status === 1 && currentData.expiryTime > Date.now()) {
+                    showToast("🛑 تم رفض العملية! الجهاز مفعّل بالفعل واشتراكه الحالي لا يزال سارياً وقيد التفعيل.", "warning");
+                    return;
+                }
+                
+                // إذا لم يكن مفعلاً أو اشتراكه انتهى، يتم التفعيل بشكل طبيعي
+                executeWriteDevice(devId, finalStatus, duration, codeLabel);
+            });
+        } else {
+            // في حالة الحظر (2) يتم التطبيق فوراً دون قيود
+            executeWriteDevice(devId, finalStatus, duration, codeLabel);
+        }
+    }
+
+    // إتمام عملية الحفظ الفعلي للبيانات
+    function executeWriteDevice(devId, finalStatus, duration, codeLabel) {
         const finalExpiry = getExpiryTimestamp(duration);
         const isoString = new Date(finalExpiry).toISOString();
 
@@ -329,10 +451,49 @@
             expiryTime: finalExpiry,
             code: codeLabel
         }).then(() => {
-            showToast(finalStatus === 1 ? "تم تفعيل واضافة جهازك السحابي بنجاح!" : "تم معالجة حالة الجهاز بنجاح داخل النظام 🛡️", true);
+            showToast(finalStatus === 1 ? "تم تفعيل واضافة جهازك السحابي بنجاح!" : "تم معالجة حالة الجهاز بنجاح داخل النظام 🛡️", "success");
             document.getElementById('deviceIdInput').value = "";
         }).catch((err) => {
-            showToast("فشلت العملية، تأكد من إعدادات الحماية لقاعدة البيانات.", false);
+            showToast("فشلت العملية، تأكد من إعدادات الحماية لقاعدة البيانات.", "danger");
+        });
+    }
+
+    // خاصية إيقاف الاشتراك الفوري من الجدول
+    window.stopSubscription = function(id) {
+        if(confirm(`هل أنت متأكد من إيقاف اشتراك الجهاز (${id}) فوراً؟`)) {
+            database.ref('devices/' + id).update({
+                status: 2, // تحويل الحالة إلى موقوف / محظور
+                code: "SUBSCRIPTION-STOPPED"
+            }).then(() => {
+                showToast(`تم إيقاف اشتراك الجهاز ${id} بنجاح ⛔`, "danger");
+            });
+        }
+    }
+
+    // خاصية تمديد الاشتراك من داخل الجدول مع إضافة كل الأيام والخيارات
+    window.extendDevice = function(id, durationValue) {
+        if(!durationValue) return;
+        
+        database.ref('devices/' + id).once('value').then((snapshot) => {
+            const dev = snapshot.val();
+            let startTimestamp = Date.now();
+            
+            // إذا كان الجهاز يملك اشتراكاً حالياً ساري المفعول، نقوم بالتمديد فوق وقته المتبقي
+            if (dev && dev.expiryTime && dev.expiryTime > Date.now() && dev.status === 1) {
+                startTimestamp = dev.expiryTime;
+            }
+            
+            const newExpiryTimestamp = getExpiryTimestamp(durationValue, startTimestamp);
+            const newIsoString = new Date(newExpiryTimestamp).toISOString();
+            
+            database.ref('devices/' + id).update({
+                status: 1, // تأكيد التنشيط في حال كان موقوفاً
+                expireAt: newIsoString,
+                expiryTime: newExpiryTimestamp,
+                code: "EXTENDED-BY-ADMIN"
+            }).then(() => {
+                showToast(`تم تمديد فترة صلاحية الجهاز (${id}) بنجاح! ✅`, "success");
+            });
         });
     }
 
@@ -340,12 +501,12 @@
     window.deleteDevice = function(id) {
         if(confirm("هل أنت متأكد من رغبتك في حذف هذا الجهاز من السحابة؟")) {
             database.ref('devices/' + id).remove().then(() => {
-                showToast("تم إزالة وثيقة الجهاز بنجاح من الخادم.", true);
+                showToast("تم إزالة وثيقة الجهاز بنجاح من الخادم.", "success");
             });
         }
     }
 
-    // المزامنة الحية وعرض الجدول الفاخر
+    // المزامنة الحية وعرض الجدول الفاخر مع الخصائص الجديدة
     database.ref('devices').on('value', (snapshot) => {
         const tbody = document.getElementById('devicesTableBody');
         tbody.innerHTML = "";
@@ -358,16 +519,43 @@
 
         for (let id in data) {
             const dev = data[id];
-            // يدعم التحقق من الحظر إذا كانت الحالة تساوي 2
-            const isBanned = dev.status === 2;
+            
+            // يعتبر الجهاز محظوراً أو موقوفاً إذا كانت حالته تساوي 2 أو انتهى وقته الزمني
+            const isExpired = dev.expiryTime ? Date.now() > dev.expiryTime : false;
+            const isBanned = dev.status === 2 || isExpired;
+            
             const expiryDate = new Date(dev.expireAt || dev.expiryTime).toLocaleString('ar-EG');
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="color:var(--primary); font-weight: bold;">${id}</td>
-                <td><span class="badge ${isBanned ? 'badge-banned' : 'badge-active'}">${isBanned ? 'محظور / مفعل كود ⛔' : 'نشط مفعّل  ✅'}</span></td>
+                <td>
+                    <span class="badge ${isBanned ? 'badge-banned' : 'badge-active'}">
+                        ${dev.status === 2 ? 'موقوف / محظور ⛔' : (isExpired ? 'منتهي الصلاحية ⏳' : 'نشط مفعّل ✅')}
+                    </span>
+                </td>
                 <td style="font-size:12px; color: #ccc;">${expiryDate}</td>
-                <td><button class="btn-delete" onclick="deleteDevice('${id}')">إلغاء وتصفير</button></td>
+                <td>
+                    <div class="actions-cell">
+                        <button class="btn-table-stop" onclick="stopSubscription('${id}')" title="إيقاف فوري">إيقاف ⛔</button>
+                        
+                        <select class="select-table-extend" onchange="extendDevice('${id}', this.value); this.value='';">
+                            <option value="" selected disabled>➕ تمديد الـ أيام...</option>
+                            <option value="20seconds">20 ثانية</option>
+                            <option value="1hour">ساعة واحدة</option>
+                            <option value="1day">يوم إضافي</option>
+                            <option value="2day">يومان (2 Days)</option>
+                            <option value="7days">أسبوع (7 Days)</option>
+                            <option value="30days">شهر (30 Days)</option>
+                            <option value="90days">3 أشهر (90 Days)</option>
+                            <option value="180days">6 أشهر</option>
+                            <option value="365days">سنة كاملة</option>
+                            <option value="lifetime">مدى الحياة ♾️</option>
+                        </select>
+                        
+                        <button class="btn-delete" onclick="deleteDevice('${id}')">تصفير</button>
+                    </div>
+                </td>
             `;
             tbody.appendChild(tr);
         }

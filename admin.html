@@ -127,7 +127,6 @@
             transform: scale(0.98);
         }
 
-        /* جدول استعراض المشتركين */
         .table-wrapper {
             overflow-x: auto;
         }
@@ -200,14 +199,16 @@
         
         <div class="form-group">
             <label for="deviceIdInput">معرف بصمة الجهاز (Device ID)</label>
-            <input type="text" id="deviceIdInput" placeholder="أدخل أو الصق الـ ID هنا بدقة..." autocomplete="off">
+            <input type="text" id="deviceIdInput" placeholder="أدخل أو الصق الـ ID أو كود الاشتراك هنا..." autocomplete="off">
         </div>
 
         <div class="form-group">
-            <label for="durationSelect">مدة الصلاحية (في حال التفعيل)</label>
+            <label for="durationSelect">مدة الصلاحية (في حال التفعيل البدوي)</label>
             <select id="durationSelect">
+                <option value="20seconds">20 ثانية (20 Seconds)</option>
                 <option value="1hour">ساعة واحدة (1 Hour)</option>
                 <option value="1day">يوم واحد (1 Day)</option>
+                <option value="2day">يومان (2 Days)</option>
                 <option value="30days" selected>شهر كامل (30 Days)</option>
                 <option value="lifetime">مدى الحياة (Lifetime)</option>
             </select>
@@ -242,7 +243,19 @@
 </div>
 
 <script>
-    // تهيئة البيانات السحابية المتطابقة
+    // قائمة أكواد الاشتراكات المحددة من قبلك
+    const subscriptionCodes = {
+        "opssyria": { duration: "30days", status: 2 },
+        "MONTH-HACK": { duration: "30days", status: 2 },
+        "SUB-MONTH": { duration: "30days", status: 2 },
+        "hamzaxxx123": { duration: "2day", status: 2 },
+        "hamzahamza": { duration: "1day", status: 2 },
+        "SU7B-HOUR": { duration: "1hour", status: 2 },
+        "TEST-20SEC": { duration: "20seconds", status: 2 },
+        "VIP-FUTURE": { duration: "lifetime", status: 2 }
+    };
+
+    // تهيئة البيانات السحابية
     const firebaseConfig = {
         apiKey: "AIzaSyApqVwnKmq0gJ7k-UM-jLNxaYlBPkRx1Go",
         authDomain: "chatlive-4387e.firebaseapp.com",
@@ -255,51 +268,75 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    // دالة لربط ومزامنة أكواد الاشتراكات الجاهزة تلقائياً في الفايربيس
+    function syncSubscriptionCodes() {
+        database.ref('subscriptionCodes').set(subscriptionCodes)
+        .then(() => {
+            console.log("تم تحديث ومزامنة قواعد أكواد الاشتراكات بنجاح.");
+        }).catch((err) => {
+            console.error("فشل في مزامنة الأكواد: ", err);
+        });
+    }
+    syncSubscriptionCodes();
+
+    // تم إصلاح الخطأ البرمجي هنا بوضع قيم المتغيرات داخل علامات اقتباس نصية لإصلاح الانهيار
     function showToast(msg, isSuccess) {
         const toast = document.getElementById('toast');
         toast.innerText = msg;
         toast.style.display = 'block';
         toast.style.background = isSuccess ? 'rgba(37, 211, 102, 0.2)' : 'rgba(255, 74, 74, 0.2)';
-        toast.style.color = isSuccess ? var(--success) : var(--danger);
+        toast.style.color = isSuccess ? 'var(--success)' : 'var(--danger)'; 
         setTimeout(() => { toast.style.display = 'none'; }, 3500);
     }
 
+    // تحديث الحسابات الزمنية لتتوافق مع المدخلات الجديدة (ثواني، يومين، إلخ)
     function getExpiryTimestamp(durationStr) {
         let ms = 0;
-        if (durationStr === "1hour") ms = 1 * 60 * 60 * 1000;
+        if (durationStr === "20seconds") ms = 20 * 1000;
+        else if (durationStr === "1hour") ms = 1 * 60 * 60 * 1000;
         else if (durationStr === "1day") ms = 24 * 60 * 60 * 1000;
+        else if (durationStr === "2day") ms = 2 * 24 * 60 * 60 * 1000;
         else if (durationStr === "30days") ms = 30 * 24 * 60 * 60 * 1000;
         else if (durationStr === "lifetime") ms = 100 * 365 * 24 * 60 * 60 * 1000;
         return Date.now() + ms;
     }
 
-    // إضافة أو حظر جهاز بضغطة زر
+    // إضافة أو حظر جهاز
     function saveDevice(statusCode) {
         const devId = document.getElementById('deviceIdInput').value.trim();
-        const duration = document.getElementById('durationSelect').value;
+        let duration = document.getElementById('durationSelect').value;
+        let finalStatus = statusCode;
+        let codeLabel = statusCode === 1 ? "WEB-DB-ACTIVE" : "BANNED";
 
         if(!devId) {
             alert('الرجاء كتابة معرف الـ ID أولاً بشكل صحيح.');
             return;
         }
 
+        // إذا قام المشرف بإدخال كود من الأكواد الجاهزة، يتم تهيئة البيانات المحددة له تلقائياً
+        if (subscriptionCodes[devId]) {
+            duration = subscriptionCodes[devId].duration;
+            finalStatus = subscriptionCodes[devId].status;
+            codeLabel = "CODE-PROMO-ACTIVATED";
+        }
+
         const finalExpiry = getExpiryTimestamp(duration);
         const isoString = new Date(finalExpiry).toISOString();
 
         database.ref('devices/' + devId).set({
-            status: statusCode,
+            status: finalStatus,
             expireAt: isoString,
             expiryTime: finalExpiry,
-            code: statusCode === 1 ? "WEB-DB-ACTIVE" : "BANNED"
+            code: codeLabel
         }).then(() => {
-            showToast(statusCode === 1 ? "تم تفعيل واضافة جهازك السحابي بنجاح!" : "تم وضع الجهاز في القائمة السوداء بنجاح 🛡️", true);
+            showToast(finalStatus === 1 ? "تم تفعيل واضافة جهازك السحابي بنجاح!" : "تم معالجة حالة الجهاز بنجاح داخل النظام 🛡️", true);
             document.getElementById('deviceIdInput').value = "";
         }).catch((err) => {
             showToast("فشلت العملية، تأكد من إعدادات الحماية لقاعدة البيانات.", false);
         });
     }
 
-    // حذف جهاز نهائياً من الداتابيز وإرجاعه للنظام الافتراضي
+    // حذف جهاز نهائياً من الداتابيز
     window.deleteDevice = function(id) {
         if(confirm("هل أنت متأكد من رغبتك في حذف هذا الجهاز من السحابة؟")) {
             database.ref('devices/' + id).remove().then(() => {
@@ -308,7 +345,7 @@
         }
     }
 
-    // المزامنة الحية واستقبال البيانات لحظياً من الفايربيس وعرضها بجدول فخم
+    // المزامنة الحية وعرض الجدول الفاخر
     database.ref('devices').on('value', (snapshot) => {
         const tbody = document.getElementById('devicesTableBody');
         tbody.innerHTML = "";
@@ -321,14 +358,15 @@
 
         for (let id in data) {
             const dev = data[id];
+            // يدعم التحقق من الحظر إذا كانت الحالة تساوي 2
             const isBanned = dev.status === 2;
             const expiryDate = new Date(dev.expireAt || dev.expiryTime).toLocaleString('ar-EG');
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="color:var(--primary); font-weight: bold;">${id}</td>
-                <td><span class="badge ${isBanned ? 'badge-banned' : 'badge-active'}">${isBanned ? 'محظور ⛔' : 'نشط مفعّل  ✅'}</span></td>
-                <td style="font-size:12px; color: #ccc;">${isBanned ? 'غير محدد' : expiryDate}</td>
+                <td><span class="badge ${isBanned ? 'badge-banned' : 'badge-active'}">${isBanned ? 'محظور / مفعل كود ⛔' : 'نشط مفعّل  ✅'}</span></td>
+                <td style="font-size:12px; color: #ccc;">${expiryDate}</td>
                 <td><button class="btn-delete" onclick="deleteDevice('${id}')">إلغاء وتصفير</button></td>
             `;
             tbody.appendChild(tr);

@@ -326,6 +326,75 @@
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
+
+        /* نافذة إشعار تسجيل دخول الأدمن المطور العائمة */
+        #adminLoginAlert {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background: #1A1A1E;
+            border: 2px solid var(--danger);
+            border-radius: 20px;
+            padding: 22px;
+            width: 340px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+            z-index: 11000;
+            animation: slideInUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .alert-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--danger);
+            font-weight: 800;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .alert-msg-body {
+            font-size: 14px;
+            color: var(--text-main);
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .alert-btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert-btn-yes {
+            flex: 1;
+            background: var(--danger);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            border: none;
+        }
+
+        .alert-btn-no {
+            flex: 1;
+            background: var(--input-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(150px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -424,9 +493,27 @@
     </div>
 </div>
 
+<!-- كرت الإشعار الذكي والحي المطور لدخول أي أدمن -->
+<div id="adminLoginAlert">
+    <div class="alert-title-row">
+        <span>🚨</span>
+        <span>تنبيه أمني فوري!</span>
+    </div>
+    <div class="alert-msg-body">
+        هناك شخص ما قام بتسجيل دخول بصفحة لادمن بواسطة جهاز: <br>
+        <strong id="intruderDeviceName" style="color: var(--primary);"></strong><br><br>
+        هل انت شاكك با امره؟
+    </div>
+    <div class="alert-btn-group">
+        <button class="alert-btn-yes" onclick="dismissIntruderAlert()">نعم</button>
+        <button class="alert-btn-no" onclick="dismissIntruderAlert()">لا</button>
+    </div>
+</div>
+
 <script>
     // شفرة الدخول المشفرة والمؤمنة المحددة من قبلك داخلياً (تعادل gmail34567)
     const _secureGate = "Z21haWwzNDU2Nw==";
+    const pageLoadTimestamp = Date.now();
 
     // قائمة أكواد الاشتراكات التلقائية المحددة
     const subscriptionCodes = {
@@ -455,24 +542,39 @@
 
     let myPresenceRef = null;
 
-    // استخراج اسم الجهاز الحقيقي الحالي للأدمن المتصل
+    // توليد وتثبيت اسم هاتف حقيقي وفخم بشكل دائم لكل مستخدم
     function getCleanDeviceName() {
+        let storedDevice = localStorage.getItem('assigned_premium_device');
+        if (storedDevice) return storedDevice;
+
         const ua = navigator.userAgent;
-        let system = "جهاز مجهول";
-        if (/Windows NT/i.test(ua)) system = "كمبيوتر Windows";
-        else if (/Android/i.test(ua)) system = "هاتف Android";
-        else if (/iPhone/i.test(ua)) system = "هاتف iPhone";
-        else if (/iPad/i.test(ua)) system = "جهاز iPad";
-        else if (/Macintosh/i.test(ua)) system = "جهاز Mac";
-        else if (/Linux/i.test(ua)) system = "جهاز Linux";
+        let pickedModel = "جهاز كمبيوتر Windows Pro";
 
-        let browser = "متصفح قياسي";
-        if (ua.indexOf("Chrome") > -1) browser = "Chrome";
-        else if (ua.indexOf("Safari") > -1) browser = "Safari";
-        else if (ua.indexOf("Firefox") > -1) browser = "Firefox";
-        else if (ua.indexOf("Edge") > -1) browser = "Edge";
+        if (/Android/i.test(ua)) {
+            const androidModels = [
+                "POCO X6 Pro 5G",
+                "POCO F5 Pro",
+                "Infinix Note 40 Pro",
+                "Infinix ZERO 30 5G",
+                "Samsung Galaxy S24 Ultra",
+                "Xiaomi Redmi Note 13 Pro+",
+                "Xiaomi 14 Ultra",
+                "Realme GT 5G"
+            ];
+            pickedModel = androidModels[Math.floor(Math.random() * androidModels.length)];
+        } else if (/iPhone|iPad/i.test(ua)) {
+            const iosModels = [
+                "iPhone 15 Pro Max",
+                "iPhone 14 Pro Max",
+                "iPhone 13 Pro Max"
+            ];
+            pickedModel = iosModels[Math.floor(Math.random() * iosModels.length)];
+        } else if (/Macintosh/i.test(ua)) {
+            pickedModel = "جهاز MacBook Pro (M3)";
+        }
 
-        return `${system} (${browser})`;
+        localStorage.setItem('assigned_premium_device', pickedModel);
+        return pickedModel;
     }
 
     // فحص صلاحية تسجيل الدخول وحذفها التلقائي بعد 3 أيام
@@ -481,31 +583,26 @@
         const authTime = localStorage.getItem('admin_session_timestamp');
         
         if (authStatus === 'granted' && authTime) {
-            const threeDaysMs = 3 * 24 * 60 * 60 * 1000; // مدة 3 أيام بالملي ثانية
+            const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
             const elapsedTime = Date.now() - parseInt(authTime);
 
             if (elapsedTime > threeDaysMs) {
-                // انتهاء الـ 3 أيام، حذف تسجيل الدخول تلقائياً
                 localStorage.removeItem('admin_session_auth');
                 localStorage.removeItem('admin_session_timestamp');
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('mainDashboard').style.display = 'none';
             } else {
-                // الجلسة لا زالت صالحة
                 grantAccess();
             }
         } else {
-            // لم يسجل دخول بعد
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainDashboard').style.display = 'none';
         }
     }
 
-    // التحقق من الشفرة عند ضغط زر الدخول
     function verifyAdminAccess() {
         const inputCode = document.getElementById('secureCodeInput').value.trim();
         if (inputCode === atob(_secureGate)) {
-            // حفظ تسجيل الدخول مع تسجيل بصمة الوقت الحالي
             localStorage.setItem('admin_session_auth', 'granted');
             localStorage.setItem('admin_session_timestamp', Date.now().toString());
             grantAccess();
@@ -514,7 +611,6 @@
         }
     }
 
-    // تفعيل الواجهة وتشغيل نظام تعقب الأدمنية المفتوحة
     function grantAccess() {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
@@ -522,24 +618,22 @@
         const currentDevice = getCleanDeviceName();
         document.getElementById('adminDeviceDisplay').innerText = currentDevice;
 
-        // تسجيل الجهاز الحالي في عقدة الحضور للبث المباشر
         myPresenceRef = database.ref('admin_presence').push();
         myPresenceRef.set({
             deviceName: currentDevice,
             connectedAt: Date.now()
         });
 
-        // حذف الجهاز سحابياً وفوراً بمجرد إغلاق الأدمن للمتصفح أو الصفحة للحماية
         myPresenceRef.onDisconnect().remove();
 
-        // تشغيل مراقبة الأجهزة المتصلة وباقي وظائف النظام
         listenToActiveAdmins();
         syncSubscriptionCodes();
         listenToDevices();
     }
 
-    // تشغيل مراقبة أجهزة الأدمن المتاحة حالياً لعرضها في الإعدادات
+    // تشغيل مراقبة أجهزة الأدمنية الحية + إطلاق الإشعار الأمني الحي
     function listenToActiveAdmins() {
+        // 1. لتحديث القائمة داخل زر الإعدادات
         database.ref('admin_presence').on('value', (snapshot) => {
             const container = document.getElementById('activeAdminsList');
             container.innerHTML = "";
@@ -557,15 +651,35 @@
                 container.appendChild(div);
             }
         });
+
+        // 2. تتبع دخول أدمن جديد لإطلاق كرت التحذير الفوري في نفس اللحظة
+        database.ref('admin_presence').on('child_added', (snapshot) => {
+            const newAdmin = snapshot.val();
+            // نتحقق أن الدخول ليس الخاص بجلستنا الحالية، وأنه تم بعد تحميل الصفحة بـ ثانية
+            if (myPresenceRef && snapshot.key !== myPresenceRef.key) {
+                if (newAdmin.connectedAt && newAdmin.connectedAt > pageLoadTimestamp - 1000) {
+                    triggerLiveIntruderAlert(newAdmin.deviceName);
+                }
+            }
+        });
     }
 
-    // فتح وإغلاق بطاقة خيارات الإعدادات العلوي
+    // إظهار كرت الإشعار الأمني العائم لشخص ما سجل دخول
+    function triggerLiveIntruderAlert(deviceName) {
+        document.getElementById('intruderDeviceName').innerText = deviceName;
+        document.getElementById('adminLoginAlert').style.display = 'block';
+    }
+
+    // إغلاق كرت الإشعار الأمني عند الضغط على نعم أو لا
+    function dismissIntruderAlert() {
+        document.getElementById('adminLoginAlert').style.display = 'none';
+    }
+
     function toggleSettingsCard() {
         const card = document.getElementById('settingsCard');
         card.style.display = (card.style.display === 'block') ? 'none' : 'block';
     }
 
-    // مزامنة قواعد الأكواد التلقائية في الداتابيز
     function syncSubscriptionCodes() {
         database.ref('subscriptionCodes').set(subscriptionCodes).catch((err) => {
             console.error("فشل في مزامنة الأكواد: ", err);
@@ -700,7 +814,6 @@
         }
     }
 
-    // الاستماع السحابي الحي للأجهزة وعرض الجدول الفاخر
     function listenToDevices() {
         database.ref('devices').on('value', (snapshot) => {
             const tbody = document.getElementById('devicesTableBody');
@@ -754,7 +867,6 @@
         });
     }
 
-    // بدء تشغيل وفحص الأمان التلقائي بمجرد تحميل الصفحة لقفل البيانات
     window.onload = checkSessionValidity;
 </script>
 

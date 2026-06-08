@@ -3,209 +3,337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم | نظام fawakihAI</title>
+    <title>لوحة التحكم الفاخرة | منصة ريماس لإدارة الأجهزة</title>
     <style>
         :root {
-            --bg: #0b1121;
-            --card: #151c2c;
-            --primary: #10b981;
-            --danger: #ef4444;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-            --border: #334155;
+            --bg-color: #0E051A;       
+            --card-bg: #1A0B2E;        
+            --primary: #BB86FC;        
+            --primary-dark: #9368E6;   
+            --text-main: #FFFFFF;      
+            --text-muted: #E0AAFF;     
+            --input-bg: #25143E;       
+            --border-color: #4A306D;
+            --danger: #FF4A4A;
+            --success: #25D366;
         }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 30px 15px;
+            direction: rtl;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: var(--card);
-            border-radius: 24px;
-            padding: 25px;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        .dashboard-container {
+            max-width: 800px;
+            margin: 0 auto;
         }
 
-        .header {
+        header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
-        .header h1 { font-size: 22px; color: var(--primary); margin: 0; }
-        .header p { font-size: 13px; color: var(--muted); }
-
-        .search-section {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+            color: var(--primary);
+            letter-spacing: -0.5px;
         }
 
-        input {
-            flex: 1;
-            background: #1e293b;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            color: white;
-            outline: none;
-            font-family: monospace;
-        }
-
-        .btn {
-            cursor: pointer;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 18px;
-            font-weight: 600;
-            transition: 0.2s;
-            color: white;
-        }
-
-        .btn-primary { background: var(--primary); }
-        .btn-danger { background: var(--danger); width: 100%; margin-top: 10px; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); width: 100%; margin-top: 10px; color: var(--muted); }
-
-        .user-info {
-            background: #0f172a;
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 10px;
-            display: none;
-            border-right: 4px solid var(--primary);
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
+        header p {
+            color: var(--text-muted);
+            margin: 5px 0 0 0;
             font-size: 14px;
         }
 
-        .info-row span:first-child { color: var(--muted); }
-        .info-row span:last-child { font-weight: 600; color: var(--text); }
-
-        .badge {
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            text-transform: uppercase;
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
         }
 
-        .badge-active { background: rgba(16, 185, 129, 0.2); color: var(--primary); }
-        .badge-banned { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-color);
+            background: var(--input-bg);
+            color: #FFFFFF;
+            box-sizing: border-box;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button.btn-activate {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        button.btn-ban {
+            background: rgba(255, 74, 74, 0.15);
+            color: var(--danger);
+            border: 1.5px solid var(--danger);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* جدول استعراض المشتركين */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        th {
+            background: rgba(187, 134, 252, 0.1);
+            color: var(--primary);
+            padding: 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: #FFFFFF;
+            font-family: monospace;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .badge-active { background: rgba(37, 211, 102, 0.2); color: var(--success); }
+        .badge-banned { background: rgba(255, 74, 74, 0.2); color: var(--danger); }
+
+        .btn-delete {
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: underline;
+        }
+        
+        .notification {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+            font-weight: 600;
+            text-align: center;
+        }
     </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>🛡️ لوحة الإدارة الذكية</h1>
-        <p>التحكم في بصمة الجهاز واشتراكات المستخدمين</p>
-    </div>
+<div class="dashboard-container">
+    <header>
+        <h1>لوحة تحكم منصة نبراس وريماس</h1>
+        <p>إدارة تفعيل وحظر الاشتراكات الفورية عبر الـ Device ID</p>
+    </header>
 
-    <div class="search-section">
-        <input type="text" id="targetId" placeholder="أدخل Device ID هنا...">
-        <button class="btn btn-primary" onclick="findUser()">بحث</button>
-    </div>
+    <div id="toast" class="notification"></div>
 
-    <div id="userCard" class="user-info">
-        <div class="info-row">
-            <span>حالة الجهاز:</span>
-            <span id="statusBadge" class="badge"></span>
-        </div>
-        <div class="info-row">
-            <span>الكود المستخدم:</span>
-            <span id="resCode">---</span>
-        </div>
-        <div class="info-row">
-            <span>تاريخ الانتهاء:</span>
-            <span id="resExpiry">---</span>
-        </div>
+    <div class="card">
+        <h2>➕ التحكم ومعالجة معرف جهاز</h2>
         
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">
-        
-        <button id="banBtn" class="btn btn-danger" onclick="toggleBan()">حظر المستخدم فوراً</button>
-        <button class="btn btn-outline" onclick="resetUser()">إعادة تعيين (حذف الاشتراك)</button>
+        <div class="form-group">
+            <label for="deviceIdInput">معرف بصمة الجهاز (Device ID)</label>
+            <input type="text" id="deviceIdInput" placeholder="أدخل أو الصق الـ ID هنا بدقة..." autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="durationSelect">مدة الصلاحية (في حال التفعيل)</label>
+            <select id="durationSelect">
+                <option value="1hour">ساعة واحدة (1 Hour)</option>
+                <option value="1day">يوم واحد (1 Day)</option>
+                <option value="30days" selected>شهر كامل (30 Days)</option>
+                <option value="lifetime">مدى الحياة (Lifetime)</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-activate" onclick="saveDevice(1)">تفعيل / تجديد الاشتراك ✅</button>
+            <button class="btn-ban" onclick="saveDevice(2)">حظر هذا الجهاز فوراً ⛔</button>
+        </div>
     </div>
 
-    <div id="noData" style="display:none; text-align:center; color:var(--danger); font-size:14px; margin-top:10px;">
-        ⚠️ لم يتم العثور على أي بيانات لهذا الجهاز.
+    <div class="card">
+        <h2>📋 قائمة الأجهزة المحفوظة حالياً في الفايربيس</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Device ID</th>
+                        <th>الحالة</th>
+                        <th>تاريخ الانتهاء</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="devicesTableBody">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-muted);">جاري الاتصال السحابي بالبيانات...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    function findUser() {
-        const deviceId = document.getElementById('targetId').value.trim();
-        const rawData = localStorage.getItem("DEVICE_DB_" + deviceId);
-        const card = document.getElementById('userCard');
-        const noData = document.getElementById('noData');
+    // تهيئة البيانات السحابية المتطابقة
+    const firebaseConfig = {
+        apiKey: "AIzaSyApqVwnKmq0gJ7k-UM-jLNxaYlBPkRx1Go",
+        authDomain: "chatlive-4387e.firebaseapp.com",
+        databaseURL: "https://chatlive-4387e-default-rtdb.firebaseio.com",
+        projectId: "chatlive-4387e",
+        storageBucket: "chatlive-4387e.firebasestorage.app",
+        messagingSenderId: "722728428486",
+        appId: "1:722728428486:android:847b11a7743dfb7d5ac8c7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-        if (rawData) {
-            const data = JSON.parse(rawData);
-            card.style.display = 'block';
-            noData.style.display = 'none';
+    function showToast(msg, isSuccess) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        toast.style.background = isSuccess ? 'rgba(37, 211, 102, 0.2)' : 'rgba(255, 74, 74, 0.2)';
+        toast.style.color = isSuccess ? var(--success) : var(--danger);
+        setTimeout(() => { toast.style.display = 'none'; }, 3500);
+    }
 
-            // تحديث الواجهة
-            document.getElementById('resCode').innerText = data.code || "تفعيل تلقائي";
-            document.getElementById('resExpiry').innerText = new Date(data.expiryTime).toLocaleString('ar-EG');
-            
-            const badge = document.getElementById('statusBadge');
-            const banBtn = document.getElementById('banBtn');
-            
-            if (data.status === 2) {
-                badge.innerText = "محظور";
-                badge.className = "badge badge-banned";
-                banBtn.innerText = "إلغاء الحظر عن الجهاز";
-                banBtn.style.background = "var(--primary)";
-            } else {
-                badge.innerText = "نشط";
-                badge.className = "badge badge-active";
-                banBtn.innerText = "حظر المستخدم فوراً";
-                banBtn.style.background = "var(--danger)";
-            }
-        } else {
-            card.style.display = 'none';
-            noData.style.display = 'block';
+    function getExpiryTimestamp(durationStr) {
+        let ms = 0;
+        if (durationStr === "1hour") ms = 1 * 60 * 60 * 1000;
+        else if (durationStr === "1day") ms = 24 * 60 * 60 * 1000;
+        else if (durationStr === "30days") ms = 30 * 24 * 60 * 60 * 1000;
+        else if (durationStr === "lifetime") ms = 100 * 365 * 24 * 60 * 60 * 1000;
+        return Date.now() + ms;
+    }
+
+    // إضافة أو حظر جهاز بضغطة زر
+    function saveDevice(statusCode) {
+        const devId = document.getElementById('deviceIdInput').value.trim();
+        const duration = document.getElementById('durationSelect').value;
+
+        if(!devId) {
+            alert('الرجاء كتابة معرف الـ ID أولاً بشكل صحيح.');
+            return;
+        }
+
+        const finalExpiry = getExpiryTimestamp(duration);
+        const isoString = new Date(finalExpiry).toISOString();
+
+        database.ref('devices/' + devId).set({
+            status: statusCode,
+            expireAt: isoString,
+            expiryTime: finalExpiry,
+            code: statusCode === 1 ? "WEB-DB-ACTIVE" : "BANNED"
+        }).then(() => {
+            showToast(statusCode === 1 ? "تم تفعيل واضافة جهازك السحابي بنجاح!" : "تم وضع الجهاز في القائمة السوداء بنجاح 🛡️", true);
+            document.getElementById('deviceIdInput').value = "";
+        }).catch((err) => {
+            showToast("فشلت العملية، تأكد من إعدادات الحماية لقاعدة البيانات.", false);
+        });
+    }
+
+    // حذف جهاز نهائياً من الداتابيز وإرجاعه للنظام الافتراضي
+    window.deleteDevice = function(id) {
+        if(confirm("هل أنت متأكد من رغبتك في حذف هذا الجهاز من السحابة؟")) {
+            database.ref('devices/' + id).remove().then(() => {
+                showToast("تم إزالة وثيقة الجهاز بنجاح من الخادم.", true);
+            });
         }
     }
 
-    function toggleBan() {
-        const deviceId = document.getElementById('targetId').value.trim();
-        let data = JSON.parse(localStorage.getItem("DEVICE_DB_" + deviceId));
-        
-        // تبديل الحالة بين 1 (نشط) و 2 (محظور)
-        data.status = (data.status === 2) ? 1 : 2;
-        
-        localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify(data));
-        alert(data.status === 2 ? "تم حظر الجهاز بنجاح!" : "تم إلغاء الحظر.");
-        findUser(); // تحديث العرض
-    }
+    // المزامنة الحية واستقبال البيانات لحظياً من الفايربيس وعرضها بجدول فخم
+    database.ref('devices').on('value', (snapshot) => {
+        const tbody = document.getElementById('devicesTableBody');
+        tbody.innerHTML = "";
+        const data = snapshot.val();
 
-    function resetUser() {
-        if (!confirm("هل أنت متأكد؟ سيتم حذف اشتراك هذا الجهاز تماماً وسيطلب منه كود جديد عند الدخول.")) return;
-        
-        const deviceId = document.getElementById('targetId').value.trim();
-        const data = JSON.parse(localStorage.getItem("DEVICE_DB_" + deviceId));
-        
-        if (data && data.code) {
-            localStorage.removeItem("CODE_USED_" + data.code);
+        if(!data) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">لا توجد أي أجهزة مسجلة حالياً في السيرفر.</td></tr>`;
+            return;
         }
-        localStorage.removeItem("DEVICE_DB_" + deviceId);
-        
-        alert("تم مسح بيانات الجهاز.");
-        document.getElementById('userCard').style.display = 'none';
-        document.getElementById('targetId').value = '';
-    }
+
+        for (let id in data) {
+            const dev = data[id];
+            const isBanned = dev.status === 2;
+            const expiryDate = new Date(dev.expireAt || dev.expiryTime).toLocaleString('ar-EG');
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="color:var(--primary); font-weight: bold;">${id}</td>
+                <td><span class="badge ${isBanned ? 'badge-banned' : 'badge-active'}">${isBanned ? 'محظور ⛔' : 'نشط مفعّل  ✅'}</span></td>
+                <td style="font-size:12px; color: #ccc;">${isBanned ? 'غير محدد' : expiryDate}</td>
+                <td><button class="btn-delete" onclick="deleteDevice('${id}')">إلغاء وتصفير</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+    });
 </script>
 
 </body>

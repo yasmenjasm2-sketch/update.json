@@ -222,7 +222,7 @@
 
         button.btn-ban {
             flex: 1;
-            background: rgba(255, 74, 74, 0.15);
+            background: rgba(239, 68, 68, 0.15);
             color: var(--danger);
             border: 1.5px solid var(--danger);
         }
@@ -286,7 +286,7 @@
             cursor: pointer;
         }
 
-        .btn-table-stop:hover {
+        .btn-table-stop:hover:not(:disabled) {
             background: var(--danger);
             color: #FFF;
         }
@@ -327,7 +327,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        /* نافذة إشعار تسجيل دخول الأدمن المطور العائمة */
+        /* نافذة إشعار تسجيل دخول الأدمن المطور المخصصة العائمة */
         #adminLoginAlert {
             display: none;
             position: fixed;
@@ -402,7 +402,6 @@
 </head>
 <body>
 
-<!-- شاشة تسجيل الدخول المقفلة بالشفرة المؤمّنة -->
 <div id="loginScreen">
     <div class="login-card">
         <h3>🔒 حماية لوحة التحكم</h3>
@@ -414,18 +413,15 @@
     </div>
 </div>
 
-<!-- الحاوية الرئيسية للمنصة -->
 <div class="dashboard-container" id="mainDashboard">
     <div class="header-row">
         <header>
-            <h1>لوحة تحكم منصة حمزة </h1>
+            <h1>لوحة تحكم منصة نبراس وريماس</h1>
             <p>إدارة تفعيل وحظر الاشتراكات الفورية عبر الـ Device ID</p>
         </header>
-        <!-- زر الإعدادات المطور لقراءة الأجهزة النشطة -->
         <button class="btn-settings-toggle" onclick="toggleSettingsCard()">⚙️ خيارات الإعدادات</button>
     </div>
 
-    <!-- بطاقة الإعدادات الفرعية المخفية (تظهر عند النقر) -->
     <div class="settings-card" id="settingsCard">
         <h2 style="font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-top: 0;">🖥️ أجهزة الأدمنية المتاحة حالياً بالصفحة (Live بث مباشر)</h2>
         <div id="activeAdminsList">
@@ -435,7 +431,7 @@
     </div>
 
     <div class="admin-security-card">
-        🛡️ <span style="color: var(--text-muted);">الاجهزة المتاحه في تطبيق:</span> 
+        🛡️ <span style="color: var(--text-muted);">جهازك الحالي المتصل بالمنصة:</span> 
         <strong id="adminDeviceDisplay" style="color: var(--primary);">جاري الفحص...</strong>
     </div>
 
@@ -446,7 +442,7 @@
         
         <div class="form-group">
             <label for="deviceIdInput">معرف بصمة الجهاز (Device ID)</label>
-            <input type="text" id="deviceIdInput" placeholder="أدخل أو الصق الـ ID أو كود الاشتراك هنا..." autocomplete="off">
+            <input type="text" id="deviceIdInput" placeholder="أدخل أو الصق الـ ID أو كود الاشتراك هنا..." autocomplete="off" oninput="checkDeviceStatus()">
         </div>
 
         <div class="form-group">
@@ -467,7 +463,7 @@
 
         <div class="btn-group">
             <button class="btn-activate" onclick="saveDevice(1)">تفعيل / تجديد الاشتراك ✅</button>
-            <button class="btn-ban" onclick="saveDevice(2)">حظر هذا الجهاز فوراً ⛔</button>
+            <button class="btn-ban" id="dynamicBanBtn" onclick="saveDevice(2)">حظر هذا الجهاز فوراً ⛔</button>
         </div>
     </div>
 
@@ -493,7 +489,6 @@
     </div>
 </div>
 
-<!-- كرت الإشعار الذكي والحي المطور لدخول أي أدمن -->
 <div id="adminLoginAlert">
     <div class="alert-title-row">
         <span>🚨</span>
@@ -513,7 +508,10 @@
 <script>
     // شفرة الدخول المشفرة والمؤمنة المحددة من قبلك داخلياً (تعادل gmail34567)
     const _secureGate = "Z21haWwzNDU2Nw==";
+    // تخزين وقت تحميل الصفحة المحلي لمنع الإشعارات القديمة من الظهور فور فتح الصفحة
     const pageLoadTimestamp = Date.now();
+    // متغير عام لتخزين بيانات الأجهزة للمراقبة الحية لزر الحظر والفك
+    window.globalDevicesData = {};
 
     // قائمة أكواد الاشتراكات التلقائية المحددة
     const subscriptionCodes = {
@@ -542,13 +540,13 @@
 
     let myPresenceRef = null;
 
-    // توليد وتثبيت اسم هاتف حقيقي وفخم بشكل دائم لكل مستخدم
+    // دالة توليد أسماء أجهزة حقيقية واحترافية ممتازة بدلاً من أسماء المتصفحات التقليدية وتخزينها لعدم التغير
     function getCleanDeviceName() {
         let storedDevice = localStorage.getItem('assigned_premium_device');
         if (storedDevice) return storedDevice;
 
         const ua = navigator.userAgent;
-        let pickedModel = "جهاز كمبيوتر Windows Pro";
+        let pickedModel = "جهاز كمبيوتر Pro Desktop";
 
         if (/Android/i.test(ua)) {
             const androidModels = [
@@ -571,6 +569,8 @@
             pickedModel = iosModels[Math.floor(Math.random() * iosModels.length)];
         } else if (/Macintosh/i.test(ua)) {
             pickedModel = "جهاز MacBook Pro (M3)";
+        } else if (/Windows/i.test(ua)) {
+            pickedModel = "جهاز Windows 11 Pro PC";
         }
 
         localStorage.setItem('assigned_premium_device', pickedModel);
@@ -631,9 +631,9 @@
         listenToDevices();
     }
 
-    // تشغيل مراقبة أجهزة الأدمنية الحية + إطلاق الإشعار الأمني الحي
+    // الاستماع السحابي المباشر لحضور الأدمنية وبث التنبيه الفوري
     function listenToActiveAdmins() {
-        // 1. لتحديث القائمة داخل زر الإعدادات
+        // 1. عرض الأجهزة في قائمة خيارات الإعدادات
         database.ref('admin_presence').on('value', (snapshot) => {
             const container = document.getElementById('activeAdminsList');
             container.innerHTML = "";
@@ -652,10 +652,9 @@
             }
         });
 
-        // 2. تتبع دخول أدمن جديد لإطلاق كرت التحذير الفوري في نفس اللحظة
+        // 2. مراقبة دخول أي أدمن جديد لإظهار كرت الإشعار العائم المباشر في لوحتك
         database.ref('admin_presence').on('child_added', (snapshot) => {
             const newAdmin = snapshot.val();
-            // نتحقق أن الدخول ليس الخاص بجلستنا الحالية، وأنه تم بعد تحميل الصفحة بـ ثانية
             if (myPresenceRef && snapshot.key !== myPresenceRef.key) {
                 if (newAdmin.connectedAt && newAdmin.connectedAt > pageLoadTimestamp - 1000) {
                     triggerLiveIntruderAlert(newAdmin.deviceName);
@@ -664,13 +663,13 @@
         });
     }
 
-    // إظهار كرت الإشعار الأمني العائم لشخص ما سجل دخول
+    // دالة إظهار نافذة التنبيه الأمني العائمة
     function triggerLiveIntruderAlert(deviceName) {
         document.getElementById('intruderDeviceName').innerText = deviceName;
         document.getElementById('adminLoginAlert').style.display = 'block';
     }
 
-    // إغلاق كرت الإشعار الأمني عند الضغط على نعم أو لا
+    // دالة إخفاء نافذة التنبيه الأمني
     function dismissIntruderAlert() {
         document.getElementById('adminLoginAlert').style.display = 'none';
     }
@@ -705,6 +704,53 @@
             toast.style.border = '1px solid var(--danger)';
         }
         setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    // دالة ذكية لمراقبة حقل الإدخال وتحويل زر الحظر لزر "فك الحظر" إذا كان الجهاز محظوراً
+    function checkDeviceStatus() {
+        const devId = document.getElementById('deviceIdInput').value.trim();
+        const banBtn = document.getElementById('dynamicBanBtn');
+        
+        if (!devId || !window.globalDevicesData || !window.globalDevicesData[devId]) {
+            // العودة لحالة الحظر الافتراضية
+            banBtn.innerHTML = 'حظر هذا الجهاز فوراً ⛔';
+            banBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+            banBtn.style.color = 'var(--danger)';
+            banBtn.style.border = '1.5px solid var(--danger)';
+            banBtn.onclick = function() { saveDevice(2); };
+            return;
+        }
+
+        const dev = window.globalDevicesData[devId];
+        if (dev.status === 2) {
+            // الجهاز محظور: تبديل الزر إلى فك الحظر
+            banBtn.innerHTML = 'فك الحظر عن الجهاز 🔓';
+            banBtn.style.background = 'rgba(34, 197, 94, 0.15)';
+            banBtn.style.color = 'var(--success)';
+            banBtn.style.border = '1.5px solid var(--success)';
+            banBtn.onclick = function() { unbanDeviceAction(devId); };
+        } else {
+            // الجهاز موجود وغير محظور
+            banBtn.innerHTML = 'حظر هذا الجهاز فوراً ⛔';
+            banBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+            banBtn.style.color = 'var(--danger)';
+            banBtn.style.border = '1.5px solid var(--danger)';
+            banBtn.onclick = function() { saveDevice(2); };
+        }
+    }
+
+    // إجراء فك الحظر المباشر من الزر الجديد
+    function unbanDeviceAction(devId) {
+        if(confirm(`هل أنت متأكد من فك الحظر وإرجاع حالة الجهاز (${devId}) إلى نشط؟`)) {
+            database.ref('devices/' + devId).update({
+                status: 1,
+                code: "UNBANNED-BY-ADMIN"
+            }).then(() => {
+                showToast(`تم فك الحظر عن الجهاز ${devId} بنجاح ✅`, "success");
+                document.getElementById('deviceIdInput').value = "";
+                checkDeviceStatus(); // إعادة تعيين الزر لشكله الطبيعي
+            });
+        }
     }
 
     function getExpiryTimestamp(durationStr, baseTimestamp = Date.now()) {
@@ -742,6 +788,7 @@
         if (finalStatus === 1) {
             database.ref('devices/' + devId).once('value').then((snapshot) => {
                 const currentData = snapshot.val();
+                // يُسمح بالتجديد للمحظور لأن حالته 2، لكن النشط يرفض لمنع التكرار العشوائي
                 if (currentData && currentData.status === 1 && currentData.expiryTime > Date.now()) {
                     showToast("🛑 تم رفض العملية! الجهاز مفعّل بالفعل واشتراكه الحالي لا يزال سارياً وقيد التفعيل.", "warning");
                     return;
@@ -765,6 +812,7 @@
         }).then(() => {
             showToast(finalStatus === 1 ? "تم تفعيل واضافة جهازك السحابي بنجاح!" : "تم معالجة حالة الجهاز بنجاح داخل النظام 🛡️", "success");
             document.getElementById('deviceIdInput').value = "";
+            checkDeviceStatus(); // تحديث الأزرار بعد العملية
         }).catch((err) => {
             showToast("فشلت العملية، تأكد من إعدادات الحماية لقاعدة البيانات.", "danger");
         });
@@ -820,6 +868,10 @@
             tbody.innerHTML = "";
             const data = snapshot.val();
 
+            // حفظ الداتا محلياً لمعالجة الزر الذكي عند الكتابة
+            window.globalDevicesData = data || {};
+            checkDeviceStatus();
+
             if(!data) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">لا توجد أي أجهزة مسجلة حالياً في السيرفر.</td></tr>`;
                 return;
@@ -831,6 +883,11 @@
                 const isBanned = dev.status === 2 || isExpired;
                 const expiryDate = new Date(dev.expireAt || dev.expiryTime).toLocaleString('ar-EG');
                 
+                // تحويل زر الإيقاف لغير مفعل إذا كان محظوراً مسبقاً لحل المشكلة التقنية
+                const stopBtnHTML = dev.status === 2 
+                    ? `<button class="btn-table-stop" style="opacity:0.5; cursor:not-allowed;" disabled>موقوف مسبقاً</button>`
+                    : `<button class="btn-table-stop" onclick="stopSubscription('${id}')" title="إيقاف فوري">إيقاف ⛔</button>`;
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="color:var(--primary); font-weight: bold;">${id}</td>
@@ -842,7 +899,7 @@
                     <td style="font-size:12px; color: #ccc;">${expiryDate}</td>
                     <td>
                         <div class="actions-cell">
-                            <button class="btn-table-stop" onclick="stopSubscription('${id}')" title="إيقاف فوري">إيقاف ⛔</button>
+                            ${stopBtnHTML}
                             
                             <select class="select-table-extend" onchange="extendDevice('${id}', this.value); this.value='';">
                                 <option value="" selected disabled>➕ تمديد الـ أيام...</option>

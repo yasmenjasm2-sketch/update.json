@@ -256,6 +256,9 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -299,15 +302,26 @@
 </div>
 
 <script>
+    // تهيئة Firebase بالبيانات الخاصة بك
+    const firebaseConfig = {
+        apiKey: "AIzaSyApqVwnKmq0gJ7k-UM-jLNxaYlBPkRx1Go",
+        authDomain: "chatlive-4387e.firebaseapp.com",
+        databaseURL: "https://chatlive-4387e-default-rtdb.firebaseio.com",
+        projectId: "chatlive-4387e",
+        storageBucket: "chatlive-4387e.firebasestorage.app",
+        messagingSenderId: "722728428486",
+        appId: "1:722728428486:android:847b11a7743dfb7d5ac8c7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     // ==========================================
     // جدار الحماية ونظام حماية الأكواد ومنع كشف الهوية والتلاعب
     // ==========================================
     (function() {
-        // منع القائمة اليمين تماماً واختصارات لوحة المفاتيح المتقدمة للفحص
         document.addEventListener('contextmenu', event => event.preventDefault());
         
         window.addEventListener('keydown', function(e) {
-            // حظر: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+Shift+C, Cmd+Alt+I
             if (
                 e.keyCode === 123 || 
                 (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
@@ -320,14 +334,12 @@
             }
         }, true);
 
-        // منع تحديد أو سحب النصوص والصور للحفاظ على الطابع التطبيقي الأصلي ومنع نسخ البيانات
         document.addEventListener('selectstart', e => {
             if(e.target.tagName !== 'INPUT') e.preventDefault();
         });
         window.addEventListener('dragstart', e => e.preventDefault());
         window.addEventListener('drop', e => e.preventDefault());
 
-        // حجب وتعطيل الـ Console تماماً لقطع الطريق على قراءة المتغيرات أو الأكواد
         const silentNoop = function() {};
         console.log = silentNoop;
         console.dir = silentNoop;
@@ -335,7 +347,6 @@
         console.warn = silentNoop;
         console.error = silentNoop;
 
-        // حلقة فخ المطورين (Anti-Debugger Trap) 
         setInterval(function() {
             const t0 = performance.now();
             debugger; 
@@ -345,12 +356,8 @@
                 window.location.href = "about:blank";
             }
         }, 400);
-
-        // تم إزالة MutationObserver الذي كان يسبب مشكلة تكرار التحديث عند ظهور رسالة الخطأ
-        // هذا هو السبب الرئيسي لرمشة الشاشة (Flickering) في الفيديو
     })();
 
-    // الحفاظ التام على شيفرة المفاتيح القديمة ومنع تعديلها من الكونسول عبر التجميد الآمن
     const REQUIRED_APP_VERSION = "3.4.6"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
@@ -410,7 +417,6 @@
         "VIP-FUTURE": { duration: "lifetime", status: 2 },
     };
 
-    // منع التعديل اليدوي على الكود البرمي عبر تجميد الكائنات برمجياً فورياً بعد الإسناد
     Object.freeze(vipDevices);
     Object.freeze(subscriptionCodes);
 
@@ -430,49 +436,70 @@
 
         setTimeout(() => {
             let memoryKey = "DEVICE_DB_" + appDeviceId;
-            let deviceData = null;
             
-            try {
-                let localData = localStorage.getItem(memoryKey);
-                deviceData = vipDevices[appDeviceId] || (localData ? JSON.parse(localData) : null);
-            } catch (e) {
-                deviceData = vipDevices[appDeviceId] || null;
+            // دالة الاحتياط اليدوي (Fallback) في حال انتهاء مساحة الداتابيز أو فشل الشبكة
+            function checkLocalSystem() {
+                let deviceData = null;
+                try {
+                    let localData = localStorage.getItem(memoryKey);
+                    deviceData = vipDevices[appDeviceId] || (localData ? JSON.parse(localData) : null);
+                } catch (e) {
+                    deviceData = vipDevices[appDeviceId] || null;
+                }
+                executeAuthLogic(deviceData);
             }
 
-            if (deviceData && appDeviceId !== "UNKNOWN") {
-                if (deviceData.status === 2) {
-                    window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
-                    return;
-                }
-
-                let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
-                
-                if (finalExpiry > Date.now()) {
-                    window.location.href = `app://success_auth?code=${deviceData.code || "AUTO"}&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
-                    
-                    if (!isBgCheck && !isAdmin) {
-                        document.getElementById('mainCard').innerHTML = `
-                            <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
-                            <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
-                            <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك تلقائياً</p>
-                            <div class="spinner"></div>
-                        `;
-                    }
-                    return;
-                } else {
-                    localStorage.removeItem(memoryKey);
-                    
-                    if (isBgCheck) {
-                        window.location.href = "app://logout_user"; 
+            // الفحص المباشر من قاعدة البيانات الفايربيس أولاً
+            if (appDeviceId !== "UNKNOWN") {
+                database.ref('devices/' + appDeviceId).once('value').then((snapshot) => {
+                    const dbData = snapshot.val();
+                    if (dbData) {
+                        executeAuthLogic(dbData);
                     } else {
-                        let errorDiv = document.getElementById('error');
-                        errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
-                        errorDiv.style.display = 'block';
+                        checkLocalSystem(); // إذا لم يكن مسجلاً بالفايربيس، جرب الفحص اليدوي المحلى
                     }
-                }
+                }).catch((err) => {
+                    checkLocalSystem(); // عند حدوث أي خطأ في السيرفر أو المساحة، يعمل يدوي تلقائياً
+                });
             } else {
-                if (isBgCheck) {
-                    window.location.href = "app://logout_user";
+                checkLocalSystem();
+            }
+
+            function executeAuthLogic(deviceData) {
+                if (deviceData && appDeviceId !== "UNKNOWN") {
+                    if (deviceData.status === 2) {
+                        window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                        return;
+                    }
+
+                    let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
+                    
+                    if (finalExpiry > Date.now()) {
+                        window.location.href = `app://success_auth?code=${deviceData.code || "AUTO"}&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                        
+                        if (!isBgCheck && !isAdmin) {
+                            document.getElementById('mainCard').innerHTML = `
+                                <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
+                                <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
+                                <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك تلقائياً</p>
+                                <div class="spinner"></div>
+                            `;
+                        }
+                        return;
+                    } else {
+                        localStorage.removeItem(memoryKey);
+                        if (isBgCheck) {
+                            window.location.href = "app://logout_user"; 
+                        } else {
+                            let errorDiv = document.getElementById('error');
+                            errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
+                            errorDiv.style.display = 'block';
+                        }
+                    }
+                } else {
+                    if (isBgCheck) {
+                        window.location.href = "app://logout_user";
+                    }
                 }
             }
         }, 300); 
@@ -483,10 +510,9 @@
         const codeData = subscriptionCodes[subCode];
         const errorDiv = document.getElementById('error');
 
-        // إخفاء رسالة الخطأ أولاً وإعادة تشغيل الحركة
         errorDiv.style.display = 'none';
         errorDiv.style.animation = 'none';
-        errorDiv.offsetHeight; // Trigger reflow
+        errorDiv.offsetHeight; 
         errorDiv.style.animation = null; 
 
         if (codeData) {

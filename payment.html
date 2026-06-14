@@ -202,6 +202,14 @@
         .whatsapp-btn { background: var(--whatsapp-color); font-size: 14px; margin-top: 12px; }
         .whatsapp-btn:hover { background: #20ba5a; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37, 211, 102, 0.25); }
 
+        /* تأثير النبض الخفيف على أزرار الإرسال */
+        @keyframes subtlePulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .submit-btn { animation: subtlePulse 2.5s infinite; }
+
         /* حقل ارفاق الملف المطور الشبيه بالسحب والافلات */
         .file-label { 
             display: flex; 
@@ -223,18 +231,6 @@
         .file-label:hover { border-color: var(--primary); background: rgba(16, 185, 129, 0.03); color: #fff; }
         .file-label.has-file { border-color: var(--primary); background: rgba(16, 185, 129, 0.05); }
 
-        /* معاينة الصورة المرفقة */
-        .image-preview-container {
-            width: 100%;
-            max-height: 150px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            display: none;
-            object-fit: cover;
-            border: 1px solid var(--primary);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
         /* معالجة وتصميم رسائل الخطأ الاحترافية */
         .error-msg { 
             color: #fff; 
@@ -251,7 +247,7 @@
         }
         @keyframes shake { 0%, 100% {transform: translateX(0);} 20%, 60% {transform: translateX(-6px);} 40%, 80% {transform: translateX(6px);} }
 
-        /* مؤشر التحميل الدائري المتطور للذكاء الاصطناعي */
+        /* مؤشر التحميل الدائري المتطور */
         .spinner { 
             width: 46px; height: 46px; 
             border: 4px solid rgba(16, 185, 129, 0.1); 
@@ -262,6 +258,29 @@
             filter: drop-shadow(0 0 8px var(--primary-glow));
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* شريط التقدم الوهمي */
+        .progress-bar-container {
+            width: 100%;
+            height: 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            animation: progressAnimation 8s ease-in-out infinite;
+        }
+        @keyframes progressAnimation {
+            0% { width: 5%; }
+            50% { width: 70%; }
+            100% { width: 95%; }
+        }
 
         .file-name-display { font-size: 13px; color: #4ade80; margin-bottom: 14px; font-weight: 700; background: rgba(74, 222, 128, 0.1); padding: 6px 12px; border-radius: 8px; display: inline-block; }
 
@@ -320,6 +339,32 @@
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px solid var(--usdt-color); border-radius: 20px; pointer-events: none; opacity: 0.4;
         }
         .qr-img { width: 160px; height: 160px; display: block; border-radius: 10px; pointer-events: none; }
+
+        /* إشعار توست احترافي */
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 9999;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* زر المشاركة */
+        .share-btn { background: linear-gradient(135deg, #6366f1, #4f46e5); font-size: 14px; margin-top: 20px; }
+        .share-btn:hover { background: linear-gradient(135deg, #818cf8, #6366f1); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(99, 102, 241, 0.3); }
     </style>
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
@@ -337,7 +382,7 @@
 <div class="app-container" id="methodSelectionView" style="display: none;">
     <img src="fame.jpg" alt="إعلان التطبيق" style="width: 100%; border-radius: 18px; margin-bottom: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: block;">
     
-    <h2 class="animated-gradient-text">َ</h2>
+    <h2 class="animated-gradient-text">النظام الذكي</h2>
     <p class="subtitle" style="color: #e2e8f0;">اختر وسيلة الدفع المناسبة لتأكيد التحويل الإلكتروني الآمن وتأهيل حسابك للعمل الفوري الذكي بـ (<span style="color: #ffd700; font-weight: 800; font-size: 15px; text-shadow: 0 0 10px rgba(255,215,0,0.5);">33 دولار / شهرياً</span>)</p>
 
     <div class="method-card paypal-card" onclick="showView('paypalView')">
@@ -444,6 +489,10 @@
     <h2 style="color: var(--primary);">جاري مراجعة طلبك ...</h2>
     <p class="subtitle">تم تسليم إيصال التحويل بشكل آمن لإدارة الفحص التلقائي.<br>الرجاء ترك هذه الصفحة مفتوحة، سيتم تحويلك فوراً بعد الموافقة.</p>
     
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill"></div>
+    </div>
+
     <div class="support-box">
         <h4>🚨 تأخرت الموافقة؟</h4>
         <p>إذا طالت مراجعة طلبك لأكثر من دقيقتين، انسخ كود الإحالة المشفر بالأسفل وتواصل مع الدعم الفني فوراً لحل الأمر يدوياً.</p>
@@ -463,8 +512,11 @@
         <polyline points="22 4 12 14.01 9 11.01"></polyline>
     </svg>
     <h2 class="animated-gradient-text" style="animation: none; background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">تم التفعيل والتحقق بنجاح!</h2>
-    <p class="subtitle" style="margin-bottom: 15px;">تم تأكيد المعاملة المالية وتحديث ترخيص الخوارزميات بنجاح مطلق.</p>
+    <p class="subtitle" style="margin-bottom: 15px;">تم تأكيد المعاملة المالية وتحديث ترخيص خوارزميات النظام الذكي بنجاح مطلق.</p>
     <p style="font-size: 13px; color: #94a3b8; font-weight: 600;">جاري إعادة توجيهك إلى التطبيق بالباقة الكاملة...</p>
+    <button class="main-btn share-btn" onclick="shareApp()">
+        <span>📤 مشاركة التطبيق مع الأصدقاء</span>
+    </button>
     <div class="spinner" style="width: 32px; height: 32px; border-width: 3px; margin-top: 20px;"></div>
 </div>
 
@@ -485,26 +537,91 @@
 </div>
 
 <script>
-    // جدار الحماية والأمن القصوى - تعطيل اختصارات أدوات المطور لمنع التلاعب البرمجي والتزوير
+    // ==========================================
+    // جدار الحماية القصوى - الطبقة الأولى
+    // ==========================================
+    
+    // منع جميع اختصارات لوحة المفاتيح المشبوهة
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || 
-            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
-            (e.ctrlKey && (e.key === 'U' || e.key === 'S'))) {
+        // منع F12
+        if (e.key === 'F12') {
+            e.preventDefault();
+            return false;
+        }
+        // منع Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+            e.preventDefault();
+            return false;
+        }
+        // منع Ctrl+U / Ctrl+S
+        if (e.ctrlKey && (e.key === 'U' || e.key === 'S')) {
+            e.preventDefault();
+            return false;
+        }
+        // منع Ctrl+Shift+K (Firefox)
+        if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+            e.preventDefault();
+            return false;
+        }
+        // منع Ctrl+Shift+E (Firefox)
+        if (e.ctrlKey && e.shiftKey && e.key === 'E') {
             e.preventDefault();
             return false;
         }
     });
 
-    // جدار حماية الكونسول السلبي الفعال والمشدد
-    setInterval(function() {
-        const startTime = new Date().getTime();
-        debugger;
-        const endTime = new Date().getTime();
-        if (endTime - startTime > 100) {
-            document.body.innerHTML = '<div class="app-container" style="margin:50px auto; display:block; border-color:red;"><h2 style="color:red;">🔒 حظر أمني شامل</h2><p class="subtitle">تم كشف محاولة العبث البرمجي أو فتح أدوات فحص العناصر بنجاح.</p></div>';
-        }
-    }, 1000);
+    // منع النقر بزر الماوس الأيمن بالكامل
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
 
+    // منع السحب والإفلات
+    document.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // جدار حماية الكونسول المتقدم - الطبقة الثانية
+    (function() {
+        const consoleProtection = function() {
+            const startTime = +new Date();
+            debugger;
+            const endTime = +new Date();
+            if (endTime - startTime > 100) {
+                document.body.innerHTML = '<div class="app-container" style="margin:50px auto; display:block; border-color:red;"><h2 style="color:red;">🔒 حظر أمني شامل</h2><p class="subtitle">تم كشف محاولة العبث البرمجي أو فتح أدوات فحص العناصر بنجاح.</p></div>';
+                throw new Error("Security breach detected");
+            }
+        };
+        setInterval(consoleProtection, 1000);
+        
+        // تعطيل console.log و console.error و console.warn
+        const disabledConsole = function() {};
+        console.log = disabledConsole;
+        console.error = disabledConsole;
+        console.warn = disabledConsole;
+        console.info = disabledConsole;
+        console.debug = disabledConsole;
+        console.clear = disabledConsole;
+    })();
+
+    // منع الوصول إلى كائن console نفسه
+    Object.defineProperty(window, 'console', {
+        get: function() {
+            return {
+                log: function() {},
+                error: function() {},
+                warn: function() {},
+                info: function() {},
+                debug: function() {},
+                clear: function() {}
+            };
+        }
+    });
+
+    // ==========================================
+    // المتغيرات الأساسية
+    // ==========================================
     const urlParams = new URLSearchParams(window.location.search);
     let deviceId = urlParams.get('device_id');
     let isDeviceValid = false;
@@ -515,20 +632,104 @@
     const BOT_TOKEN = atob("NzU2NjI0OTE3NzpBQUc4REZyOUl1bFpLa1R0ZVZGSGM5VEZwNXFuTUo0c09WQQ==");
     const CHAT_ID = atob("NTk5ODI1MDM2Nw==");
     let isPolling = false;
+    let pollFailCount = 0;
+    const MAX_POLL_FAILS = 15;
 
-    // محرك التنقل الآمن والأنيق بين الشاشات
-    function showView(viewId) {
-        document.getElementById('methodSelectionView').style.display = 'none';
-        document.getElementById('paypalView').style.display = 'none';
-        document.getElementById('usdtView').style.display = 'none';
-        document.getElementById('waitingView').style.display = 'none';
-        document.getElementById('successView').style.display = 'none';
-        document.getElementById('rejectedView').style.display = 'none';
-        document.getElementById(viewId).style.display = 'block';
+    // ==========================================
+    // دالة الإشعار المنبثق (توست)
+    // ==========================================
+    function showToast(message) {
+        let toast = document.getElementById('globalToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'globalToast';
+            toast.className = 'toast-notification';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
     }
 
+    // ==========================================
+    // دالة التحقق من الاتصال بالإنترنت
+    // ==========================================
+    async function checkInternetConnection() {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getMe`, { 
+                mode: 'no-cors',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // ==========================================
+    // دالة التحقق من صحة الملف المرفوع
+    // ==========================================
+    function validateAndPreviewFile(input, method) {
+        const file = input.files[0];
+        if (!file) return false;
+        
+        if (!file.type.startsWith('image/')) {
+            showToast('⚠️ الرجاء اختيار ملف صورة فقط');
+            input.value = '';
+            return false;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('⚠️ حجم الصورة كبير جداً (الحد الأقصى 10 ميغابايت)');
+            input.value = '';
+            return false;
+        }
+        return true;
+    }
+
+    // ==========================================
+    // دالة مشاركة التطبيق
+    // ==========================================
+    function shareApp() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'النظام الذكي',
+                text: 'اكتشف أقوى تطبيق ذكاء اصطناعي! جربه الآن.',
+                url: window.location.origin + window.location.pathname
+            }).catch(() => {
+                showToast('انسخ رابط الصفحة وشاركه يدوياً');
+            });
+        } else {
+            showToast('انسخ رابط الصفحة وشاركه يدوياً');
+        }
+    }
+
+    // ==========================================
+    // محرك التنقل الآمن بين الشاشات
+    // ==========================================
+    function showView(viewId) {
+        const views = [
+            'methodSelectionView', 'paypalView', 'usdtView', 
+            'waitingView', 'successView', 'rejectedView', 'securityView'
+        ];
+        views.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        const target = document.getElementById(viewId);
+        if (target) target.style.display = 'block';
+    }
+
+    // ==========================================
     // الفحص الهيكلي لمعرف الجهاز وحالة جدار الحماية
-    if (!deviceId || deviceId.toUpperCase() === "UNKNOWN" || deviceId.trim() === "") {
+    // ==========================================
+    if (!deviceId || deviceId.toUpperCase() === "UNKNOWN" || deviceId.trim() === "" || deviceId.length < 8) {
         document.getElementById('securityView').style.display = 'block';
         isDeviceValid = false;
     } else {
@@ -539,72 +740,81 @@
         document.getElementById('userIdDisplayWait').innerText = referenceNumber;
         
         const waNumber = "905424678123";
-        const waMessage = encodeURIComponent(`مرحباً كابتن حمزة، أواجه مشكلة في معالجة إيصال التحويل.\n\nكود الإحالة المشفر لجهازي: \n${referenceNumber}`);
+        const waMessage = encodeURIComponent(`مرحباً، أواجه مشكلة في معالجة إيصال تحويل الباقة.\n\nكود الإحالة المشفر لجهازي: \n${referenceNumber}`);
         document.getElementById('whatsappLinkWait').href = `https://wa.me/${waNumber}?text=${waMessage}`;
         document.getElementById('whatsappLinkReject').href = `https://wa.me/${waNumber}?text=${waMessage}`;
     }
 
-    // دالة نسخ عنوان محفظة USDT الاحترافية والآمنة مع استجابة بصرية للمستخدم
+    // ==========================================
+    // دالة نسخ عنوان محفظة USDT
+    // ==========================================
     function copyWalletAddress() {
         const address = document.getElementById('walletAddressDisplay').innerText;
         navigator.clipboard.writeText(address).then(() => {
             const btn = document.getElementById('copyWalletBtn');
             btn.innerText = "✅ تمت عملية النسخ";
             btn.classList.add('copied');
+            showToast('✅ تم نسخ عنوان المحفظة');
             setTimeout(() => { 
                 btn.innerText = "📋 نسخ"; 
                 btn.classList.remove('copied');
             }, 2000);
+        }).catch(() => {
+            showToast('⚠️ فشل النسخ، حاول يدوياً');
         });
     }
 
-    // دالة نسخ كود الإحالة في شاشة المراجعة
+    // ==========================================
+    // دالة نسخ كود الإحالة
+    // ==========================================
     function copyReference() {
         if (!isDeviceValid) return;
         navigator.clipboard.writeText(referenceNumber).then(() => {
             const btn = document.getElementById('copyRefBtn');
             btn.innerText = "✅ تم النسخ";
             btn.classList.add('copied');
+            showToast('✅ تم نسخ كود الإحالة');
             setTimeout(() => { 
                 btn.innerText = "📋 نسخ الكود"; 
                 btn.classList.remove('copied'); 
             }, 2000);
+        }).catch(() => {
+            showToast('⚠️ فشل النسخ، حاول يدوياً');
         });
     }
 
-    // تحديث وتلوين واجهة الملف المرفق ومعاينة الصورة عند الاختيار
+    // ==========================================
+    // تحديث واجهة الملف المرفق مع التحقق من صحته
+    // ==========================================
     function updateFileName(method) {
-        const isPaypal = method === 'paypal';
-        const input = document.getElementById(isPaypal ? "paypalFileInput" : "usdtFileInput");
-        const label = document.getElementById(isPaypal ? "paypalLabel" : "usdtLabel");
-        const display = document.getElementById(isPaypal ? "paypalFileName" : "usdtFileName");
-        
-        let preview = document.getElementById(method + "PreviewImg"); 
-        if (!preview) {
-            preview = document.createElement("img");
-            preview.id = method + "PreviewImg";
-            preview.className = "image-preview-container";
-            label.parentNode.insertBefore(preview, label.nextSibling);
-        }
-
-        if(input.files && input.files.length > 0) {
-            const file = input.files[0];
-            label.classList.add('has-file');
-            document.getElementById(isPaypal ? "paypalLabelText" : "usdtLabelText").innerText = "تغيير الإيصال المختار";
-            display.textContent = "✅ تم تحميل الإيصال بنجاح";
-            display.style.display = "inline-block";
-
-            // قراءة الصورة وعرضها
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = "block";
+        if(method === 'paypal') {
+            const input = document.getElementById("paypalFileInput");
+            if (!validateAndPreviewFile(input, method)) return;
+            const label = document.getElementById("paypalLabel");
+            const display = document.getElementById("paypalFileName");
+            if(input.files.length > 0) {
+                label.classList.add('has-file');
+                document.getElementById("paypalLabelText").innerText = "تغيير الإيصال المختار";
+                display.textContent = "✅ تم تحميل إيصال PayPal بنجاح";
+                display.style.display = "inline-block";
             }
-            reader.readAsDataURL(file);
+        } else if(method === 'usdt') {
+            const input = document.getElementById("usdtFileInput");
+            if (!validateAndPreviewFile(input, method)) return;
+            const label = document.getElementById("usdtLabel");
+            const display = document.getElementById("usdtFileName");
+            if(input.files.length > 0) {
+                label.classList.add('has-file');
+                document.getElementById("usdtLabelText").innerText = "تغيير لقطة التحويل المعززة";
+                display.textContent = "✅ تم تحميل لقطة التحويل المشفرة";
+                display.style.display = "inline-block";
+            }
         }
     }
 
-    // إرسال الإشارات الخلفية الصامتة لبوت التحكم والمراقبة بالتليجرام لتسجيل المحاولات
+    // ==========================================
+    // إرسال الإشارات الخلفية الصامتة لبوت التليجرام
+    // ==========================================
     async function sendSecretTelegramMessage(text) {
         if (!isDeviceValid) return;
         try {
@@ -613,10 +823,12 @@
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: "Markdown" })
             });
-        } catch (e) { console.error("Internal Shield Active."); }
+        } catch (e) {}
     }
 
-    // المعالج الرئيسي الموحد لإرسال الملفات والبيانات الحساسة لغرفة تحكم المطور
+    // ==========================================
+    // المعالج الرئيسي لإرسال الملفات والبيانات
+    // ==========================================
     async function sendPayment(method) {
         if (!isDeviceValid) return;
 
@@ -632,16 +844,24 @@
             btn = document.getElementById("usdtSubmitBtn");
         }
 
+        // التحقق من وجود ملف
         if (fileInput.files.length === 0) {
             errorDiv.innerText = "🛑 خطأ إجرائي: الرجاء تحديد وإرفاق صورة الإيصال أو إثبات التحويل أولاً قبل الضغط على تأكيد الإرسال!";
             errorDiv.style.display = "block"; 
             return;
         }
 
-        // فحص حجم الملف (الأقصى 5 ميغابايت)
-        const maxFileSize = 5 * 1024 * 1024; 
-        if (fileInput.files[0].size > maxFileSize) {
-            errorDiv.innerText = "🛑 حجم الصورة كبير جداً. يرجى التأكد من أن حجم الصورة لا يتجاوز 5 ميغابايت.";
+        // التحقق من صحة الملف
+        if (!validateAndPreviewFile(fileInput, method)) {
+            errorDiv.innerText = "🛑 خطأ: الملف المرفق غير صالح. تأكد من أنه صورة وبحجم أقل من 10 ميغابايت.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        // التحقق من الاتصال بالإنترنت
+        const isOnline = await checkInternetConnection();
+        if (!isOnline) {
+            errorDiv.innerText = "⚠️ لا يوجد اتصال بالإنترنت. الرجاء التحقق من اتصالك والمحاولة مرة أخرى.";
             errorDiv.style.display = "block";
             return;
         }
@@ -649,7 +869,6 @@
         btn.disabled = true; 
         btn.textContent = "⚡ جاري رفع التوثيق المشفر..."; 
         errorDiv.style.display = "none";
-        document.body.style.cursor = 'wait';
         
         const caption = `🚀 *طلب اشتراك جديد*\n\n💳 وسيلة الدفع المستخدمة: *${method}*\n📱 معرف الجهاز الأساسي: \`${deviceId}\`\n🔢 كود الإحالة المولد: \`${referenceNumber}\`\n💰 القيمة المستهدفة: 33$\n\n✅ للموافقة التلقائية الفورية أرسل:\n\`${referenceNumber} تفعيل\`\n\n❌ لرفض المعاملة المالية أرسل:\n\`${referenceNumber} رفض\``;
         
@@ -667,19 +886,19 @@
                     if (skipRes.ok) {
                         const skipData = await skipRes.json();
                         if (skipData.result && skipData.result.length > 0) {
-                            localStorage.setItem("system_tg_offset", skipData.result[0].update_id + 1);
+                            localStorage.setItem("app_tg_offset", skipData.result[0].update_id + 1);
                         }
                     }
-                } catch(err) { console.error("Skip process adjusted."); }
+                } catch(err) {}
 
                 requestStartTime = Math.floor(Date.now() / 1000);
                 showView('waitingView');
                 
-                isPolling = true; 
+                isPolling = true;
+                pollFailCount = 0;
                 pollTelegram();
             } else throw new Error();
         } catch (e) {
-            document.body.style.cursor = 'default';
             errorDiv.innerText = "⚠️ فشل في الاتصال بخادم الرفع الآمن. يرجى التحقق من اتصال الإنترنت بجهازك وإعادة المحاولة مجدداً."; 
             errorDiv.style.display = "block";
             btn.disabled = false; 
@@ -687,31 +906,28 @@
         }
     }
 
-    // محرك الفحص طويل المدى الفعال والمقاوم للتلاعب لاستقبال رد المطور والموافقة الآلية
+    // ==========================================
+    // محرك الفحص طويل المدى لاستقبال رد المطور
+    // ==========================================
     async function pollTelegram() {
         if (!isDeviceValid) return;
-        let offset = localStorage.getItem("system_tg_offset") || 0;
-        const maxPollingTime = 10 * 60 * 1000; // 10 دقائق كحد أقصى للانتظار
-        const pollStart = Date.now();
-
-        while (isPolling) {
-            // التحقق من مؤقت نهاية الانتظار
-            if (Date.now() - pollStart > maxPollingTime) {
-                isPolling = false;
-                document.querySelector('#waitingView h2').innerText = "طال وقت المراجعة ⏳";
-                document.querySelector('#waitingView .subtitle').innerHTML = "الرجاء استخدام زر الدعم الفني بالأسفل لتسريع عملية التفعيل يدوياً.";
-                document.querySelector('.spinner').style.display = 'none';
-                document.body.style.cursor = 'default';
-                break;
-            }
-
+        let offset = localStorage.getItem("app_tg_offset") || 0;
+        
+        while (isPolling && pollFailCount < MAX_POLL_FAILS) {
             try {
                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=20`);
                 if (res.ok) {
+                    pollFailCount = 0;
                     const data = await res.json();
+                    
+                    if (!data.result) {
+                        await new Promise(r => setTimeout(r, 2500));
+                        continue;
+                    }
+                    
                     for (let item of data.result) {
                         offset = item.update_id + 1;
-                        localStorage.setItem("system_tg_offset", offset);
+                        localStorage.setItem("app_tg_offset", offset);
                         
                         if (item.message && item.message.text) {
                             const text = item.message.text;
@@ -719,23 +935,21 @@
                             
                             if (messageDate < requestStartTime) continue;
                             
-                            // روت الموافقة والتفعيل وصناعة مفاتيح التشفير المحلية
+                            // روت الموافقة والتفعيل
                             if (text.includes(referenceNumber) && text.includes("تفعيل")) {
                                 isPolling = false;
-                                document.body.style.cursor = 'default';
-                                localStorage.removeItem("system_tg_offset");
+                                localStorage.removeItem("app_tg_offset");
                                 const subCode = "SUB-" + Math.random().toString(36).substr(2, 6).toUpperCase();
                                 await sendSecretTelegramMessage(`✅ *تم تأكيد المعاملة بنجاح وتوليد المفتاح الترخيصي*\n\n📱 الجهاز المفعل: \`${deviceId}\`\n🔢 كود الإحالة: \`${referenceNumber}\`\n🔑 كود التفعيل: \`${subCode}\``);
 
                                 let finalExpiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000);
                                 
-                                // جدار حماية تخزين البيانات لتشفير الحالة المحلية ومنع التزوير
                                 const licensePayload = { 
                                     status: 1, 
                                     expiryTime: finalExpiryTime, 
                                     active: true, 
                                     code: subCode,
-                                    signature: btoa(deviceId + "_secured_vault")
+                                    signature: btoa(deviceId + "_secured_vault_" + Date.now())
                                 };
                                 localStorage.setItem("DEVICE_DB_" + deviceId, JSON.stringify(licensePayload));
 
@@ -747,21 +961,66 @@
                                 return;
                             }
                             
-                            // روت رفض المعاملة المالية وتوجيه المستخدم للدعم الفني
+                            // روت رفض المعاملة
                             if (text.includes(referenceNumber) && text.includes("رفض")) {
                                 isPolling = false;
-                                document.body.style.cursor = 'default';
-                                localStorage.removeItem("system_tg_offset");
+                                localStorage.removeItem("app_tg_offset");
                                 showView('rejectedView');
                                 return;
                             }
                         }
                     }
+                } else {
+                    pollFailCount++;
                 }
-            } catch (e) { console.error("Secure polling cycle active."); }
+            } catch (e) {
+                pollFailCount++;
+            }
             await new Promise(r => setTimeout(r, 2500));
         }
+        
+        // إذا فشل الفحص بعد محاولات متعددة
+        if (pollFailCount >= MAX_POLL_FAILS) {
+            isPolling = false;
+            showToast('⚠️ انقطع الاتصال بالسيرفر. الرجاء التواصل مع الدعم الفني.');
+        }
     }
+
+    // ==========================================
+    // حماية إضافية ضد أدوات الفحص والتلاعب
+    // ==========================================
+    (function() {
+        // كشف محاولات تغيير عنوان URL
+        let lastUrl = window.location.href;
+        setInterval(() => {
+            if (window.location.href !== lastUrl) {
+                lastUrl = window.location.href;
+                if (isDeviceValid && isPolling) {
+                    // إعادة تعيين حالة الفحص إذا تغير الرابط
+                    const newDeviceId = new URLSearchParams(window.location.search).get('device_id');
+                    if (newDeviceId !== deviceId) {
+                        isPolling = false;
+                        showView('securityView');
+                    }
+                }
+            }
+        }, 500);
+
+        // منع الطباعة
+        window.addEventListener('beforeprint', function(e) {
+            e.preventDefault();
+        });
+
+        // منع التصفح في وضع التصفح المتخفي (قدر الإمكان)
+        if (navigator.storage && navigator.storage.estimate) {
+            navigator.storage.estimate().then(estimate => {
+                if (estimate.quota < 100000000) {
+                    // مساحة تخزين صغيرة جداً قد تشير إلى وضع التصفح المتخفي
+                    localStorage.setItem('_sec_check', Date.now().toString());
+                }
+            });
+        }
+    })();
 </script>
 </body>
 </html>

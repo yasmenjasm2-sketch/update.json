@@ -404,8 +404,12 @@
         "4b1b404208b8efdf": { status: 1, expireAt: "2026-06-20T23:13:40" },
         "3a9b5294e99f3adb": { status: 1, expireAt: "2026-06-27T03:17:36" },
         "39864b929fc77667": { status: 1, expireAt: "2026-07-15T02:27:00" },
-        "dd7b73d50492ab01": { status: 2, expireAt: "2026-06-15T18:16:58" },
         "3bf5d49d707af7d9": { status: 1, expireAt: "2026-07-15T23:04:47" },
+        // --- ⛔ الأجهزة المخترقة (المحظورة نهائياً بناءً على طلبك) ---
+        "baf0331f812d3f21": { status: 2, expireAt: "2020-01-01T00:00:00" },
+        "dd7b73d50492ab01": { status: 2, expireAt: "2020-01-01T00:00:00" },
+        "45eb86519268ace1": { status: 2, expireAt: "2020-01-01T00:00:00" },
+        "73ff021fe0ffb4e7": { status: 2, expireAt: "2020-01-01T00:00:00" },
     };
 
     const subscriptionCodes = {
@@ -469,6 +473,16 @@
 
             function executeAuthLogic(deviceData) {
                 if (deviceData && appDeviceId !== "UNKNOWN") {
+                    
+                    // 🛡️ حماية متكاملة ضد التلاعب بكلمة AUTO سواء حقنها الهاكر أو وضعها في قاعدة البيانات
+                    let safeCode = deviceData.code || "";
+                    if (safeCode.toUpperCase() === "AUTO" || safeCode === "") {
+                        localStorage.removeItem(memoryKey);
+                        database.ref('devices/' + appDeviceId).update({status: 2, code: "BANNED_HACKER"}); // فضح الهاكر في الفايربيس
+                        window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                        return;
+                    }
+
                     if (deviceData.status === 2) {
                         window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
                         return;
@@ -477,7 +491,8 @@
                     let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
                     
                     if (finalExpiry > Date.now()) {
-                        window.location.href = `app://success_auth?code=${deviceData.code || "AUTO"}&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                        // تمرير الكود الحقيقي الموثوق بدلاً من الافتراضي الذي كان ثغرة
+                        window.location.href = `app://success_auth?code=${safeCode}&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
                         
                         if (!isBgCheck && !isAdmin) {
                             document.getElementById('mainCard').innerHTML = `
@@ -509,13 +524,29 @@
 
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
-        const codeData = subscriptionCodes[subCode];
         const errorDiv = document.getElementById('error');
 
         errorDiv.style.display = 'none';
         errorDiv.style.animation = 'none';
         errorDiv.offsetHeight; 
         errorDiv.style.animation = null; 
+
+        // 🛡️ فخ محكم لأي محاولة تفعيل يدوية بكود AUTO
+        if (subCode.toUpperCase() === "AUTO") {
+            errorDiv.innerText = "⛔ تم اكتشاف محاولة تلاعب بالأنظمة! سيتم حظر جهازك.";
+            errorDiv.style.display = 'block';
+            
+            // تسجيل الحظر فوراً في قاعدة البيانات والمتصفح
+            localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({status: 2, expiryTime: 0, code: "BANNED"}));
+            database.ref('devices/' + appDeviceId).set({status: 2, code: "BANNED_AUTO_HACK"});
+            
+            setTimeout(() => {
+                window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+            }, 1500);
+            return;
+        }
+
+        const codeData = subscriptionCodes[subCode];
 
         if (codeData) {
             if (codeData.status === 2) {

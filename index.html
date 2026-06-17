@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+،<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -404,7 +404,7 @@
     // دالة إنشاء توقيع أمني مشفر بقوة لمنع أي تعديل يدوي
     function generateSecureSignature(id, expiry, code) {
         // إضافة Salt (ملح تشفير) لتعقيد البصمة
-        const salt = "SECURE_FW_v2_2026_x#9";
+        const salt = "FawakihaSecure2026X";
         const rawString = id + salt + expiry + code;
         // تشفير مزدوج (Base64 + عكس النص + URI Encoding)
         return btoa(encodeURIComponent(rawString)).split('').reverse().join('');

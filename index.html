@@ -10,6 +10,10 @@
     <meta name="format-detection" content="telephone=no">
     
     <title>تفعيل الاشتراك | نظام محمي</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         :root {
             --bg-color: #1A0B2E;       
@@ -300,14 +304,33 @@
 
 <script>
     // ==========================================
+    // إعداد وتهيئة الـ Firebase بناءً على بياناتك المستلمة
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyBWJJZHzUhbrl-dh1wowh-u0n0T9i5n0uU",
+        databaseURL: "https://hamzazed34567-default-rtdb.firebaseio.com",
+        projectId: "hamzazed34567",
+        storageBucket: "hamzazed34567.firebasestorage.app"
+    };
+    
+    // بدء تهيئة الفايربيز
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    // دالة لتشفير بصمة الجهاز (Base64 معالجة) لإخفائها في قاعدة البيانات
+    function encryptDeviceKey(id) {
+        return btoa(id).replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    // ==========================================
     // جدار الحماية ونظام حماية الأكواد ومنع كشف الهوية والتلاعب
     // ==========================================
     (function() {
-        // منع القائمة اليمين تماماً واختصارات لوحة المفاتيح المتقدمة للفحص
         document.addEventListener('contextmenu', event => event.preventDefault());
         
         window.addEventListener('keydown', function(e) {
-            // حظر: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+Shift+C, Cmd+Alt+I
             if (
                 e.keyCode === 123 || 
                 (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
@@ -320,14 +343,12 @@
             }
         }, true);
 
-        // منع تحديد أو سحب النصوص والصور للحفاظ على الطابع التطبيقي الأصلي ومنع نسخ البيانات
         document.addEventListener('selectstart', e => {
             if(e.target.tagName !== 'INPUT') e.preventDefault();
         });
         window.addEventListener('dragstart', e => e.preventDefault());
         window.addEventListener('drop', e => e.preventDefault());
 
-        // حجب وتعطيل الـ Console تماماً لقطع الطريق على قراءة المتغيرات أو الأكواد
         const silentNoop = function() {};
         console.log = silentNoop;
         console.dir = silentNoop;
@@ -335,7 +356,6 @@
         console.warn = silentNoop;
         console.error = silentNoop;
 
-        // حلقة فخ المطورين (Anti-Debugger Trap) 
         setInterval(function() {
             const t0 = performance.now();
             debugger; 
@@ -345,12 +365,8 @@
                 window.location.href = "about:blank";
             }
         }, 400);
-
-        // تم إزالة MutationObserver الذي كان يسبب مشكلة تكرار التحديث عند ظهور رسالة الخطأ
-        // هذا هو السبب الرئيسي لرمشة الشاشة (Flickering) في الفيديو
     })();
 
-    // الحفاظ التام على شيفرة المفاتيح القديمة ومنع تعديلها من الكونسول عبر التجميد الآمن
     const REQUIRED_APP_VERSION = "3.4.9"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
@@ -392,6 +408,7 @@
         }
     }
 
+    // المصفوفة اليدوية التي تقوم بتعديلها وتحديث الملف من خلالها
     const vipDevices = {
         "ae949adad83adb0d": { status: 1, expireAt: "2026-06-29T17:04:10" },
         "6357ef9846e96b17": { status: 1, expireAt: "2026-10-28T11:18:55" },
@@ -406,6 +423,7 @@
         "73ff021fe0ffb4e7": { status: 2, expireAt: "2026-06-17T23:59:59" },
         "baf0331f812d3f21": { status: 2, expireAt: "2026-06-17T23:59:59" },
         "cd33b98e1704aae1": { status: 2, expireAt: "2026-06-18T18:11:42" },
+        "b2c8cdd53aba1104": { status: 1, expireAt: "2026-07-18T09:42:39" },
     };
 
     const subscriptionCodes = {
@@ -419,8 +437,6 @@
         "VIP-FUTURE": { duration: "lifetime", status: 2 },
     };
 
-    // منع التعديل اليدوي على الكود البرمي عبر تجميد الكائنات برمجياً فورياً بعد الإسناد
-    Object.freeze(vipDevices);
     Object.freeze(subscriptionCodes);
 
     function getDurationMs(durationStr) {
@@ -437,54 +453,71 @@
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }
 
+        // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز بشكل مشفر
+        for (let id in vipDevices) {
+            let securedKey = encryptDeviceKey(id);
+            db.ref("active_sessions/" + securedKey).set({
+                status: vipDevices[id].status,
+                expireAt: vipDevices[id].expireAt
+            });
+        }
+
         setTimeout(() => {
-            let memoryKey = "DEVICE_DB_" + appDeviceId;
-            let deviceData = null;
-            
-            try {
-                let localData = localStorage.getItem(memoryKey);
-                deviceData = vipDevices[appDeviceId] || (localData ? JSON.parse(localData) : null);
-            } catch (e) {
-                deviceData = vipDevices[appDeviceId] || null;
-            }
-
-            if (deviceData && appDeviceId !== "UNKNOWN") {
-                if (deviceData.status === 2) {
-                    window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
-                    return;
-                }
-
-                let finalExpiry = deviceData.expireAt ? new Date(deviceData.expireAt).getTime() : deviceData.expiryTime;
+            if (appDeviceId !== "UNKNOWN") {
+                let currentSecuredKey = encryptDeviceKey(appDeviceId);
                 
-                if (finalExpiry > Date.now()) {
-                    window.location.href = `app://success_auth?code=${deviceData.code || "AUTO"}&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                // 2. التحقق من السيرفر (الفايربيز) مباشرة للتأكد من صحة البصمة المشفرة
+                db.ref("active_sessions/" + currentSecuredKey).once("value").then((snapshot) => {
+                    let deviceData = snapshot.val();
                     
-                    if (!isBgCheck && !isAdmin) {
-                        document.getElementById('mainCard').innerHTML = `
-                            <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
-                            <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
-                            <p style='color:var(--text-muted);font-size:14px;'>تم التعرف على جهازك تلقائياً</p>
-                            <div class="spinner"></div>
-                        `;
-                    }
-                    return;
-                } else {
-                    localStorage.removeItem(memoryKey);
-                    
-                    if (isBgCheck) {
-                        window.location.href = "app://logout_user"; 
+                    if (deviceData) {
+                        if (deviceData.status === 2) {
+                            window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                            return;
+                        }
+
+                        let finalExpiry = new Date(deviceData.expireAt).getTime();
+                        
+                        if (finalExpiry > Date.now()) {
+                            // البصمة صالحة ومطابقة للسيرفر -> يتم تسجيل الدخول الآمن
+                            window.location.href = `app://success_auth?code=AUTO&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                            
+                            if (!isBgCheck && !isAdmin) {
+                                document.getElementById('mainCard').innerHTML = `
+                                    <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
+                                    <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
+                                    <p style='color:var(--text-muted);font-size:14px;'>تم التحقق الآمن عبر السيرفر</p>
+                                    <div class="spinner"></div>
+                                `;
+                            }
+                            return;
+                        } else {
+                            // 3. إذا انتهى الوقت -> تُحذف البصمة فوراً من قاعدة البيانات لتجاوز الثغرة
+                            db.ref("active_sessions/" + currentSecuredKey).remove();
+                            localStorage.removeItem("DEVICE_DB_" + appDeviceId);
+                            
+                            if (isBgCheck) {
+                                window.location.href = "app://logout_user"; 
+                            } else {
+                                let errorDiv = document.getElementById('error');
+                                errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
+                                errorDiv.style.display = 'block';
+                            }
+                        }
                     } else {
-                        let errorDiv = document.getElementById('error');
-                        errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
-                        errorDiv.style.display = 'block';
+                        // إذا لم يتم العثور على المعرف في الفايربيز
+                        if (isBgCheck) {
+                            window.location.href = "app://logout_user";
+                        }
                     }
-                }
+                }).catch((err) => {
+                    // في حال انقطاع الاتصال بالفروع يتم الرجوع الاختياري للـ localStorage
+                    if (isBgCheck) window.location.href = "app://logout_user";
+                });
             } else {
-                if (isBgCheck) {
-                    window.location.href = "app://logout_user";
-                }
+                if (isBgCheck) window.location.href = "app://logout_user";
             }
-        }, 300); 
+        }, 400); 
     };
 
     function login() {
@@ -492,10 +525,9 @@
         const codeData = subscriptionCodes[subCode];
         const errorDiv = document.getElementById('error');
 
-        // إخفاء رسالة الخطأ أولاً وإعادة تشغيل الحركة
         errorDiv.style.display = 'none';
         errorDiv.style.animation = 'none';
-        errorDiv.offsetHeight; // Trigger reflow
+        errorDiv.offsetHeight; 
         errorDiv.style.animation = null; 
 
         if (codeData) {
@@ -515,6 +547,7 @@
             }
 
             let finalExpiryTime = Date.now() + getDurationMs(codeData.duration);
+            let expiryISO = new Date(finalExpiryTime).toISOString();
             
             localStorage.setItem(codeMemoryKey, appDeviceId);
             localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
@@ -522,6 +555,14 @@
                 expiryTime: finalExpiryTime,
                 code: subCode
             }));
+
+            // رفع الكود الجديد للفايربيز مباشرة لحفظ الجلسة آلياً
+            if(appDeviceId !== "UNKNOWN") {
+                db.ref("active_sessions/" + encryptDeviceKey(appDeviceId)).set({
+                    status: codeData.status,
+                    expireAt: expiryISO
+                });
+            }
 
             errorDiv.style.display = 'none';
             window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;

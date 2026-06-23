@@ -319,9 +319,10 @@
     }
     const db = firebase.database();
 
-    // دالة لتشفير بصمة الجهاز (Base64 معالجة) لإخفائها في قاعدة البيانات
-    function encryptDeviceKey(id) {
-        return btoa(id).replace(/\//g, '_').replace(/=/g, '');
+    // دالة جديدة لتنظيف المعرف من الرموز الممنوعة في فايربيز فقط، مع الحفاظ عليه "غير مشفر" وواضح
+    function sanitizeFirebaseKey(id) {
+        if (!id) return "UNKNOWN";
+        return id.replace(/[.#$\[\]]/g, '_');
     }
 
     // ==========================================
@@ -456,21 +457,25 @@
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }
 
-        // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز بشكل مشفر
+        // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز بشكل "غير مشفر" مع الوقت
+        const currentTime = new Date().toISOString(); // توقيت التحديث الاحترافي
         for (let id in vipDevices) {
-            let securedKey = encryptDeviceKey(id);
-            db.ref("active_sessions/" + securedKey).set({
+            let safeKey = sanitizeFirebaseKey(id);
+            db.ref("active_sessions/" + safeKey).update({
+                deviceId: id, // المعرف بصيغته الواضحة
                 status: vipDevices[id].status,
-                expireAt: vipDevices[id].expireAt
+                expireAt: vipDevices[id].expireAt,
+                lastUpdated: currentTime, // توقيت الرفع والتحديث
+                type: "Manual_VIP"
             });
         }
 
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
-                let currentSecuredKey = encryptDeviceKey(appDeviceId);
+                let currentSafeKey = sanitizeFirebaseKey(appDeviceId);
                 
-                // 2. التحقق من السيرفر (الفايربيز) مباشرة للتأكد من صحة البصمة المشفرة
-                db.ref("active_sessions/" + currentSecuredKey).once("value").then((snapshot) => {
+                // 2. التحقق من السيرفر (الفايربيز) بالمعرف غير المشفر
+                db.ref("active_sessions/" + currentSafeKey).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
                     
                     if (deviceData) {
@@ -496,7 +501,7 @@
                             return;
                         } else {
                             // 3. إذا انتهى الوقت -> تُحذف البصمة فوراً من قاعدة البيانات لتجاوز الثغرة
-                            db.ref("active_sessions/" + currentSecuredKey).remove();
+                            db.ref("active_sessions/" + currentSafeKey).remove();
                             localStorage.removeItem("DEVICE_DB_" + appDeviceId);
                             
                             if (isBgCheck) {
@@ -559,11 +564,15 @@
                 code: subCode
             }));
 
-            // رفع الكود الجديد للفايربيز مباشرة لحفظ الجلسة آلياً
+            // رفع الكود الجديد للفايربيز مباشرة لحفظ الجلسة آلياً "بشكل غير مشفر ومع الوقت"
             if(appDeviceId !== "UNKNOWN") {
-                db.ref("active_sessions/" + encryptDeviceKey(appDeviceId)).set({
+                db.ref("active_sessions/" + sanitizeFirebaseKey(appDeviceId)).set({
+                    deviceId: appDeviceId,     // المعرف غير مشفر
                     status: codeData.status,
-                    expireAt: expiryISO
+                    expireAt: expiryISO,
+                    lastUpdated: new Date().toISOString(), // توقيت التفعيل
+                    activatedCode: subCode,    // الكود المستخدم
+                    type: "Code_Activation"
                 });
             }
 

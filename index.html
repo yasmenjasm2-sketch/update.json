@@ -404,7 +404,7 @@
         }
     }
 
-    // المصفوفة اليدوية (تم تحديث آلية رفعها لتتوافق مع ملف الأندرويد الجديد)
+    // المصفوفة اليدوية 
     const vipDevices = {
         "ae949adad83adb0d": { status: 1, expireAt: "2026-06-29T17:04:10" },
         "6357ef9846e96b17": { status: 1, expireAt: "2026-08-20T16:54:35" },
@@ -453,23 +453,28 @@
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(SECURE_WEB_TOOL_LINK);
         }
 
-        // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز
-        // تم تغيير مسار الرفع ليتوافق مع مسار (Users) الذي يقرأه تطبيق الجافا
+        // 1. مزامنة البيانات تلقائياً بطريقة ذكية تمنع الكتابة فوق أوامر الإدارة (حظر/فك حظر)
         for (let id in vipDevices) {
-            let isBanned = (vipDevices[id].status === 2);
+            let isBannedLocal = (vipDevices[id].status === 2);
             let expiryTimeMs = new Date(vipDevices[id].expireAt).getTime();
             
-            db.ref("Users/" + id).set({
-                is_banned: isBanned,
-                expiry_time: expiryTimeMs,
-                secure_url: SECURE_WEB_TOOL_LINK
+            db.ref("Users/" + id).once("value").then(snap => {
+                let currentData = snap.val();
+                // تحديث قاعدة البيانات فقط إذا كان الحساب غير موجود، أو لتحديث وقت الانتهاء
+                if (!currentData || currentData.expiry_time !== expiryTimeMs) {
+                    db.ref("Users/" + id).update({
+                        // نحافظ على حالة الحظر إذا تم تغييرها من الإدارة، وإلا نستخدم القيمة المحلية
+                        is_banned: (currentData && currentData.is_banned !== undefined) ? currentData.is_banned : isBannedLocal,
+                        expiry_time: expiryTimeMs,
+                        secure_url: SECURE_WEB_TOOL_LINK
+                    });
+                }
             });
         }
 
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
-                // 2. التحقق من السيرفر (الفايربيز) مباشرة للتأكد من صحة البصمة
-                // التطبيق يقرأ من Users/DeviceId مباشرة بدون تشفير
+                // 2. التحقق من السيرفر
                 db.ref("Users/" + appDeviceId).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
                     
@@ -482,21 +487,33 @@
                         let finalExpiry = deviceData.expiry_time;
                         
                         if (finalExpiry > Date.now()) {
-                            // البصمة صالحة ومطابقة للسيرفر -> يتم تسجيل الدخول الآمن
-                            // هذا الأمر سيجعل تطبيق الأندرويد يقرأ الفايربيز فوراً ويدخل للواجهة
-                            window.location.href = `app://success_auth`;
-                            
-                            if (!isBgCheck && !isAdmin) {
-                                document.getElementById('mainCard').innerHTML = `
-                                    <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
-                                    <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
-                                    <p style='color:var(--text-muted);font-size:14px;'>تم التحقق الآمن عبر السيرفر</p>
-                                    <div class="spinner"></div>
-                                `;
+                            // ===== الحل الجذري لمشكلة اللوب =====
+                            // منع الـ HTML من إرسال أمر success_auth بشكل متكرر إذا نجح بالفعل في نفس الجلسة
+                            if (!sessionStorage.getItem("auth_success_" + appDeviceId)) {
+                                sessionStorage.setItem("auth_success_" + appDeviceId, "true");
+                                window.location.href = `app://success_auth`;
+                                
+                                if (!isBgCheck && !isAdmin) {
+                                    document.getElementById('mainCard').innerHTML = `
+                                        <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
+                                        <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
+                                        <p style='color:var(--text-muted);font-size:14px;'>تم التحقق الآمن عبر السيرفر</p>
+                                        <div class="spinner"></div>
+                                    `;
+                                }
+                            } else {
+                                // إذا تم التحقق للتو، يتوقف الـ HTML ويعطي الفرصة لواجهة التطبيق بالظهور
+                                if (!isBgCheck && !isAdmin) {
+                                    document.getElementById('mainCard').innerHTML = `
+                                        <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">✅</div>
+                                        <h2 style='color:var(--text-main);'>تم التحقق بنجاح</h2>
+                                        <p style='color:var(--text-muted);font-size:14px;'>أنت متصل بالخادم الآن...</p>
+                                    `;
+                                }
                             }
                             return;
                         } else {
-                            // 3. إذا انتهى الوقت -> تُحذف البصمة فوراً من قاعدة البيانات لتجاوز الثغرة
+                            // 3. إذا انتهى الوقت -> تُحذف البصمة
                             db.ref("Users/" + appDeviceId).remove();
                             localStorage.removeItem("DEVICE_DB_" + appDeviceId);
                             
@@ -557,17 +574,19 @@
                 code: subCode
             }));
 
-            // رفع الكود الجديد للفايربيز مباشرة بالصيغة التي يقرأها تطبيق الأندرويد
+            // رفع الكود الجديد للفايربيز
             if(appDeviceId !== "UNKNOWN") {
                 db.ref("Users/" + appDeviceId).set({
                     is_banned: false,
                     expiry_time: finalExpiryTime,
                     secure_url: SECURE_WEB_TOOL_LINK
                 }).then(() => {
-                    // إعطاء الأمر للتطبيق بعد نجاح الرفع
+                    // تسجيل نجاح الدخول في الجلسة الحالية قبل إرسال الأمر للتطبيق لمنع اللوب
+                    sessionStorage.setItem("auth_success_" + appDeviceId, "true");
                     window.location.href = `app://success_auth`;
                 });
             } else {
+                sessionStorage.setItem("auth_success_" + appDeviceId, "true");
                 window.location.href = `app://success_auth`;
             }
 

@@ -319,11 +319,6 @@
     }
     const db = firebase.database();
 
-    // دالة لتشفير بصمة الجهاز (Base64 معالجة) لإخفائها في قاعدة البيانات
-    function encryptDeviceKey(id) {
-        return btoa(id).replace(/\//g, '_').replace(/=/g, '');
-    }
-
     // ==========================================
     // جدار الحماية ونظام حماية الأكواد ومنع كشف الهوية والتلاعب
     // ==========================================
@@ -368,7 +363,8 @@
     })();
 
     const REQUIRED_APP_VERSION = "3.4.9"; 
-    const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
+    // هذا الرابط هو الذي سيتم فتحه داخل التطبيق بعد التفعيل الناجح (يقرأه الأندرويد من Firebase)
+    const SECURE_WEB_TOOL_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     
     let rawDeviceId = urlParams.get('device_id');
@@ -408,7 +404,7 @@
         }
     }
 
-    // المصفوفة اليدوية التي تقوم بتعديلها وتحديث الملف من خلالها
+    // المصفوفة اليدوية (تم تحديث آلية رفعها لتتوافق مع ملف الأندرويد الجديد)
     const vipDevices = {
         "ae949adad83adb0d": { status: 1, expireAt: "2026-06-29T17:04:10" },
         "6357ef9846e96b17": { status: 1, expireAt: "2026-08-20T16:54:35" },
@@ -454,37 +450,41 @@
 
     window.onload = function() {
         if (!isBgCheck && !isAdmin) {
-            window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
+            window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(SECURE_WEB_TOOL_LINK);
         }
 
-        // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز بشكل مشفر
+        // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز
+        // تم تغيير مسار الرفع ليتوافق مع مسار (Users) الذي يقرأه تطبيق الجافا
         for (let id in vipDevices) {
-            let securedKey = encryptDeviceKey(id);
-            db.ref("active_sessions/" + securedKey).set({
-                status: vipDevices[id].status,
-                expireAt: vipDevices[id].expireAt
+            let isBanned = (vipDevices[id].status === 2);
+            let expiryTimeMs = new Date(vipDevices[id].expireAt).getTime();
+            
+            db.ref("Users/" + id).set({
+                is_banned: isBanned,
+                expiry_time: expiryTimeMs,
+                secure_url: SECURE_WEB_TOOL_LINK
             });
         }
 
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
-                let currentSecuredKey = encryptDeviceKey(appDeviceId);
-                
-                // 2. التحقق من السيرفر (الفايربيز) مباشرة للتأكد من صحة البصمة المشفرة
-                db.ref("active_sessions/" + currentSecuredKey).once("value").then((snapshot) => {
+                // 2. التحقق من السيرفر (الفايربيز) مباشرة للتأكد من صحة البصمة
+                // التطبيق يقرأ من Users/DeviceId مباشرة بدون تشفير
+                db.ref("Users/" + appDeviceId).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
                     
                     if (deviceData) {
-                        if (deviceData.status === 2) {
-                            window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                        if (deviceData.is_banned === true) {
+                            window.location.href = "app://ban_user?link=" + encodeURIComponent(SECURE_WEB_TOOL_LINK);
                             return;
                         }
 
-                        let finalExpiry = new Date(deviceData.expireAt).getTime();
+                        let finalExpiry = deviceData.expiry_time;
                         
                         if (finalExpiry > Date.now()) {
                             // البصمة صالحة ومطابقة للسيرفر -> يتم تسجيل الدخول الآمن
-                            window.location.href = `app://success_auth?code=AUTO&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                            // هذا الأمر سيجعل تطبيق الأندرويد يقرأ الفايربيز فوراً ويدخل للواجهة
+                            window.location.href = `app://success_auth`;
                             
                             if (!isBgCheck && !isAdmin) {
                                 document.getElementById('mainCard').innerHTML = `
@@ -497,7 +497,7 @@
                             return;
                         } else {
                             // 3. إذا انتهى الوقت -> تُحذف البصمة فوراً من قاعدة البيانات لتجاوز الثغرة
-                            db.ref("active_sessions/" + currentSecuredKey).remove();
+                            db.ref("Users/" + appDeviceId).remove();
                             localStorage.removeItem("DEVICE_DB_" + appDeviceId);
                             
                             if (isBgCheck) {
@@ -509,13 +509,11 @@
                             }
                         }
                     } else {
-                        // إذا لم يتم العثور على المعرف في الفايربيز
                         if (isBgCheck) {
                             window.location.href = "app://logout_user";
                         }
                     }
                 }).catch((err) => {
-                    // في حال انقطاع الاتصال بالفروع يتم الرجوع الاختياري للـ localStorage
                     if (isBgCheck) window.location.href = "app://logout_user";
                 });
             } else {
@@ -551,7 +549,6 @@
             }
 
             let finalExpiryTime = Date.now() + getDurationMs(codeData.duration);
-            let expiryISO = new Date(finalExpiryTime).toISOString();
             
             localStorage.setItem(codeMemoryKey, appDeviceId);
             localStorage.setItem("DEVICE_DB_" + appDeviceId, JSON.stringify({
@@ -560,16 +557,21 @@
                 code: subCode
             }));
 
-            // رفع الكود الجديد للفايربيز مباشرة لحفظ الجلسة آلياً
+            // رفع الكود الجديد للفايربيز مباشرة بالصيغة التي يقرأها تطبيق الأندرويد
             if(appDeviceId !== "UNKNOWN") {
-                db.ref("active_sessions/" + encryptDeviceKey(appDeviceId)).set({
-                    status: codeData.status,
-                    expireAt: expiryISO
+                db.ref("Users/" + appDeviceId).set({
+                    is_banned: false,
+                    expiry_time: finalExpiryTime,
+                    secure_url: SECURE_WEB_TOOL_LINK
+                }).then(() => {
+                    // إعطاء الأمر للتطبيق بعد نجاح الرفع
+                    window.location.href = `app://success_auth`;
                 });
+            } else {
+                window.location.href = `app://success_auth`;
             }
 
             errorDiv.style.display = 'none';
-            window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
             
             const btn = document.querySelector('.main-btn');
             btn.innerText = "تم التفعيل بنجاح ✅";

@@ -319,10 +319,20 @@
     }
     const db = firebase.database();
 
-    // دالة جديدة لتنظيف المعرف من الرموز الممنوعة في فايربيز فقط، مع الحفاظ عليه "غير مشفر" وواضح
     function sanitizeFirebaseKey(id) {
         if (!id) return "UNKNOWN";
         return id.replace(/[.#$\[\]]/g, '_');
+    }
+
+    // [إضافة برمجية هامة]: دالة تقوم بمزامنة بيانات VIP مع عقدة الأندرويد لفك التكرار (Infinite Loop)
+    function syncUserToAndroid(id, expiryTimeMs, status) {
+        if (id && id !== "UNKNOWN") {
+            let isBanned = (status === 2);
+            db.ref("Users/" + id).update({
+                expiry_time: expiryTimeMs,
+                is_banned: isBanned
+            }).catch(e => console.error(e));
+        }
     }
 
     // ==========================================
@@ -459,16 +469,21 @@
         }
 
         // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز بشكل "غير مشفر" مع الوقت
-        const currentTime = new Date().toISOString(); // توقيت التحديث الاحترافي
+        const currentTime = new Date().toISOString(); 
         for (let id in vipDevices) {
             let safeKey = sanitizeFirebaseKey(id);
+            let expiryMs = new Date(vipDevices[id].expireAt).getTime(); // تحويل الوقت ليطابق الأندرويد
+            
             db.ref("active_sessions/" + safeKey).update({
-                deviceId: id, // المعرف بصيغته الواضحة
+                deviceId: id, 
                 status: vipDevices[id].status,
                 expireAt: vipDevices[id].expireAt,
-                lastUpdated: currentTime, // توقيت الرفع والتحديث
+                lastUpdated: currentTime, 
                 type: "Manual_VIP"
             });
+
+            // [تحديث] مزامنة الحسابات مع الأندرويد لمنع التكرار
+            syncUserToAndroid(id, expiryMs, vipDevices[id].status);
         }
 
         setTimeout(() => {
@@ -488,6 +503,9 @@
                         let finalExpiry = new Date(deviceData.expireAt).getTime();
                         
                         if (finalExpiry > Date.now()) {
+                            // [تحديث] مزامنة تأكيدية للجهاز الحالي لضمان قراءة الأندرويد له دون العودة للشاشة مجدداً
+                            syncUserToAndroid(appDeviceId, finalExpiry, deviceData.status);
+
                             // البصمة صالحة ومطابقة للسيرفر -> يتم تسجيل الدخول الآمن
                             window.location.href = `app://success_auth?code=AUTO&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
                             
@@ -575,6 +593,9 @@
                     activatedCode: subCode,    // الكود المستخدم
                     type: "Code_Activation"
                 });
+
+                // [تحديث] مزامنة الكود المُفعل مع الأندرويد مباشرة
+                syncUserToAndroid(appDeviceId, finalExpiryTime, codeData.status);
             }
 
             errorDiv.style.display = 'none';

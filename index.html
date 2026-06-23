@@ -324,13 +324,19 @@
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
-    // [إضافة برمجية هامة]: دالة تقوم بمزامنة بيانات VIP مع عقدة الأندرويد لفك التكرار (Infinite Loop)
+    // [إضافة برمجية هامة]: دالة تقوم بمزامنة بيانات VIP وعمل (ريست/حذف القديم) لفك التكرار
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
+            // تحويل حالة الحظر إلى true أو false استجابة فورية للأندرويد
             let isBanned = (status === 2);
-            db.ref("Users/" + id).update({
+            
+            // استخدام ".set()" يحذف جميع البيانات القديمة العالقة في عقدة المستخدم ويستبدلها بالجديدة فقط
+            db.ref("Users/" + id).set({
                 expiry_time: expiryTimeMs,
-                is_banned: isBanned
+                is_banned: isBanned,
+                status: status,
+                device_id: id,
+                last_updated: new Date().getTime()
             }).catch(e => console.error(e));
         }
     }
@@ -438,7 +444,7 @@
         "df04cd9e9bab4f6a": { status: 2, expireAt: "2026-06-21T15:50:10" },
         "abeecfa4765f5310": { status: 2, expireAt: "2026-06-22T10:21:08" },
         "faa996c61650dc66": { status: 2, expireAt: "2026-06-22T10:24:18" },
-        "0ee25352b150a1cb": { status: 2, expireAt: "2026-07-23T18:31:06" },
+        "0ee25352b150a1cb": { status: 1, expireAt: "2026-07-23T18:31:06" },
     };
 
     const subscriptionCodes = {
@@ -468,29 +474,45 @@
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }
 
-        // 1. مزامنة البيانات تلقائياً ورفع البصمات المضافة يدوياً إلى الفايربيز بشكل "غير مشفر" مع الوقت
         const currentTime = new Date().toISOString(); 
-        for (let id in vipDevices) {
-            let safeKey = sanitizeFirebaseKey(id);
-            let expiryMs = new Date(vipDevices[id].expireAt).getTime(); // تحويل الوقت ليطابق الأندرويد
-            
-            db.ref("active_sessions/" + safeKey).update({
-                deviceId: id, 
-                status: vipDevices[id].status,
-                expireAt: vipDevices[id].expireAt,
-                lastUpdated: currentTime, 
-                type: "Manual_VIP"
+
+        // [تحديث جذري]: ريست للقاعدة يحذف المشتركين القدامى (VIP) الذين تم إزالتهم من القائمة هنا، ويرسل التحديثات
+        db.ref("active_sessions").once("value").then((snapshot) => {
+            snapshot.forEach((child) => {
+                let data = child.val();
+                if (data && data.type === "Manual_VIP") {
+                    // إذا كان المعرف غير موجود في قائمة vipDevices الحالية، قم بحذفه بالكامل (ريست/حذف القديم)
+                    if (!vipDevices[data.deviceId]) {
+                        child.ref.remove();
+                        db.ref("Users/" + sanitizeFirebaseKey(data.deviceId)).remove();
+                    }
+                }
             });
 
-            // [تحديث] مزامنة الحسابات مع الأندرويد لمنع التكرار
-            syncUserToAndroid(id, expiryMs, vipDevices[id].status);
-        }
+            // مزامنة البيانات تلقائياً ورفع البصمات الجديدة بعد تنظيف القديم
+            for (let id in vipDevices) {
+                let safeKey = sanitizeFirebaseKey(id);
+                let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
+                
+                // استخدام ".set()" بدلاً من التحديث الجزئي لضمان الكتابة فوق أي بيانات عالقة سابقة
+                db.ref("active_sessions/" + safeKey).set({
+                    deviceId: id, 
+                    status: vipDevices[id].status,
+                    expireAt: vipDevices[id].expireAt,
+                    lastUpdated: currentTime, 
+                    type: "Manual_VIP"
+                });
+
+                // مزامنة الحسابات مع الأندرويد وإرسال أمر حالة الحظر (is_banned: true/false)
+                syncUserToAndroid(id, expiryMs, vipDevices[id].status);
+            }
+        }).catch(e => console.error(e));
 
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
                 let currentSafeKey = sanitizeFirebaseKey(appDeviceId);
                 
-                // 2. التحقق من السيرفر (الفايربيز) بالمعرف غير المشفر
+                // 2. التحقق من السيرفر (الفايربيز) بالمعرف 
                 db.ref("active_sessions/" + currentSafeKey).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
                     
@@ -503,7 +525,7 @@
                         let finalExpiry = new Date(deviceData.expireAt).getTime();
                         
                         if (finalExpiry > Date.now()) {
-                            // [تحديث] مزامنة تأكيدية للجهاز الحالي لضمان قراءة الأندرويد له دون العودة للشاشة مجدداً
+                            // [تأكيد المزامنة]: إرسال البيانات للجهاز الحالي لضمان قراءة الأندرويد له 
                             syncUserToAndroid(appDeviceId, finalExpiry, deviceData.status);
 
                             // البصمة صالحة ومطابقة للسيرفر -> يتم تسجيل الدخول الآمن
@@ -544,7 +566,7 @@
             } else {
                 if (isBgCheck) window.location.href = "app://logout_user";
             }
-        }, 400); 
+        }, 600); // زيادة بسيطة للوقت لضمان انتهاء الفرمتة قبل القراءة
     };
 
     function login() {
@@ -583,18 +605,18 @@
                 code: subCode
             }));
 
-            // رفع الكود الجديد للفايربيز مباشرة لحفظ الجلسة آلياً "بشكل غير مشفر ومع الوقت"
+            // رفع الكود الجديد للفايربيز بـ ".set()" لضمان مسح أي فضلات سابقة للجلسة
             if(appDeviceId !== "UNKNOWN") {
                 db.ref("active_sessions/" + sanitizeFirebaseKey(appDeviceId)).set({
-                    deviceId: appDeviceId,     // المعرف غير مشفر
+                    deviceId: appDeviceId,     
                     status: codeData.status,
                     expireAt: expiryISO,
-                    lastUpdated: new Date().toISOString(), // توقيت التفعيل
-                    activatedCode: subCode,    // الكود المستخدم
+                    lastUpdated: new Date().toISOString(), 
+                    activatedCode: subCode,    
                     type: "Code_Activation"
                 });
 
-                // [تحديث] مزامنة الكود المُفعل مع الأندرويد مباشرة
+                // مزامنة الكود المُفعل مع الأندرويد مباشرة ورفع حالة الحظر
                 syncUserToAndroid(appDeviceId, finalExpiryTime, codeData.status);
             }
 

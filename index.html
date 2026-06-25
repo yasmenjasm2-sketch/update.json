@@ -384,7 +384,7 @@
         }, 400);
     })();
 
-    const REQUIRED_APP_VERSION = "3.4.9"; 
+    const REQUIRED_APP_VERSION = "3.3.9"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     
@@ -470,6 +470,9 @@
     }
 
     window.onload = function() {
+        // [تحديث أمان]: إرسال رقم الإصدار المطلوب إلى قاعدة البيانات لضمان عدم التخطي من التطبيق
+        db.ref("App_Settings/Required_Version").set(REQUIRED_APP_VERSION);
+
         if (!isBgCheck && !isAdmin) {
             window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
         }

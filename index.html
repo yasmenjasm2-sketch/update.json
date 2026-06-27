@@ -324,21 +324,22 @@
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
-    // [إضافة برمجية هامة]: دالة تقوم بمزامنة بيانات VIP وعمل (ريست/حذف القديم) لفك التكرار
+    // [تعديل هام لإصلاح الحظر]: تم إرجاع Promise مع انتظار بسيط لضمان وصول الأمر للفايربيز قبل إغلاق الواجهة
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
-            // تحويل حالة الحظر إلى true أو false استجابة فورية للأندرويد
             let isBanned = (status === 2);
-            
-            // استخدام ".set()" يحذف جميع البيانات القديمة العالقة في عقدة المستخدم ويستبدلها بالجديدة فقط
-            db.ref("Users/" + id).set({
+            let updateTask = db.ref("Users/" + id).set({
                 expiry_time: expiryTimeMs,
                 is_banned: isBanned,
                 status: status,
                 device_id: id,
                 last_updated: new Date().getTime()
             }).catch(e => console.error(e));
+            
+            // ننتظر حتى تصل البيانات للسيرفر أو يمر 600ms لتفادي تعليق التطبيق إذا لم يتوفر اتصال
+            return Promise.race([updateTask, new Promise(resolve => setTimeout(resolve, 600))]);
         }
+        return Promise.resolve();
     }
 
     // ==========================================
@@ -470,7 +471,7 @@
     }
 
     window.onload = function() {
-        // [تحديث أمان]: إرسال رقم الإصدار المطلوب إلى قاعدة البيانات لضمان عدم التخطي من التطبيق
+        // إرسال رقم الإصدار المطلوب إلى قاعدة البيانات لضمان عدم التخطي من التطبيق
         db.ref("App_Settings/Required_Version").set(REQUIRED_APP_VERSION);
 
         if (!isBgCheck && !isAdmin) {
@@ -479,12 +480,10 @@
 
         const currentTime = new Date().toISOString(); 
 
-        // [تحديث جذري]: ريست للقاعدة يحذف المشتركين القدامى (VIP) الذين تم إزالتهم من القائمة هنا، ويرسل التحديثات
         db.ref("active_sessions").once("value").then((snapshot) => {
             snapshot.forEach((child) => {
                 let data = child.val();
                 if (data && data.type === "Manual_VIP") {
-                    // إذا كان المعرف غير موجود في قائمة vipDevices الحالية، قم بحذفه بالكامل (ريست/حذف القديم)
                     if (!vipDevices[data.deviceId]) {
                         child.ref.remove();
                         db.ref("Users/" + sanitizeFirebaseKey(data.deviceId)).remove();
@@ -492,12 +491,10 @@
                 }
             });
 
-            // مزامنة البيانات تلقائياً ورفع البصمات الجديدة بعد تنظيف القديم
             for (let id in vipDevices) {
                 let safeKey = sanitizeFirebaseKey(id);
                 let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
                 
-                // استخدام ".set()" بدلاً من التحديث الجزئي لضمان الكتابة فوق أي بيانات عالقة سابقة
                 db.ref("active_sessions/" + safeKey).set({
                     deviceId: id, 
                     status: vipDevices[id].status,
@@ -506,33 +503,69 @@
                     type: "Manual_VIP"
                 });
 
-                // مزامنة الحسابات مع الأندرويد وإرسال أمر حالة الحظر (is_banned: true/false)
                 syncUserToAndroid(id, expiryMs, vipDevices[id].status);
             }
         }).catch(e => console.error(e));
 
+        // زيادة الوقت لضمان الرفع + قراءة الحالة من vipDevices مباشرة إذا توفرت لتفادي القراءة القديمة
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
+                // التحقق المباشر لحل مشكلة عدم فك الحظر السريع للمشتركين اليدويين
+                if (vipDevices[appDeviceId]) {
+                    let vData = vipDevices[appDeviceId];
+                    let finalExpiry = new Date(vData.expireAt).getTime();
+                    
+                    if (vData.status === 2) {
+                        syncUserToAndroid(appDeviceId, finalExpiry, 2).then(() => {
+                            window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                        });
+                        return;
+                    }
+                    
+                    if (finalExpiry > Date.now()) {
+                        syncUserToAndroid(appDeviceId, finalExpiry, vData.status).then(() => {
+                            window.location.href = `app://success_auth?code=AUTO&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                        });
+                        
+                        if (!isBgCheck && !isAdmin) {
+                            document.getElementById('mainCard').innerHTML = `
+                                <div class="app-icon" style="background: transparent; box-shadow: none; font-size:40px;">🔄</div>
+                                <h2 style='color:var(--text-main);'>مرحباً بك مجدداً</h2>
+                                <p style='color:var(--text-muted);font-size:14px;'>تم التحقق الآمن عبر السيرفر</p>
+                                <div class="spinner"></div>
+                            `;
+                        }
+                        return;
+                    } else {
+                        if (isBgCheck) window.location.href = "app://logout_user";
+                        else {
+                            let errorDiv = document.getElementById('error');
+                            errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
+                            errorDiv.style.display = 'block';
+                        }
+                        return;
+                    }
+                }
+
+                // مستخدمي الأكواد
                 let currentSafeKey = sanitizeFirebaseKey(appDeviceId);
-                
-                // 2. التحقق من السيرفر (الفايربيز) بالمعرف 
                 db.ref("active_sessions/" + currentSafeKey).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
                     
                     if (deviceData) {
                         if (deviceData.status === 2) {
-                            window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                            syncUserToAndroid(appDeviceId, new Date(deviceData.expireAt).getTime(), 2).then(() => {
+                                window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
+                            });
                             return;
                         }
 
                         let finalExpiry = new Date(deviceData.expireAt).getTime();
                         
                         if (finalExpiry > Date.now()) {
-                            // [تأكيد المزامنة]: إرسال البيانات للجهاز الحالي لضمان قراءة الأندرويد له 
-                            syncUserToAndroid(appDeviceId, finalExpiry, deviceData.status);
-
-                            // البصمة صالحة ومطابقة للسيرفر -> يتم تسجيل الدخول الآمن
-                            window.location.href = `app://success_auth?code=AUTO&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                            syncUserToAndroid(appDeviceId, finalExpiry, deviceData.status).then(() => {
+                                window.location.href = `app://success_auth?code=AUTO&duration=auto&expiry_time=${finalExpiry}&silent=${isBgCheck}`;
+                            });
                             
                             if (!isBgCheck && !isAdmin) {
                                 document.getElementById('mainCard').innerHTML = `
@@ -544,7 +577,6 @@
                             }
                             return;
                         } else {
-                            // 3. إذا انتهى الوقت -> تُحذف البصمة فوراً من قاعدة البيانات لتجاوز الثغرة
                             db.ref("active_sessions/" + currentSafeKey).remove();
                             localStorage.removeItem("DEVICE_DB_" + appDeviceId);
                             
@@ -557,19 +589,17 @@
                             }
                         }
                     } else {
-                        // إذا لم يتم العثور على المعرف في الفايربيز
                         if (isBgCheck) {
                             window.location.href = "app://logout_user";
                         }
                     }
                 }).catch((err) => {
-                    // في حال انقطاع الاتصال بالفروع يتم الرجوع الاختياري للـ localStorage
                     if (isBgCheck) window.location.href = "app://logout_user";
                 });
             } else {
                 if (isBgCheck) window.location.href = "app://logout_user";
             }
-        }, 600); // زيادة بسيطة للوقت لضمان انتهاء الفرمتة قبل القراءة
+        }, 750); 
     };
 
     function login() {
@@ -608,7 +638,6 @@
                 code: subCode
             }));
 
-            // رفع الكود الجديد للفايربيز بـ ".set()" لضمان مسح أي فضلات سابقة للجلسة
             if(appDeviceId !== "UNKNOWN") {
                 db.ref("active_sessions/" + sanitizeFirebaseKey(appDeviceId)).set({
                     deviceId: appDeviceId,     
@@ -619,12 +648,15 @@
                     type: "Code_Activation"
                 });
 
-                // مزامنة الكود المُفعل مع الأندرويد مباشرة ورفع حالة الحظر
-                syncUserToAndroid(appDeviceId, finalExpiryTime, codeData.status);
+                // تأخير التوجيه للتأكد من وصول بيانات الأندرويد
+                syncUserToAndroid(appDeviceId, finalExpiryTime, codeData.status).then(() => {
+                    errorDiv.style.display = 'none';
+                    window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
+                });
+            } else {
+                errorDiv.style.display = 'none';
+                window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
             }
-
-            errorDiv.style.display = 'none';
-            window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
             
             const btn = document.querySelector('.main-btn');
             btn.innerText = "تم التفعيل بنجاح ✅";

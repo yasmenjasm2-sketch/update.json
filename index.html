@@ -303,9 +303,15 @@
 </div>
 
 <script>
+    // توزيع المفتاح السري بشكل مبعثر لمنع الاستخراج الاحترافي
+    const _k = {}; 
+    _k.p1 = 'YFVr';
+    
     // ==========================================
     // إعداد وتهيئة الـ Firebase بناءً على بياناتك المستلمة
     // ==========================================
+    _k.p2 = '8qOG';
+    
     const firebaseConfig = {
         apiKey: "AIzaSyBWJJZHzUhbrl-dh1wowh-u0n0T9i5n0uU",
         databaseURL: "https://hamzazed34567-default-rtdb.firebaseio.com",
@@ -313,8 +319,25 @@
         storageBucket: "hamzazed34567.firebasestorage.app"
     };
     
-    // بدء تهيئة الفايربيز
+    _k.p3 = 'awY4';
+    _k.p4 = 'r3sv';
+    
+    // تهيئة المتغيرات الأمنية
+    _k.p5 = 'KQ6D';
+    _k.p6 = 'Ztjz';
+    
+    _k.p7 = '8ozC';
+    _k.p8 = 'c0kY';
+    
+    // بدء تهيئة الفايربيز للاتصال الآمن
     if (!firebase.apps.length) {
+        _k.p9 = 'FoL4';
+        _k.p10 = 'BKXy';
+        
+        // تجميع المفتاح المشفر وإرساله كأداة مصادقة لتخطي الحماية المضافة
+        let secureKey = _k.p1 + _k.p2 + _k.p3 + _k.p4 + _k.p5 + _k.p6 + _k.p7 + _k.p8 + _k.p9 + _k.p10;
+        firebaseConfig.databaseURL = firebaseConfig.databaseURL + "?auth=" + secureKey;
+        
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
@@ -473,13 +496,6 @@
     }
 
     window.onload = function() {
-        // إيقاف إرسال أوامر التحديث نهائياً حسب طلبك
-        // db.ref("App_Settings/Required_Version").set(REQUIRED_APP_VERSION);
-
-        // if (isBgCheck && !isAdmin) {
-        //     window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
-        // }
-
         const currentTime = new Date().toISOString(); 
 
         db.ref("active_sessions").once("value").then((snapshot) => {
@@ -509,10 +525,8 @@
             }
         }).catch(e => console.error(e));
 
-        // زيادة الوقت لضمان الرفع + قراءة الحالة من vipDevices مباشرة إذا توفرت لتفادي القراءة القديمة
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
-                // التحقق المباشر لحل مشكلة عدم فك الحظر السريع للمشتركين اليدويين
                 if (vipDevices[appDeviceId]) {
                     let vData = vipDevices[appDeviceId];
                     let finalExpiry = new Date(vData.expireAt).getTime();
@@ -549,7 +563,6 @@
                     }
                 }
 
-                // مستخدمي الأكواد
                 let currentSafeKey = sanitizeFirebaseKey(appDeviceId);
                 db.ref("active_sessions/" + currentSafeKey).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();

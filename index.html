@@ -388,9 +388,11 @@
         _k.p9 = 'FoL4';
         _k.p10 = 'BKXy';
         
-        // تجميع المفتاح المشفر وإرساله كأداة مصادقة لتخطي الحماية المضافة
+        // تجميع المفتاح المشفر
         let secureKey = _k.p1 + _k.p2 + _k.p3 + _k.p4 + _k.p5 + _k.p6 + _k.p7 + _k.p8 + _k.p9 + _k.p10;
-        firebaseConfig.databaseURL = firebaseConfig.databaseURL + "?auth=" + secureKey;
+        
+        // تم إيقاف السطر التالي لأنه يسبب فشل الاتصال (WebSocket) بقاعدة البيانات في مكتبة الفايربيز
+        // firebaseConfig.databaseURL = firebaseConfig.databaseURL + "?auth=" + secureKey;
         
         firebase.initializeApp(firebaseConfig);
     }

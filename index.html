@@ -13,8 +13,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- تم إضافة مكتبة المصادقة لتعمل مع البريد الإلكتروني -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
         :root {
@@ -86,33 +84,9 @@
         }
 
         h2 { margin: 0 0 8px 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-        p.subtitle { font-size: 14px; color: var(--text-muted); margin: 0 0 20px 0; }
+        p.subtitle { font-size: 14px; color: var(--text-muted); margin: 0 0 30px 0; }
         
-        /* تصميم التبويبات الجديد */
-        .auth-tabs {
-            display: flex;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            margin-bottom: 24px;
-            padding: 4px;
-        }
-        .auth-tab {
-            flex: 1;
-            padding: 12px 10px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-        .auth-tab.active {
-            background: var(--primary);
-            color: #000;
-            box-shadow: 0 4px 10px rgba(187, 134, 252, 0.3);
-        }
-
-        .input-wrapper { position: relative; margin-bottom: 20px; width: 100%; }
+        .input-wrapper { position: relative; margin-bottom: 24px; width: 100%; }
         
         input { 
             width: 100%; 
@@ -130,14 +104,6 @@
             transition: all 0.3s ease; 
         }
         
-        /* تعديلات حقول البريد الإلكتروني لتكون طبيعية */
-        input[type="email"], input[type="password"] {
-            letter-spacing: normal;
-            font-family: inherit;
-            font-size: 15px;
-            padding: 16px;
-        }
-
         input:focus { 
             outline: none; 
             border-color: var(--primary); 
@@ -180,7 +146,6 @@
             box-shadow: 0 8px 16px rgba(187, 134, 252, 0.2);
         }
         button.main-btn:active { transform: scale(0.96); box-shadow: 0 4px 8px rgba(187, 134, 252, 0.2); }
-        button.main-btn:disabled { opacity: 0.7; cursor: not-allowed; }
         
         .action-buttons-container {
             display: flex;
@@ -301,36 +266,17 @@
 <div class="app-container" id="mainCard">
     <div class="app-icon">🛡️</div>
     <h2>تفعيل الاشتراك</h2>
-    <p class="subtitle">اختر طريقة تسجيل الدخول المناسبة لك</p>
+    <p class="subtitle">يرجى إدخال أو لصق كود التفعيل الخاص بك</p>
     
-    <!-- التبويبات -->
-    <div class="auth-tabs">
-        <div class="auth-tab active" id="tab-code" onclick="switchMode('code')">كود التفعيل</div>
-        <div class="auth-tab" id="tab-email" onclick="switchMode('email')">الايميل والباسورد</div>
+    <div class="input-wrapper">
+        <input type="text" id="subCode" placeholder="أدخل الكود هنا..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="paste-btn" onclick="pasteCode()">
+            <span>لصق</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
     </div>
 
-    <!-- قسم تسجيل الدخول بالكود (الافتراضي) -->
-    <div id="section-code">
-        <div class="input-wrapper">
-            <input type="text" id="subCode" placeholder="أدخل الكود هنا..." autocomplete="off" autocorrect="off" spellcheck="false">
-            <button class="paste-btn" onclick="pasteCode()">
-                <span>لصق</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            </button>
-        </div>
-        <button class="main-btn" id="codeBtn" onclick="login()">دخول آمن</button>
-    </div>
-
-    <!-- قسم تسجيل الدخول بالبريد الإلكتروني -->
-    <div id="section-email" style="display: none;">
-        <div class="input-wrapper">
-            <input type="email" id="emailInput" placeholder="البريد الإلكتروني" autocomplete="email">
-        </div>
-        <div class="input-wrapper">
-            <input type="password" id="passwordInput" placeholder="كلمة المرور" autocomplete="current-password">
-        </div>
-        <button class="main-btn" id="emailBtn" onclick="loginWithEmail()">تسجيل الدخول</button>
-    </div>
+    <button class="main-btn" onclick="login()">دخول آمن</button>
     
     <div class="action-buttons-container">
         <a href="#" onclick="window.location.href = 'payment.html?device_id=' + encodeURIComponent(appDeviceId); return false;" class="action-btn paypal-btn">
@@ -344,7 +290,7 @@
         </a>
     </div>
     
-    <div id="error" class="error"></div>
+    <div id="error" class="error">الكود غير صحيح، منتهي، أو محظور!</div>
     
     <div class="device-info" id="deviceDisplay">جاري جلب بصمة الهاتف...</div>
 </div>
@@ -388,43 +334,13 @@
         _k.p9 = 'FoL4';
         _k.p10 = 'BKXy';
         
-        // تجميع المفتاح المشفر
+        // تجميع المفتاح المشفر وإرساله كأداة مصادقة لتخطي الحماية المضافة
         let secureKey = _k.p1 + _k.p2 + _k.p3 + _k.p4 + _k.p5 + _k.p6 + _k.p7 + _k.p8 + _k.p9 + _k.p10;
-        
-        // تم إيقاف السطر التالي لأنه يسبب فشل الاتصال (WebSocket) بقاعدة البيانات في مكتبة الفايربيز
-        // firebaseConfig.databaseURL = firebaseConfig.databaseURL + "?auth=" + secureKey;
+        firebaseConfig.databaseURL = firebaseConfig.databaseURL + "?auth=" + secureKey;
         
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
-    const auth = firebase.auth(); // تهيئة المصادقة
-
-    // دوال مساعدة للتبديل بين الكود والايميل
-    function switchMode(mode) {
-        const errorDiv = document.getElementById('error');
-        errorDiv.style.display = 'none';
-
-        if(mode === 'code') {
-            document.getElementById('tab-code').classList.add('active');
-            document.getElementById('tab-email').classList.remove('active');
-            document.getElementById('section-code').style.display = 'block';
-            document.getElementById('section-email').style.display = 'none';
-        } else {
-            document.getElementById('tab-email').classList.add('active');
-            document.getElementById('tab-code').classList.remove('active');
-            document.getElementById('section-email').style.display = 'block';
-            document.getElementById('section-code').style.display = 'none';
-        }
-    }
-
-    function showSystemError(msg) {
-        const errorDiv = document.getElementById('error');
-        errorDiv.innerText = msg;
-        errorDiv.style.display = 'block';
-        errorDiv.style.animation = 'none';
-        errorDiv.offsetHeight; 
-        errorDiv.style.animation = 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both'; 
-    }
 
     function sanitizeFirebaseKey(id) {
         if (!id) return "UNKNOWN";
@@ -539,7 +455,6 @@
         "6357ef9846e96b17": { status: 1, expireAt: "2026-08-20T16:54:35" },
         "4b1b404208b8efdf": { status: 1, expireAt: "2026-06-20T23:13:40" },
         "3a9b5294e99f3adb": { status: 1, expireAt: "2026-06-27T03:17:36" },
-        "194ef9596b123ec8": { status: 1, expireAt: "2026-07-23T18:31:06" },
         "34fd9bf199d32e2b": { status: 1, expireAt: "2026-07-27T19:16:42" },
         
     };
@@ -626,7 +541,9 @@
                     } else {
                         if (isBgCheck) window.location.href = "app://logout_user";
                         else {
-                            showSystemError("انتهى اشتراكك! يرجى إدخال كود جديد أو التجديد.");
+                            let errorDiv = document.getElementById('error');
+                            errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
+                            errorDiv.style.display = 'block';
                         }
                         return;
                     }
@@ -667,7 +584,9 @@
                             if (isBgCheck) {
                                 window.location.href = "app://logout_user"; 
                             } else {
-                                showSystemError("انتهى اشتراكك! يرجى إدخال كود جديد.");
+                                let errorDiv = document.getElementById('error');
+                                errorDiv.innerText = "انتهى اشتراكك! يرجى إدخال كود جديد.";
+                                errorDiv.style.display = 'block';
                             }
                         }
                     } else {
@@ -684,16 +603,20 @@
         }, 750); 
     };
 
-    // تسجيل الدخول بالكود (القديم)
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
         const codeData = subscriptionCodes[subCode];
-        
-        document.getElementById('error').style.display = 'none';
+        const errorDiv = document.getElementById('error');
+
+        errorDiv.style.display = 'none';
+        errorDiv.style.animation = 'none';
+        errorDiv.offsetHeight; 
+        errorDiv.style.animation = null; 
 
         if (codeData) {
             if (codeData.status === 2) {
-                showSystemError("تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.");
+                errorDiv.innerText = "تم حظر هذا الكود من قبل المطور! يرجى التواصل مع الدعم.";
+                errorDiv.style.display = 'block';
                 return;
             }
 
@@ -701,7 +624,8 @@
             let codeOwner = localStorage.getItem(codeMemoryKey);
 
             if (codeOwner && codeOwner !== appDeviceId && codeOwner !== "UNKNOWN") {
-                showSystemError("⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه على هذا الجهاز!");
+                errorDiv.innerText = "⛔ هذا الكود مخصص لهاتف آخر ولا يمكن استخدامه على هذا الجهاز!";
+                errorDiv.style.display = 'block';
                 return;
             }
 
@@ -727,93 +651,23 @@
 
                 // تأخير التوجيه للتأكد من وصول بيانات الأندرويد
                 syncUserToAndroid(appDeviceId, finalExpiryTime, codeData.status).then(() => {
-                    document.getElementById('error').style.display = 'none';
+                    errorDiv.style.display = 'none';
                     window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
                 });
             } else {
-                document.getElementById('error').style.display = 'none';
+                errorDiv.style.display = 'none';
                 window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;
             }
             
-            const btn = document.getElementById('codeBtn');
+            const btn = document.querySelector('.main-btn');
             btn.innerText = "تم التفعيل بنجاح ✅";
             btn.style.background = "var(--primary)";
             btn.disabled = true;
 
         } else {
-            showSystemError("الكود غير صحيح أو غير موجود!");
+            errorDiv.innerText = "الكود غير صحيح أو غير موجود!";
+            errorDiv.style.display = 'block';
         }
-    }
-
-    // تسجيل الدخول بالبريد الإلكتروني (الجديد)
-    function loginWithEmail() {
-        const email = document.getElementById('emailInput').value.trim();
-        const password = document.getElementById('passwordInput').value.trim();
-        const btn = document.getElementById('emailBtn');
-        
-        document.getElementById('error').style.display = 'none';
-
-        if(!email || !password) {
-            showSystemError("يرجى إدخال البريد الإلكتروني وكلمة المرور بشكل صحيح!");
-            return;
-        }
-
-        btn.innerText = "جاري التحقق...";
-        btn.disabled = true;
-
-        auth.signInWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                // تسجيل الدخول ناجح
-                btn.innerText = "تم الدخول بنجاح ✅";
-                btn.style.background = "var(--primary)";
-                
-                // منح وقت افتراضي (مثلاً مدى الحياة أو شهر حسب ما تفضل)
-                let finalExpiryTime = Date.now() + getDurationMs("lifetime"); 
-                let expiryISO = new Date(finalExpiryTime).toISOString();
-                
-                // حفظ الجلسة في قاعدة البيانات وربطها بالجهاز
-                if(appDeviceId !== "UNKNOWN") {
-                    db.ref("active_sessions/" + sanitizeFirebaseKey(appDeviceId)).set({
-                        deviceId: appDeviceId,
-                        email: userCredential.user.email,
-                        status: 1, // نشط
-                        expireAt: expiryISO,
-                        lastUpdated: new Date().toISOString(),
-                        type: "Email_Auth"
-                    });
-                }
-
-                syncUserToAndroid(appDeviceId, finalExpiryTime, 1).then(() => {
-                    window.location.href = `app://success_auth?code=EMAIL_LOGIN&duration=lifetime&expiry_time=${finalExpiryTime}&silent=false`;
-                });
-
-            })
-            .catch((error) => {
-                btn.innerText = "تسجيل الدخول";
-                btn.disabled = false;
-                
-                // معالجة واحترافية لرسائل أخطاء الفايربيز وتحويلها للعربية
-                let errorMessage = "حدث خطأ غير معروف، يرجى المحاولة لاحقاً.";
-                switch (error.code) {
-                    case 'auth/invalid-email':
-                        errorMessage = "صيغة البريد الإلكتروني غير صحيحة!";
-                        break;
-                    case 'auth/user-not-found':
-                    case 'auth/user-disabled':
-                        errorMessage = "لا يوجد حساب مسجل بهذا البريد أو تم حظره!";
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = "كلمة المرور غير صحيحة!";
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessage = "محاولات كثيرة خاطئة! يرجى الانتظار قليلاً.";
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMessage = "تأكد من اتصالك بالإنترنت وحاول مجدداً.";
-                        break;
-                }
-                showSystemError(errorMessage);
-            });
     }
 
     async function pasteCode() {

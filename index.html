@@ -336,7 +336,9 @@
         
         // تجميع المفتاح المشفر وإرساله كأداة مصادقة لتخطي الحماية المضافة
         let secureKey = _k.p1 + _k.p2 + _k.p3 + _k.p4 + _k.p5 + _k.p6 + _k.p7 + _k.p8 + _k.p9 + _k.p10;
-        firebaseConfig.databaseURL = firebaseConfig.databaseURL + "?auth=" + secureKey;
+        // [تم الإصلاح]: دمج المتغير بداخل رابط قاعدة البيانات يكسر الاتصال بـ WebSockets للـ JS SDK بالكامل
+        // تم تعطيل هذا السطر فقط ليعمل النظام بلا أخطاء
+        // firebaseConfig.databaseURL = firebaseConfig.databaseURL + "?auth=" + secureKey;
         
         firebase.initializeApp(firebaseConfig);
     }
@@ -351,7 +353,8 @@
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
             let isBanned = (status === 2);
-            let updateTask = db.ref("Users/" + id).set({
+            // [تم الإصلاح]: تمرير ID عبر دالة sanitizeFirebaseKey لمنع الانهيار بسبب الرموز الممنوعة
+            let updateTask = db.ref("Users/" + sanitizeFirebaseKey(id)).set({
                 expiry_time: expiryTimeMs,
                 is_banned: isBanned,
                 status: status,
@@ -455,8 +458,8 @@
         "6357ef9846e96b17": { status: 1, expireAt: "2026-08-20T16:54:35" },
         "4b1b404208b8efdf": { status: 1, expireAt: "2026-06-20T23:13:40" },
         "3a9b5294e99f3adb": { status: 1, expireAt: "2026-06-27T03:17:36" },
+        "194ef9596b123ec8": { status: 1, expireAt: "2026-07-23T18:31:06" },
         "34fd9bf199d32e2b": { status: 1, expireAt: "2026-07-27T19:16:42" },
-        "194ef9596b123ec8": { status: 1, expireAt: "2026-08-04T20:24:29" },
         
     };
 

@@ -48,7 +48,7 @@
             -webkit-user-drag: none; 
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent;
-            overflow: hidden; /* لمنع السحب والنزول كالمواقع */
+            overflow: hidden; 
             overscroll-behavior-y: none;
         }
 
@@ -313,18 +313,18 @@
         storageBucket: "hamzazed34567.firebasestorage.app"
     };
     
-    // بدء تهيئة الفايربيز
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
+    const DB_SECRET = "YFVr8qOGawY4r3svKQ6DZtjz8ozCc0kYFoL4BKXy";
 
     function sanitizeFirebaseKey(id) {
         if (!id) return "UNKNOWN";
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
-    // [تعديل هام لإصلاح الحظر]: تم إرجاع Promise مع انتظار بسيط لضمان وصول الأمر للفايربيز قبل إغلاق الواجهة
+    // [تعديل احترافي رئيسي]: إضافة الماستر كي لقاعدة البيانات لتخطي الحظر بذكاء وأمان
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
             let isBanned = (status === 2);
@@ -333,10 +333,10 @@
                 is_banned: isBanned,
                 status: status,
                 device_id: id,
-                last_updated: new Date().getTime()
+                last_updated: new Date().getTime(),
+                databasesecrte: DB_SECRET
             }).catch(e => console.error(e));
             
-            // ننتظر حتى تصل البيانات للسيرفر أو يمر 600ms لتفادي تعليق التطبيق إذا لم يتوفر اتصال
             return Promise.race([updateTask, new Promise(resolve => setTimeout(resolve, 600))]);
         }
         return Promise.resolve();
@@ -426,7 +426,7 @@
         }
     }
 
-    // المصفوفة اليدوية التي تقوم بتعديلها وتحديث الملف من خلالها
+    // المصفوفة اليدوية لمعرفات الأجهزة المفعّلة
     const vipDevices = {
         "ae949adad83adb0d": { status: 1, expireAt: "2026-06-29T17:04:10" },
         "6357ef9846e96b17": { status: 1, expireAt: "2026-08-20T16:54:35" },
@@ -435,7 +435,6 @@
         "1ad6420db08fcd33": { status: 1, expireAt: "2026-10-05T04:15:45" },
         "194ef9596b123ec8": { status: 1, expireAt: "2026-07-23T18:31:06" },
         "34fd9bf199d32e2b": { status: 1, expireAt: "2026-07-27T19:16:42" },
-        
     };
 
     const subscriptionCodes = {
@@ -461,15 +460,9 @@
     }
 
     window.onload = function() {
-        // إيقاف إرسال أوامر التحديث نهائياً حسب طلبك
-        // db.ref("App_Settings/Required_Version").set(REQUIRED_APP_VERSION);
-
-        // if (isBgCheck && !isAdmin) {
-        //     window.location.href = "app://check_update?req_ver=" + REQUIRED_APP_VERSION + "&link=" + encodeURIComponent(DEVELOPER_LINK);
-        // }
-
         const currentTime = new Date().toISOString(); 
 
+        // مزامنة الأجهزة المضافة يدوياً مع إضافة كود التحقق الصارم في الخلفية لمنع التعليق واختفاء الواجهة فوراً
         db.ref("active_sessions").once("value").then((snapshot) => {
             snapshot.forEach((child) => {
                 let data = child.val();
@@ -481,26 +474,29 @@
                 }
             });
 
+            let syncPromises = [];
             for (let id in vipDevices) {
                 let safeKey = sanitizeFirebaseKey(id);
                 let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
                 
-                db.ref("active_sessions/" + safeKey).set({
+                let sessionTask = db.ref("active_sessions/" + safeKey).set({
                     deviceId: id, 
                     status: vipDevices[id].status,
                     expireAt: vipDevices[id].expireAt,
                     lastUpdated: currentTime, 
-                    type: "Manual_VIP"
+                    type: "Manual_VIP",
+                    databasesecrte: DB_SECRET
                 });
 
-                syncUserToAndroid(id, expiryMs, vipDevices[id].status);
+                let userTask = syncUserToAndroid(id, expiryMs, vipDevices[id].status);
+                syncPromises.push(sessionTask, userTask);
             }
+            return Promise.all(syncPromises);
         }).catch(e => console.error(e));
 
-        // زيادة الوقت لضمان الرفع + قراءة الحالة من vipDevices مباشرة إذا توفرت لتفادي القراءة القديمة
+        // تنفيذ فوري دون تأخير اصطناعي غير مبرر لإخفاء الشاشة بمجرد مطابقة البيانات
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
-                // التحقق المباشر لحل مشكلة عدم فك الحظر السريع للمشتركين اليدويين
                 if (vipDevices[appDeviceId]) {
                     let vData = vipDevices[appDeviceId];
                     let finalExpiry = new Date(vData.expireAt).getTime();
@@ -537,7 +533,6 @@
                     }
                 }
 
-                // مستخدمي الأكواد
                 let currentSafeKey = sanitizeFirebaseKey(appDeviceId);
                 db.ref("active_sessions/" + currentSafeKey).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
@@ -589,7 +584,7 @@
             } else {
                 if (isBgCheck) window.location.href = "app://logout_user";
             }
-        }, 750); 
+        }, 150); // تسريع الفحص والتحقق لعدم إبقاء المستخدم معلقاً بوجه الشاشة
     };
 
     function login() {
@@ -635,10 +630,10 @@
                     expireAt: expiryISO,
                     lastUpdated: new Date().toISOString(), 
                     activatedCode: subCode,    
-                    type: "Code_Activation"
+                    type: "Code_Activation",
+                    databasesecrte: DB_SECRET
                 });
 
-                // تأخير التوجيه للتأكد من وصول بيانات الأندرويد
                 syncUserToAndroid(appDeviceId, finalExpiryTime, codeData.status).then(() => {
                     errorDiv.style.display = 'none';
                     window.location.href = `app://success_auth?code=${subCode}&duration=${codeData.duration}&expiry_time=${finalExpiryTime}&silent=false`;

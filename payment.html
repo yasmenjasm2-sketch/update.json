@@ -114,6 +114,23 @@
         .method-card.paypal-card:hover { border-color: var(--paypal-color); box-shadow: 0 12px 25px var(--paypal-glow); }
         .method-card.usdt-card:hover { border-color: var(--usdt-color); box-shadow: 0 12px 25px var(--usdt-glow); }
         
+        /* زر بايبال المتوقف المعطل باللون الأحمر */
+        .method-card.paypal-disabled {
+            opacity: 0.75;
+            cursor: not-allowed !important;
+            border-color: rgba(239, 68, 68, 0.4) !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+        }
+        .method-card.paypal-disabled::after {
+            content: '✖';
+            color: var(--error-color);
+            opacity: 1;
+        }
+        .method-card.paypal-disabled:hover {
+            transform: none !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2) !important;
+        }
+
         .method-icon {
             width: 52px;
             height: 52px;
@@ -340,11 +357,12 @@
     <h2 class="animated-gradient-text">َ</h2>
     <p class="subtitle" style="color: #e2e8f0;">اختر وسيلة الدفع المناسبة لتأكيد التحويل الإلكتروني الآمن وتأهيل حسابك للعمل الفوري الذكي بـ (<span style="color: #ffd700; font-weight: 800; font-size: 15px; text-shadow: 0 0 10px rgba(255,215,0,0.5);">33 دولار / شهرياً</span>)</p>
 
-    <div class="method-card paypal-card" onclick="showView('paypalView')">
+    <!-- تم تعطيل بايبال بصرياً وعملياً باللون الأحمر ولا يمكن الدخول إليه -->
+    <div class="method-card paypal-card paypal-disabled" onclick="showPaypalDisabledMsg()">
         <div class="method-icon paypal-icon">P</div>
         <div class="method-details">
-            <h3>بوابة الدفع <span style="color: #00bfff;">PayPal</span></h3>
-            <p>معالجة فورية وتلقائية عبر البطاقات البنكية</p>
+            <h3 style="color: #fca5a5;">بوابة الدفع <span style="color: #ef4444;">PayPal</span></h3>
+            <p style="color: #ef4444; font-weight: 700;">خدمة PayPal متوقفة مؤقتاً</p>
         </div>
     </div>
 
@@ -525,6 +543,11 @@
         document.getElementById('successView').style.display = 'none';
         document.getElementById('rejectedView').style.display = 'none';
         document.getElementById(viewId).style.display = 'block';
+    }
+
+    // دالة تنبيه المستخدم بأن خدمة بايبال متوقفة ولا يمكن الدخول إليها
+    function showPaypalDisabledMsg() {
+        alert("عذراً، خدمة الدفع عبر PayPal متوقفة مؤقتاً. يرجى استخدام الدفع عبر العملات الرقمية USDT.");
     }
 
     // الفحص الهيكلي لمعرف الجهاز وحالة جدار الحماية

@@ -292,7 +292,7 @@
             color: var(--primary);
         }
         
-        /* تنسيقات نافذة نقل الاشتراك */
+        /* تنسيقات نافذة نقل الاشتراك الشاملة */
         .transfer-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -346,8 +346,8 @@
             padding: 14px;
             margin-top: 5px;
             margin-bottom: 15px;
-            letter-spacing: 4px;
-            font-size: 20px;
+            letter-spacing: 2px;
+            font-size: 16px;
         }
 
         @keyframes slideUp {
@@ -447,7 +447,7 @@
     </div>
 </div>
 
-<!-- واجهة نقل الاشتراك (المصادقة فقط) -->
+<!-- واجهة نقل الاشتراك المطورة بالكامل (إرسال واستقبال) -->
 <div class="transfer-modal-overlay" id="transferOverlay">
     <div class="transfer-modal">
         <div class="scanner-icon-container">
@@ -458,21 +458,63 @@
             </svg>
         </div>
 
-        <div id="transfer-step-2">
-            <h3 style="margin:0 0 5px 0; font-size: 18px;">المصادقة ونقل الاشتراك</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">يرجى إدخال كود المصادقة للمتابعة وتفعيل الاشتراك على هذا الجهاز.</p>
+        <!-- القائمة الرئيسية للنقل -->
+        <div id="transfer-main">
+            <h3 style="margin:0 0 5px 0; font-size: 18px;">نظام نقل الاشتراك</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">اختر العملية التي تريد القيام بها لنقل اشتراكك</p>
             
-            <input type="text" id="transferPin" placeholder="أدخل كود المصادقة" autocomplete="off" inputmode="text">
+            <button class="main-btn" onclick="showGenerateTransfer()" style="margin-bottom: 10px; background: rgba(187, 134, 252, 0.1); border: 1px solid var(--primary); color: var(--primary);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><path d="M12 5v14M5 12h14"></path></svg>
+                إنشاء كود نقل (من هذا الجهاز)
+            </button>
+            <button class="main-btn" onclick="showReceiveTransfer()" style="margin-bottom: 10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"></path></svg>
+                استلام اشتراك (إلى هذا الجهاز)
+            </button>
+        </div>
+
+        <!-- واجهة إنشاء كود ليتم وضعه في ملف النقل -->
+        <div id="transfer-generate" style="display: none;">
+            <h3 style="margin:0 0 5px 0; font-size: 18px;">توليد كود النقل</h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">أدخل هذه البيانات في ملف النقل لإتمام العملية</p>
+            
+            <div id="genError" class="error" style="margin-top:0; margin-bottom: 15px;"></div>
+            
+            <div id="genResult" style="display:none; text-align: center; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--primary);">
+                <p style="margin: 0 0 5px 0; font-size: 12px; color: var(--text-muted);">معرف الجهاز القديم (انسخه):</p>
+                <div style="color: var(--primary); font-family: monospace; font-size: 15px; margin-bottom: 15px; user-select: all;" id="genOldId"></div>
+                
+                <p style="margin: 0 0 5px 0; font-size: 12px; color: var(--text-muted);">كود المصادقة (6 أرقام):</p>
+                <div style="color: #fff; font-family: monospace; font-size: 26px; font-weight: bold; letter-spacing: 6px; user-select: all;" id="genCode"></div>
+                
+                <p style="margin: 15px 0 0 0; font-size: 11px; color: #ef4444;" id="genTimer"></p>
+            </div>
+            
+            <button class="main-btn" id="btnGenCode" onclick="generateTransferCodeInApp()" style="margin-bottom: 10px;">
+                <span id="genBtnText">إنشاء الكود الآن</span>
+                <div class="small-spinner" id="genSpinner"></div>
+            </button>
+            <button style="width: 100%; padding: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="backToTransferMain()">عودة للخلف</button>
+        </div>
+
+        <!-- واجهة استقبال كود النقل والمصادقة -->
+        <div id="transfer-receive" style="display: none;">
+            <h3 style="margin:0 0 5px 0; font-size: 18px;">المصادقة واستلام الاشتراك</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">أدخل بيانات الجهاز القديم للمصادقة وتفعيل الاشتراك هنا.</p>
+            
+            <input type="text" id="transferOldId" placeholder="معرف الجهاز القديم" autocomplete="off" style="font-size: 14px; letter-spacing: 1px;">
+            <input type="text" id="transferPin" placeholder="كود المصادقة (6 أرقام)" autocomplete="off" inputmode="numeric" maxlength="6" style="font-size: 18px; letter-spacing: 4px; text-align: center;">
             <div id="transferError" class="error" style="margin-top:0; margin-bottom: 15px;"></div>
 
             <button class="main-btn" id="transferActionBtn" onclick="executeTransfer()" style="margin-bottom: 10px;">
                 <span id="transferBtnText">تأكيد المصادقة والدخول</span>
                 <div class="small-spinner" id="transferSpinner"></div>
             </button>
+            <button style="width: 100%; padding: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="backToTransferMain()">عودة للخلف</button>
         </div>
 
         <!-- زر الإغلاق العام -->
-        <button style="width: 100%; margin-top: 10px; padding: 12px; background: transparent; border: none; border-radius: 12px; color: #ef4444; font-weight: 600; cursor: pointer;" onclick="closeTransferModal()">إلغاء العملية</button>
+        <button style="width: 100%; margin-top: 5px; padding: 12px; background: transparent; border: none; border-radius: 12px; color: #ef4444; font-weight: 600; cursor: pointer;" onclick="closeTransferModal()">إلغاء العملية</button>
     </div>
 </div>
 
@@ -831,38 +873,55 @@
     }
 
     // ==========================================
-    // قسم نقل الاشتراك الجديد (المصادقة فقط)
+    // قسم نقل الاشتراك الجديد المتكامل (إرسال / استقبال)
     // ==========================================
 
+    let genTransferInterval = null;
+
     function openTransferModal() {
-        document.getElementById('transferPin').value = '';
-        document.getElementById('transferError').style.display = 'none';
         document.getElementById('transferOverlay').classList.add('active');
+        backToTransferMain();
     }
 
     function closeTransferModal() {
         document.getElementById('transferOverlay').classList.remove('active');
+        clearInterval(genTransferInterval);
     }
 
-    async function executeTransfer() {
-        // تنظيف الرمز من أي مسافات أو حروف مخفية
-        const rawPin = document.getElementById('transferPin').value;
-        const pin = rawPin.replace(/[^a-zA-Z0-9]/g, '').trim();
-        const errorDiv = document.getElementById('transferError');
-        const btnText = document.getElementById('transferBtnText');
-        const spinner = document.getElementById('transferSpinner');
-        const actionBtn = document.getElementById('transferActionBtn');
+    function backToTransferMain() {
+        document.getElementById('transfer-main').style.display = 'block';
+        document.getElementById('transfer-generate').style.display = 'none';
+        document.getElementById('transfer-receive').style.display = 'none';
+        clearInterval(genTransferInterval);
+    }
+
+    function showGenerateTransfer() {
+        document.getElementById('transfer-main').style.display = 'none';
+        document.getElementById('transfer-generate').style.display = 'block';
+        document.getElementById('genResult').style.display = 'none';
+        document.getElementById('genError').style.display = 'none';
+        document.getElementById('btnGenCode').style.display = 'block';
+    }
+
+    function showReceiveTransfer() {
+        document.getElementById('transfer-main').style.display = 'none';
+        document.getElementById('transfer-receive').style.display = 'block';
+        document.getElementById('transferOldId').value = '';
+        document.getElementById('transferPin').value = '';
+        document.getElementById('transferError').style.display = 'none';
+    }
+
+    // دالة إنشاء كود النقل من الهاتف القديم
+    async function generateTransferCodeInApp() {
+        const errorDiv = document.getElementById('genError');
+        const btnText = document.getElementById('genBtnText');
+        const spinner = document.getElementById('genSpinner');
+        const actionBtn = document.getElementById('btnGenCode');
 
         errorDiv.style.display = 'none';
 
-        if (!pin || pin.length < 4) {
-            errorDiv.innerText = "يرجى إدخال كود مصادقة صحيح";
-            errorDiv.style.display = 'block';
-            return;
-        }
-
         if (appDeviceId === "UNKNOWN") {
-            errorDiv.innerText = "تعذر قراءة معرف جهازك، تأكد من صلاحيات التطبيق.";
+            errorDiv.innerText = "تعذر قراءة معرف جهازك، تأكد من الصلاحيات.";
             errorDiv.style.display = 'block';
             return;
         }
@@ -872,60 +931,135 @@
         actionBtn.disabled = true;
 
         try {
-            // محاولة جلب الطلب مباشرة عبر الرمز كـ Key
-            let reqSnapshot = await db.ref("transfer_requests/" + pin).once("value");
-            let requestData = reqSnapshot.val();
-            let requestKey = pin;
+            // التحقق من وجود اشتراك صالح في هذا الجهاز أولاً
+            let safeId = sanitizeFirebaseKey(appDeviceId);
+            let hasActiveSub = false;
 
-            // إذا لم يتم العثور عليه، قد يكون محفوظاً كـ Push Key والرمز بداخله كقيمة (نبحث عنه كنص أو كرقم)
-            if (!requestData) {
-                let queryStr = await db.ref("transfer_requests").orderByChild("pinCode").equalTo(pin).once("value");
-                if (queryStr.exists()) {
-                    let dataMap = queryStr.val();
-                    requestKey = Object.keys(dataMap)[0];
-                    requestData = dataMap[requestKey];
-                } else {
-                    let queryNum = await db.ref("transfer_requests").orderByChild("pinCode").equalTo(Number(pin)).once("value");
-                    if (queryNum.exists()) {
-                        let dataMap = queryNum.val();
-                        requestKey = Object.keys(dataMap)[0];
-                        requestData = dataMap[requestKey];
-                    }
+            let userSnap = await db.ref("Users/" + safeId).once("value");
+            if (userSnap.exists() && userSnap.val().expiry_time > Date.now()) {
+                hasActiveSub = true;
+            }
+
+            if (!hasActiveSub) {
+                let sessionSnap = await db.ref("active_sessions/" + safeId).once("value");
+                if (sessionSnap.exists() && new Date(sessionSnap.val().expireAt).getTime() > Date.now()) {
+                    hasActiveSub = true;
                 }
             }
 
-            // التحقق من صحة البيانات
-            if (!requestData) {
-                throw new Error("الكود غير صحيح أو غير موجود بالنظام.");
+            if (!hasActiveSub && vipDevices[appDeviceId] && new Date(vipDevices[appDeviceId].expireAt).getTime() > Date.now()) {
+                hasActiveSub = true;
             }
 
-            let currentStatus = requestData.status ? String(requestData.status).toUpperCase() : "";
-            if (currentStatus !== "PENDING") {
-                throw new Error("الكود غير صحيح أو تم استخدامه مسبقاً.");
+            if (!hasActiveSub) {
+                throw new Error("لا يوجد اشتراك فعال على هذا الجهاز لنقله!");
             }
 
-            if (String(requestData.pinCode) !== pin) {
-                throw new Error("كود المصادقة غير متطابق.");
+            // توليد بيانات النقل المطابقة لملف النقل
+            const securityCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const expiresAt = Date.now() + (60 * 1000); // صلاحية دقيقة
+
+            await db.ref('transfer_requests/' + safeId).set({
+                sourceDeviceId: appDeviceId,
+                securityCode: securityCode,
+                status: 'PENDING',
+                expiresAt: expiresAt,
+                createdAt: Date.now()
+            });
+
+            // عرض البيانات للمستخدم لنسخها لملف النقل
+            document.getElementById('genOldId').innerText = appDeviceId;
+            document.getElementById('genCode').innerText = securityCode;
+            document.getElementById('genResult').style.display = 'block';
+            actionBtn.style.display = 'none';
+
+            let timeLeft = 60;
+            document.getElementById('genTimer').innerText = `ينتهي الكود خلال: ${timeLeft} ثانية`;
+            
+            clearInterval(genTransferInterval);
+            genTransferInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('genTimer').innerText = `ينتهي الكود خلال: ${timeLeft} ثانية`;
+                if (timeLeft <= 0) {
+                    clearInterval(genTransferInterval);
+                    document.getElementById('genTimer').innerText = "انتهت صلاحية الكود! يرجى إعادة المحاولة.";
+                    document.getElementById('genResult').style.opacity = '0.5';
+                }
+            }, 1000);
+
+        } catch (error) {
+            errorDiv.innerText = error.message;
+            errorDiv.style.display = 'block';
+        } finally {
+            spinner.style.display = 'none';
+            btnText.style.display = 'inline-block';
+            actionBtn.disabled = false;
+        }
+    }
+
+    // دالة استلام الاشتراك والمصادقة في الجهاز الجديد
+    async function executeTransfer() {
+        const rawPin = document.getElementById('transferPin').value;
+        const pin = rawPin.replace(/[^0-9]/g, '').trim();
+        const oldId = document.getElementById('transferOldId').value.trim();
+        const errorDiv = document.getElementById('transferError');
+        const btnText = document.getElementById('transferBtnText');
+        const spinner = document.getElementById('transferSpinner');
+        const actionBtn = document.getElementById('transferActionBtn');
+
+        errorDiv.style.display = 'none';
+
+        if (!oldId) {
+            errorDiv.innerText = "يرجى إدخال معرف الجهاز القديم أولاً.";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (!pin || pin.length !== 6) {
+            errorDiv.innerText = "يرجى إدخال كود مصادقة صحيح (6 أرقام).";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (appDeviceId === "UNKNOWN") {
+            errorDiv.innerText = "تعذر قراءة معرف جهازك الجديد.";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (oldId === appDeviceId) {
+            errorDiv.innerText = "لا يمكن إتمام العملية لنفس الجهاز.";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        btnText.style.display = 'none';
+        spinner.style.display = 'inline-block';
+        actionBtn.disabled = true;
+
+        try {
+            // البحث عن طلب النقل بناءً على معرف الجهاز القديم
+            const safeOldId = sanitizeFirebaseKey(oldId);
+            let reqSnapshot = await db.ref("transfer_requests/" + safeOldId).once("value");
+            let requestData = reqSnapshot.val();
+
+            if (!requestData || requestData.securityCode !== pin) {
+                throw new Error("البيانات غير صحيحة أو أن الكود خاطئ.");
             }
 
-            if (requestData.expiresAt && requestData.expiresAt < Date.now()) {
+            if (requestData.status !== "PENDING") {
+                throw new Error("تم استخدام هذا الطلب مسبقاً.");
+            }
+
+            if (requestData.expiresAt < Date.now()) {
                 throw new Error("انتهت صلاحية الكود.");
             }
 
-            const oldDeviceId = requestData.sourceDeviceId;
-            if (!oldDeviceId) {
-                throw new Error("بيانات الجهاز المرسل غير مكتملة.");
-            }
-
-            if (oldDeviceId === appDeviceId) {
-                throw new Error("لا يمكن إتمام العملية لنفس الجهاز.");
-            }
-
-            // جلب بيانات الاشتراك للجهاز القديم
-            const userSnapshot = await db.ref("Users/" + sanitizeFirebaseKey(oldDeviceId)).once("value");
-            const userData = userSnapshot.val();
+            // جلب بيانات الاشتراك للجهاز القديم لنقلها كاملة
+            const userSnapshot = await db.ref("Users/" + safeOldId).once("value");
+            const sessionSnapshot = await db.ref("active_sessions/" + safeOldId).once("value");
             
-            const sessionSnapshot = await db.ref("active_sessions/" + sanitizeFirebaseKey(oldDeviceId)).once("value");
+            const userData = userSnapshot.val();
             const sessionData = sessionSnapshot.val();
 
             let finalExpiry = 0;
@@ -937,45 +1071,46 @@
             } else if (sessionData && sessionData.expireAt) {
                 finalExpiry = new Date(sessionData.expireAt).getTime();
                 finalStatus = sessionData.status || 1;
-            } else if (vipDevices[oldDeviceId]) {
-                finalExpiry = new Date(vipDevices[oldDeviceId].expireAt).getTime();
-                finalStatus = vipDevices[oldDeviceId].status || 1;
+            } else if (vipDevices[oldId]) {
+                finalExpiry = new Date(vipDevices[oldId].expireAt).getTime();
+                finalStatus = vipDevices[oldId].status || 1;
             }
 
             if (finalExpiry === 0 || finalExpiry < Date.now()) {
                 throw new Error("بيانات الجهاز القديم منتهية أو غير موجودة.");
             }
 
-            // 1. نقل البيانات إلى الجهاز الجديد
+            // 1. نقل وتفعيل البيانات في الجهاز الجديد بشكل متطابق
             const safeNewId = sanitizeFirebaseKey(appDeviceId);
-            await db.ref("Users/" + safeNewId).set({
-                expiry_time: finalExpiry,
-                is_banned: (finalStatus === 2),
-                status: finalStatus,
-                device_id: appDeviceId,
-                last_updated: new Date().getTime(),
-                databasesecrte: DB_SECRET,
-                transferred_from: oldDeviceId
-            });
+            
+            let newUserData = userData || {};
+            newUserData.expiry_time = finalExpiry;
+            newUserData.is_banned = (finalStatus === 2);
+            newUserData.status = finalStatus;
+            newUserData.device_id = appDeviceId;
+            newUserData.last_updated = new Date().getTime();
+            newUserData.databasesecrte = DB_SECRET;
+            newUserData.transferred_from = oldId;
 
-            await db.ref("active_sessions/" + safeNewId).set({
-                deviceId: appDeviceId,
-                status: finalStatus,
-                expireAt: new Date(finalExpiry).toISOString(),
-                lastUpdated: new Date().toISOString(),
-                type: "Transferred",
-                activatedCode: "TRANSFER",
-                databasesecrte: DB_SECRET
-            });
+            let newSessionData = sessionData || {};
+            newSessionData.deviceId = appDeviceId;
+            newSessionData.status = finalStatus;
+            newSessionData.expireAt = new Date(finalExpiry).toISOString();
+            newSessionData.lastUpdated = new Date().toISOString();
+            newSessionData.type = "Transferred";
+            newSessionData.activatedCode = "TRANSFER";
+            newSessionData.databasesecrte = DB_SECRET;
 
-            // 2. مسح بيانات الجهاز القديم
-            const safeOldId = sanitizeFirebaseKey(oldDeviceId);
+            await db.ref("Users/" + safeNewId).set(newUserData);
+            await db.ref("active_sessions/" + safeNewId).set(newSessionData);
+
+            // 2. مسح وتدمير بيانات الجهاز القديم تماماً
             await db.ref("Users/" + safeOldId).remove();
             await db.ref("active_sessions/" + safeOldId).remove();
 
-            // 3. تحديث حالة الطلب باستخدام المفتاح الصحيح
-            await db.ref("transfer_requests/" + requestKey).update({
-                status: "COMPLETED",
+            // 3. تحديث حالة الطلب
+            await db.ref("transfer_requests/" + safeOldId).update({
+                status: "SUCCESS",
                 targetDeviceId: appDeviceId,
                 completedAt: Date.now()
             });

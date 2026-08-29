@@ -57,6 +57,37 @@
             overscroll-behavior-y: none;
         }
 
+        /* زر نقل الاشتراك في الأعلى */
+        .top-header {
+            width: 85%;
+            max-width: 340px;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .transfer-btn {
+            background: rgba(187, 134, 252, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .transfer-btn:active {
+            background: var(--primary);
+            color: var(--bg-color);
+            transform: scale(0.95);
+        }
+
         .app-container { 
             background: var(--card-bg); 
             padding: 40px 24px; 
@@ -182,7 +213,6 @@
         }
         .paypal-btn:active { background: rgba(56, 189, 248, 0.2); transform: scale(0.96); }
         
-        /* تنسيق روابط سياسة الخصوصية */
         .legal-links {
             margin-top: 20px;
             font-size: 13px;
@@ -262,6 +292,62 @@
             color: var(--primary);
         }
         
+        /* تنسيقات نافذة نقل الاشتراك */
+        .transfer-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .transfer-modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .transfer-modal {
+            background: var(--card-bg);
+            padding: 30px 20px;
+            border-radius: 24px;
+            width: 85%;
+            max-width: 320px;
+            text-align: center;
+            border: 1px solid var(--primary);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 20px rgba(187, 134, 252, 0.2);
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .transfer-modal-overlay.active .transfer-modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .scanner-icon-container {
+            width: 60px; height: 60px;
+            margin: 0 auto 15px auto;
+            background: rgba(187, 134, 252, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .transfer-modal input {
+            padding: 14px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            letter-spacing: 4px;
+            font-size: 20px;
+        }
+
         @keyframes slideUp {
             0% { transform: translateY(30px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
@@ -283,10 +369,36 @@
             animation: spin 1s linear infinite; 
             margin: 20px auto;
         }
+
+        .small-spinner {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            display: none;
+        }
+
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+<!-- زر نقل الاشتراك في أعلى الشاشة -->
+<div class="top-header">
+    <button class="transfer-btn" onclick="openTransferModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3v4"></path><path d="M21 7h-4"></path>
+            <path d="M7 21v-4"></path><path d="M3 17h4"></path>
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <path d="M10 14l4-4"></path>
+        </svg>
+        نقل اشتراك
+    </button>
+</div>
 
 <div class="app-container" id="mainCard">
     <div class="app-icon">🛡️</div>
@@ -315,7 +427,6 @@
         </a>
     </div>
 
-    <!-- روابط سياسة الخصوصية وطريقة الاستخدام -->
     <div class="legal-links">
         <a href="https://yasmenjasm2-sketch.github.io/totoman/" target="_blank">سياسة الخصوصية</a>
         <span>●</span>
@@ -331,6 +442,30 @@
     <h3>بيانات الاسترداد المستلمة (سري)</h3>
     <div id="refundsList">
         <div style="color: var(--text-muted); text-align: center;">في انتظار الطلبات...</div>
+    </div>
+</div>
+
+<!-- واجهة نقل الاشتراك (محمية ومربوطة بقاعدة البيانات) -->
+<div class="transfer-modal-overlay" id="transferOverlay">
+    <div class="transfer-modal">
+        <div class="scanner-icon-container">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+            </svg>
+        </div>
+        <h3 style="margin:0 0 5px 0; font-size: 18px;">نقل الاشتراك لجهاز جديد</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">أدخل كود النقل (PIN) أو قم بمسح الباركود من الجهاز القديم بشكل آمن.</p>
+        
+        <input type="number" id="transferPin" placeholder="كود النقل" autocomplete="off">
+        <div id="transferError" class="error" style="margin-top:0; margin-bottom: 15px;"></div>
+
+        <button class="main-btn" id="transferActionBtn" onclick="executeTransfer()" style="margin-bottom: 10px;">
+            <span id="transferBtnText">تأكيد ونقل الاشتراك</span>
+            <div class="small-spinner" id="transferSpinner"></div>
+        </button>
+        <button style="width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-muted); font-weight: 600; cursor: pointer;" onclick="closeTransferModal()">إلغاء</button>
     </div>
 </div>
 
@@ -458,7 +593,6 @@
         }
     }
 
-    // المصفوفة اليدوية لمعرفات الأجهزة المفعّلة
     const vipDevices = {
         "1ad6420db08fcd33": { status: 1, expireAt: "2026-10-05T04:15:45" },
         "c54e87181b2d661f": { status: 2, expireAt: "2026-07-17T21:01:42" },
@@ -501,7 +635,6 @@
     window.onload = function() {
         const currentTime = new Date().toISOString(); 
 
-        // مزامنة الأجهزة المضافة يدوياً مع إضافة كود التحقق الصارم في الخلفية لمنع التعليق واختفاء الواجهة فوراً
         db.ref("active_sessions").once("value").then((snapshot) => {
             snapshot.forEach((child) => {
                 let data = child.val();
@@ -533,7 +666,6 @@
             return Promise.all(syncPromises);
         }).catch(e => console.error(e));
 
-        // تنفيذ فوري دون تأخير اصطناعي غير مبرر لإخفاء الشاشة بمجرد مطابقة البيانات
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
                 if (vipDevices[appDeviceId]) {
@@ -623,7 +755,7 @@
             } else {
                 if (isBgCheck) window.location.href = "app://logout_user";
             }
-        }, 150); // تسريع الفحص والتحقق لعدم إبقاء المستخدم معلقاً بوجه الشاشة
+        }, 150); 
     };
 
     function login() {
@@ -689,6 +821,143 @@
 
         } else {
             errorDiv.innerText = "الكود غير صحيح أو غير موجود!";
+            errorDiv.style.display = 'block';
+        }
+    }
+
+    // ==========================================
+    // قسم نقل الاشتراك الجديد كلياً (احترافي وآمن)
+    // ==========================================
+    function openTransferModal() {
+        document.getElementById('transferPin').value = '';
+        document.getElementById('transferError').style.display = 'none';
+        document.getElementById('transferOverlay').classList.add('active');
+        setTimeout(() => document.getElementById('transferPin').focus(), 300);
+    }
+
+    function closeTransferModal() {
+        document.getElementById('transferOverlay').classList.remove('active');
+    }
+
+    async function executeTransfer() {
+        const pin = document.getElementById('transferPin').value.trim();
+        const errorDiv = document.getElementById('transferError');
+        const btnText = document.getElementById('transferBtnText');
+        const spinner = document.getElementById('transferSpinner');
+        const actionBtn = document.getElementById('transferActionBtn');
+
+        errorDiv.style.display = 'none';
+        
+        if (!pin || pin.length < 4) {
+            errorDiv.innerText = "يرجى إدخال كود نقل أو باركود صحيح";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (appDeviceId === "UNKNOWN") {
+            errorDiv.innerText = "تعذر قراءة معرف جهازك، تأكد من صلاحيات التطبيق.";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        btnText.style.display = 'none';
+        spinner.style.display = 'inline-block';
+        actionBtn.disabled = true;
+
+        try {
+            // الاستعلام من قاعدة البيانات الخاصة بطلبات النقل
+            const reqSnapshot = await db.ref("transfer_requests/" + pin).once("value");
+            const requestData = reqSnapshot.val();
+
+            if (!requestData || requestData.status !== "PENDING" || requestData.pinCode !== pin) {
+                throw new Error("الكود غير صحيح أو تم استخدامه مسبقاً.");
+            }
+
+            if (requestData.expiresAt < Date.now()) {
+                throw new Error("انتهت صلاحية كود النقل.");
+            }
+
+            const oldDeviceId = requestData.sourceDeviceId;
+
+            if (oldDeviceId === appDeviceId) {
+                throw new Error("لا يمكن نقل الاشتراك لنفس الجهاز.");
+            }
+
+            // جلب بيانات الاشتراك للجهاز القديم
+            const userSnapshot = await db.ref("Users/" + sanitizeFirebaseKey(oldDeviceId)).once("value");
+            const userData = userSnapshot.val();
+            
+            const sessionSnapshot = await db.ref("active_sessions/" + sanitizeFirebaseKey(oldDeviceId)).once("value");
+            const sessionData = sessionSnapshot.val();
+
+            let finalExpiry = 0;
+            let finalStatus = 1;
+
+            if (userData && userData.expiry_time) {
+                finalExpiry = userData.expiry_time;
+                finalStatus = userData.status || 1;
+            } else if (sessionData && sessionData.expireAt) {
+                finalExpiry = new Date(sessionData.expireAt).getTime();
+                finalStatus = sessionData.status || 1;
+            } else if (vipDevices[oldDeviceId]) {
+                finalExpiry = new Date(vipDevices[oldDeviceId].expireAt).getTime();
+                finalStatus = vipDevices[oldDeviceId].status || 1;
+            }
+
+            if (finalExpiry === 0 || finalExpiry < Date.now()) {
+                throw new Error("اشتراك الجهاز القديم منتهي الصلاحية أو غير موجود.");
+            }
+
+            // 1. نقل البيانات إلى الجهاز الجديد
+            const safeNewId = sanitizeFirebaseKey(appDeviceId);
+            await db.ref("Users/" + safeNewId).set({
+                expiry_time: finalExpiry,
+                is_banned: (finalStatus === 2),
+                status: finalStatus,
+                device_id: appDeviceId,
+                last_updated: new Date().getTime(),
+                databasesecrte: DB_SECRET,
+                transferred_from: oldDeviceId
+            });
+
+            await db.ref("active_sessions/" + safeNewId).set({
+                deviceId: appDeviceId,
+                status: finalStatus,
+                expireAt: new Date(finalExpiry).toISOString(),
+                lastUpdated: new Date().toISOString(),
+                type: "Transferred",
+                activatedCode: "TRANSFER",
+                databasesecrte: DB_SECRET
+            });
+
+            // 2. مسح بيانات الجهاز القديم
+            const safeOldId = sanitizeFirebaseKey(oldDeviceId);
+            await db.ref("Users/" + safeOldId).remove();
+            await db.ref("active_sessions/" + safeOldId).remove();
+
+            // 3. تحديث حالة الطلب
+            await db.ref("transfer_requests/" + pin).update({
+                status: "COMPLETED",
+                targetDeviceId: appDeviceId,
+                completedAt: Date.now()
+            });
+
+            // إشعار بالنجاح وتوجيه داخل التطبيق
+            spinner.style.display = 'none';
+            btnText.style.display = 'inline-block';
+            btnText.innerText = "تم النقل بنجاح ✅";
+            actionBtn.style.background = "var(--primary)";
+            
+            setTimeout(() => {
+                closeTransferModal();
+                window.location.href = `app://success_auth?code=TRANSFER&duration=auto&expiry_time=${finalExpiry}&silent=false`;
+            }, 1000);
+
+        } catch (error) {
+            spinner.style.display = 'none';
+            btnText.style.display = 'inline-block';
+            actionBtn.disabled = false;
+            errorDiv.innerText = error.message || "حدث خطأ أثناء الاتصال بالخادم.";
             errorDiv.style.display = 'block';
         }
     }

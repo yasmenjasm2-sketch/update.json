@@ -13,8 +13,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- مكتبة قراءة الباركود -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
         :root {
@@ -344,60 +342,6 @@
             color: var(--primary);
         }
 
-        /* تنسيقات أزرار وشاشة الباركود الجديدة */
-        .scan-actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            margin-top: 15px;
-        }
-        .scan-btn {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px;
-            background: rgba(187, 134, 252, 0.1);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--primary);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .scan-btn:active {
-            background: var(--primary);
-            color: #fff;
-            transform: scale(0.95);
-        }
-        .qr-reader-container {
-            width: 100%;
-            display: none;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--primary);
-            background: #000;
-        }
-        .qr-reader-container video {
-            border-radius: 12px;
-            object-fit: cover;
-        }
-        .stop-scan-btn {
-            width: 100%;
-            padding: 10px;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid #ef4444;
-            border-radius: 12px;
-            color: #ef4444;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 15px;
-            display: none;
-        }
-
         .transfer-modal input[type="text"], .transfer-modal input[type="number"] {
             padding: 14px;
             margin-top: 5px;
@@ -503,7 +447,7 @@
     </div>
 </div>
 
-<!-- واجهة نقل الاشتراك (مقسمة لخطوتين باحترافية) -->
+<!-- واجهة نقل الاشتراك (المصادقة فقط) -->
 <div class="transfer-modal-overlay" id="transferOverlay">
     <div class="transfer-modal">
         <div class="scanner-icon-container">
@@ -514,42 +458,17 @@
             </svg>
         </div>
 
-        <!-- الخطوة 1: الفحص الأمني المموه -->
-        <div id="transfer-step-1">
-            <h3 style="margin:0 0 5px 0; font-size: 18px;">فحص الرمز الأمني</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">يرجى مسح أو إرفاق الباركود للتحقق من التشفير الأمني.</p>
+        <div id="transfer-step-2">
+            <h3 style="margin:0 0 5px 0; font-size: 18px;">المصادقة ونقل الاشتراك</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">يرجى إدخال كود المصادقة للمتابعة وتفعيل الاشتراك على هذا الجهاز.</p>
             
-            <div class="scan-actions">
-                <button class="scan-btn" onclick="startCameraScan()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                    الكاميرا
-                </button>
-                <button class="scan-btn" onclick="document.getElementById('qr-input-file').click()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                    المعرض
-                </button>
-            </div>
-            
-            <div id="qr-reader" class="qr-reader-container"></div>
-            <button id="stop-scan-btn" class="stop-scan-btn" onclick="stopCameraScan()">إغلاق الكاميرا ✖</button>
-            <input type="file" id="qr-input-file" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
-            
-            <div style="margin-top:15px; font-size:12px; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="goToStep2()">إدخال رمز المصادقة يدوياً</div>
-        </div>
-
-        <!-- الخطوة 2: المصادقة النهائية -->
-        <div id="transfer-step-2" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
-            <h3 style="margin:0 0 5px 0; font-size: 18px;">المصادقة النهائية</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">تم التقاط الرمز، يرجى تأكيد المصادقة للمتابعة.</p>
-            
-            <input type="text" id="transferPin" placeholder="رمز المصادقة" autocomplete="off" inputmode="text">
+            <input type="text" id="transferPin" placeholder="أدخل كود المصادقة" autocomplete="off" inputmode="text">
             <div id="transferError" class="error" style="margin-top:0; margin-bottom: 15px;"></div>
 
             <button class="main-btn" id="transferActionBtn" onclick="executeTransfer()" style="margin-bottom: 10px;">
                 <span id="transferBtnText">تأكيد المصادقة والدخول</span>
                 <div class="small-spinner" id="transferSpinner"></div>
             </button>
-            <button style="width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-muted); font-weight: 600; cursor: pointer;" onclick="goToStep1()">عودة للخطوة السابقة</button>
         </div>
 
         <!-- زر الإغلاق العام -->
@@ -912,105 +831,17 @@
     }
 
     // ==========================================
-    // قسم نقل الاشتراك الجديد كلياً (خطوتين للتمويه)
+    // قسم نقل الاشتراك الجديد (المصادقة فقط)
     // ==========================================
-    let html5QrCode;
-
-    function goToStep2(scannedText = null) {
-        if (scannedText) {
-            document.getElementById('transferPin').value = scannedText;
-        }
-        // إخفاء الخطوة الأولى (مسح الباركود)
-        document.getElementById('transfer-step-1').style.display = 'none';
-        
-        // إظهار الخطوة الثانية (المصادقة)
-        const step2 = document.getElementById('transfer-step-2');
-        step2.style.display = 'block';
-        setTimeout(() => { step2.style.opacity = '1'; }, 10);
-        
-        stopCameraScan(); // إيقاف الكاميرا بمجرد العبور للخطوة الثانية
-    }
-
-    function goToStep1() {
-        const step2 = document.getElementById('transfer-step-2');
-        step2.style.opacity = '0';
-        setTimeout(() => {
-            step2.style.display = 'none';
-            document.getElementById('transfer-step-1').style.display = 'block';
-        }, 300);
-        document.getElementById('transferPin').value = '';
-        document.getElementById('transferError').style.display = 'none';
-    }
 
     function openTransferModal() {
-        goToStep1(); // لضمان البدء دائماً من الخطوة الأولى
+        document.getElementById('transferPin').value = '';
+        document.getElementById('transferError').style.display = 'none';
         document.getElementById('transferOverlay').classList.add('active');
     }
 
     function closeTransferModal() {
         document.getElementById('transferOverlay').classList.remove('active');
-        stopCameraScan();
-    }
-
-    function startCameraScan() {
-        const qrReaderDiv = document.getElementById('qr-reader');
-        const stopBtn = document.getElementById('stop-scan-btn');
-        qrReaderDiv.style.display = 'block';
-        stopBtn.style.display = 'block';
-        
-        if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("qr-reader");
-        }
-        
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 220, height: 220 } },
-            (decodedText) => {
-                // عند نجاح المسح، ننتقل للخطوة الثانية تلقائياً
-                goToStep2(decodedText);
-            },
-            (errorMessage) => {
-                // تجاهل أخطاء القراءة العادية أثناء المسح
-            }
-        ).catch(err => {
-            alert("تعذر الوصول للكاميرا، يرجى التأكد من إعطاء الصلاحيات.");
-            qrReaderDiv.style.display = 'none';
-            stopBtn.style.display = 'none';
-        });
-    }
-
-    function stopCameraScan() {
-        if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().then(() => {
-                document.getElementById('qr-reader').style.display = 'none';
-                document.getElementById('stop-scan-btn').style.display = 'none';
-            }).catch(err => {
-                console.error("فشل إيقاف الكاميرا", err);
-            });
-        } else {
-            document.getElementById('qr-reader').style.display = 'none';
-            document.getElementById('stop-scan-btn').style.display = 'none';
-        }
-    }
-
-    function handleFileUpload(event) {
-        if (event.target.files.length == 0) return;
-        const file = event.target.files[0];
-        
-        if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("qr-reader");
-        }
-        
-        html5QrCode.scanFile(file, true)
-        .then(decodedText => {
-            // عند نجاح استخراج الرمز من الصورة، ننتقل للخطوة الثانية
-            goToStep2(decodedText);
-        })
-        .catch(err => {
-            alert("لم يتم العثور على باركود في هذه الصورة، يرجى المحاولة بصورة أوضح.");
-        });
-        
-        event.target.value = ""; // إعادة تعيين الحقل
     }
 
     async function executeTransfer() {
@@ -1025,7 +856,7 @@
         errorDiv.style.display = 'none';
 
         if (!pin || pin.length < 4) {
-            errorDiv.innerText = "يرجى إدخال رمز مصادقة صحيح";
+            errorDiv.innerText = "يرجى إدخال كود مصادقة صحيح";
             errorDiv.style.display = 'block';
             return;
         }
@@ -1065,20 +896,20 @@
 
             // التحقق من صحة البيانات
             if (!requestData) {
-                throw new Error("الرمز غير صحيح أو غير موجود بالنظام.");
+                throw new Error("الكود غير صحيح أو غير موجود بالنظام.");
             }
 
             let currentStatus = requestData.status ? String(requestData.status).toUpperCase() : "";
             if (currentStatus !== "PENDING") {
-                throw new Error("الرمز غير صحيح أو تم استخدامه مسبقاً.");
+                throw new Error("الكود غير صحيح أو تم استخدامه مسبقاً.");
             }
 
             if (String(requestData.pinCode) !== pin) {
-                throw new Error("رمز المصادقة غير متطابق.");
+                throw new Error("كود المصادقة غير متطابق.");
             }
 
             if (requestData.expiresAt && requestData.expiresAt < Date.now()) {
-                throw new Error("انتهت صلاحية الرمز.");
+                throw new Error("انتهت صلاحية الكود.");
             }
 
             const oldDeviceId = requestData.sourceDeviceId;

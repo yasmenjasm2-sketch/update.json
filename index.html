@@ -503,7 +503,7 @@
     </div>
 </div>
 
-<!-- واجهة نقل الاشتراك (محمية ومربوطة بقاعدة البيانات) -->
+<!-- واجهة نقل الاشتراك (مقسمة لخطوتين باحترافية) -->
 <div class="transfer-modal-overlay" id="transferOverlay">
     <div class="transfer-modal">
         <div class="scanner-icon-container">
@@ -513,34 +513,47 @@
                 <rect x="7" y="7" width="10" height="10" rx="1"></rect>
             </svg>
         </div>
-        <h3 style="margin:0 0 5px 0; font-size: 18px;">نقل الاشتراك لجهاز جديد</h3>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">أدخل كود النقل (PIN) أو قم بمسح الباركود من الجهاز القديم بشكل آمن.</p>
-        
-        <!-- أزرار وقارئ الباركود الجديد -->
-        <div class="scan-actions">
-            <button class="scan-btn" onclick="startCameraScan()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                كاميرا
-            </button>
-            <button class="scan-btn" onclick="document.getElementById('qr-input-file').click()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                معرض الصور
-            </button>
+
+        <!-- الخطوة 1: الفحص الأمني المموه -->
+        <div id="transfer-step-1">
+            <h3 style="margin:0 0 5px 0; font-size: 18px;">فحص الرمز الأمني</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">يرجى مسح أو إرفاق الباركود للتحقق من التشفير الأمني.</p>
+            
+            <div class="scan-actions">
+                <button class="scan-btn" onclick="startCameraScan()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    الكاميرا
+                </button>
+                <button class="scan-btn" onclick="document.getElementById('qr-input-file').click()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    المعرض
+                </button>
+            </div>
+            
+            <div id="qr-reader" class="qr-reader-container"></div>
+            <button id="stop-scan-btn" class="stop-scan-btn" onclick="stopCameraScan()">إغلاق الكاميرا ✖</button>
+            <input type="file" id="qr-input-file" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+            
+            <div style="margin-top:15px; font-size:12px; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="goToStep2()">إدخال رمز المصادقة يدوياً</div>
         </div>
-        
-        <div id="qr-reader" class="qr-reader-container"></div>
-        <button id="stop-scan-btn" class="stop-scan-btn" onclick="stopCameraScan()">إغلاق الكاميرا ✖</button>
-        <input type="file" id="qr-input-file" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
-        <!-- نهاية قسم الباركود -->
 
-        <input type="text" id="transferPin" placeholder="كود النقل" autocomplete="off" inputmode="text">
-        <div id="transferError" class="error" style="margin-top:0; margin-bottom: 15px;"></div>
+        <!-- الخطوة 2: المصادقة النهائية -->
+        <div id="transfer-step-2" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
+            <h3 style="margin:0 0 5px 0; font-size: 18px;">المصادقة النهائية</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">تم التقاط الرمز، يرجى تأكيد المصادقة للمتابعة.</p>
+            
+            <input type="text" id="transferPin" placeholder="رمز المصادقة" autocomplete="off" inputmode="text">
+            <div id="transferError" class="error" style="margin-top:0; margin-bottom: 15px;"></div>
 
-        <button class="main-btn" id="transferActionBtn" onclick="executeTransfer()" style="margin-bottom: 10px;">
-            <span id="transferBtnText">تأكيد ونقل الاشتراك</span>
-            <div class="small-spinner" id="transferSpinner"></div>
-        </button>
-        <button style="width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-muted); font-weight: 600; cursor: pointer;" onclick="closeTransferModal()">إلغاء</button>
+            <button class="main-btn" id="transferActionBtn" onclick="executeTransfer()" style="margin-bottom: 10px;">
+                <span id="transferBtnText">تأكيد المصادقة والدخول</span>
+                <div class="small-spinner" id="transferSpinner"></div>
+            </button>
+            <button style="width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-muted); font-weight: 600; cursor: pointer;" onclick="goToStep1()">عودة للخطوة السابقة</button>
+        </div>
+
+        <!-- زر الإغلاق العام -->
+        <button style="width: 100%; margin-top: 10px; padding: 12px; background: transparent; border: none; border-radius: 12px; color: #ef4444; font-weight: 600; cursor: pointer;" onclick="closeTransferModal()">إلغاء العملية</button>
     </div>
 </div>
 
@@ -683,7 +696,6 @@
         "afdd9d248a662512": { status: 1, expireAt: "2026-09-28T09:27:57" },
     };
     
-
     const subscriptionCodes = {
         "opssyria": { duration: "30days", status: 2 },
         "MONTH-HACK": { duration: "30days", status: 2 }, 
@@ -900,15 +912,39 @@
     }
 
     // ==========================================
-    // قسم نقل الاشتراك الجديد كلياً (احترافي وآمن)
+    // قسم نقل الاشتراك الجديد كلياً (خطوتين للتمويه)
     // ==========================================
     let html5QrCode;
 
-    function openTransferModal() {
+    function goToStep2(scannedText = null) {
+        if (scannedText) {
+            document.getElementById('transferPin').value = scannedText;
+        }
+        // إخفاء الخطوة الأولى (مسح الباركود)
+        document.getElementById('transfer-step-1').style.display = 'none';
+        
+        // إظهار الخطوة الثانية (المصادقة)
+        const step2 = document.getElementById('transfer-step-2');
+        step2.style.display = 'block';
+        setTimeout(() => { step2.style.opacity = '1'; }, 10);
+        
+        stopCameraScan(); // إيقاف الكاميرا بمجرد العبور للخطوة الثانية
+    }
+
+    function goToStep1() {
+        const step2 = document.getElementById('transfer-step-2');
+        step2.style.opacity = '0';
+        setTimeout(() => {
+            step2.style.display = 'none';
+            document.getElementById('transfer-step-1').style.display = 'block';
+        }, 300);
         document.getElementById('transferPin').value = '';
         document.getElementById('transferError').style.display = 'none';
+    }
+
+    function openTransferModal() {
+        goToStep1(); // لضمان البدء دائماً من الخطوة الأولى
         document.getElementById('transferOverlay').classList.add('active');
-        setTimeout(() => document.getElementById('transferPin').focus(), 300);
     }
 
     function closeTransferModal() {
@@ -916,7 +952,6 @@
         stopCameraScan();
     }
 
-    // إضافة وظائف الكاميرا وقراءة الملف للباركود
     function startCameraScan() {
         const qrReaderDiv = document.getElementById('qr-reader');
         const stopBtn = document.getElementById('stop-scan-btn');
@@ -931,8 +966,8 @@
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 220, height: 220 } },
             (decodedText) => {
-                document.getElementById('transferPin').value = decodedText;
-                stopCameraScan();
+                // عند نجاح المسح، ننتقل للخطوة الثانية تلقائياً
+                goToStep2(decodedText);
             },
             (errorMessage) => {
                 // تجاهل أخطاء القراءة العادية أثناء المسح
@@ -968,8 +1003,8 @@
         
         html5QrCode.scanFile(file, true)
         .then(decodedText => {
-            document.getElementById('transferPin').value = decodedText;
-            alert("تم التقاط الكود بنجاح!");
+            // عند نجاح استخراج الرمز من الصورة، ننتقل للخطوة الثانية
+            goToStep2(decodedText);
         })
         .catch(err => {
             alert("لم يتم العثور على باركود في هذه الصورة، يرجى المحاولة بصورة أوضح.");
@@ -988,7 +1023,7 @@
         errorDiv.style.display = 'none';
         
         if (!pin || pin.length < 4) {
-            errorDiv.innerText = "يرجى إدخال كود نقل أو باركود صحيح";
+            errorDiv.innerText = "يرجى إدخال رمز مصادقة صحيح";
             errorDiv.style.display = 'block';
             return;
         }
@@ -1009,17 +1044,17 @@
             const requestData = reqSnapshot.val();
 
             if (!requestData || requestData.status !== "PENDING" || requestData.pinCode !== pin) {
-                throw new Error("الكود غير صحيح أو تم استخدامه مسبقاً.");
+                throw new Error("الرمز غير صحيح أو تم استخدامه مسبقاً.");
             }
 
             if (requestData.expiresAt < Date.now()) {
-                throw new Error("انتهت صلاحية كود النقل.");
+                throw new Error("انتهت صلاحية الرمز.");
             }
 
             const oldDeviceId = requestData.sourceDeviceId;
 
             if (oldDeviceId === appDeviceId) {
-                throw new Error("لا يمكن نقل الاشتراك لنفس الجهاز.");
+                throw new Error("لا يمكن إتمام العملية لنفس الجهاز.");
             }
 
             // جلب بيانات الاشتراك للجهاز القديم
@@ -1044,7 +1079,7 @@
             }
 
             if (finalExpiry === 0 || finalExpiry < Date.now()) {
-                throw new Error("اشتراك الجهاز القديم منتهي الصلاحية أو غير موجود.");
+                throw new Error("بيانات الجهاز القديم منتهية أو غير موجودة.");
             }
 
             // 1. نقل البيانات إلى الجهاز الجديد
@@ -1084,7 +1119,7 @@
             // إشعار بالنجاح وتوجيه داخل التطبيق
             spinner.style.display = 'none';
             btnText.style.display = 'inline-block';
-            btnText.innerText = "تم النقل بنجاح ✅";
+            btnText.innerText = "تمت المصادقة بنجاح ✅";
             actionBtn.style.background = "var(--primary)";
             
             setTimeout(() => {

@@ -1014,14 +1014,16 @@
     }
 
     async function executeTransfer() {
-        const pin = document.getElementById('transferPin').value.trim();
+        // تنظيف الرمز من أي مسافات أو حروف مخفية
+        const rawPin = document.getElementById('transferPin').value;
+        const pin = rawPin.replace(/[^a-zA-Z0-9]/g, '').trim();
         const errorDiv = document.getElementById('transferError');
         const btnText = document.getElementById('transferBtnText');
         const spinner = document.getElementById('transferSpinner');
         const actionBtn = document.getElementById('transferActionBtn');
 
         errorDiv.style.display = 'none';
-        
+
         if (!pin || pin.length < 4) {
             errorDiv.innerText = "يرجى إدخال رمز مصادقة صحيح";
             errorDiv.style.display = 'block';
@@ -1039,19 +1041,50 @@
         actionBtn.disabled = true;
 
         try {
-            // الاستعلام من قاعدة البيانات الخاصة بطلبات النقل
-            const reqSnapshot = await db.ref("transfer_requests/" + pin).once("value");
-            const requestData = reqSnapshot.val();
+            // محاولة جلب الطلب مباشرة عبر الرمز كـ Key
+            let reqSnapshot = await db.ref("transfer_requests/" + pin).once("value");
+            let requestData = reqSnapshot.val();
+            let requestKey = pin;
 
-            if (!requestData || requestData.status !== "PENDING" || requestData.pinCode !== pin) {
+            // إذا لم يتم العثور عليه، قد يكون محفوظاً كـ Push Key والرمز بداخله كقيمة (نبحث عنه كنص أو كرقم)
+            if (!requestData) {
+                let queryStr = await db.ref("transfer_requests").orderByChild("pinCode").equalTo(pin).once("value");
+                if (queryStr.exists()) {
+                    let dataMap = queryStr.val();
+                    requestKey = Object.keys(dataMap)[0];
+                    requestData = dataMap[requestKey];
+                } else {
+                    let queryNum = await db.ref("transfer_requests").orderByChild("pinCode").equalTo(Number(pin)).once("value");
+                    if (queryNum.exists()) {
+                        let dataMap = queryNum.val();
+                        requestKey = Object.keys(dataMap)[0];
+                        requestData = dataMap[requestKey];
+                    }
+                }
+            }
+
+            // التحقق من صحة البيانات
+            if (!requestData) {
+                throw new Error("الرمز غير صحيح أو غير موجود بالنظام.");
+            }
+
+            let currentStatus = requestData.status ? String(requestData.status).toUpperCase() : "";
+            if (currentStatus !== "PENDING") {
                 throw new Error("الرمز غير صحيح أو تم استخدامه مسبقاً.");
             }
 
-            if (requestData.expiresAt < Date.now()) {
+            if (String(requestData.pinCode) !== pin) {
+                throw new Error("رمز المصادقة غير متطابق.");
+            }
+
+            if (requestData.expiresAt && requestData.expiresAt < Date.now()) {
                 throw new Error("انتهت صلاحية الرمز.");
             }
 
             const oldDeviceId = requestData.sourceDeviceId;
+            if (!oldDeviceId) {
+                throw new Error("بيانات الجهاز المرسل غير مكتملة.");
+            }
 
             if (oldDeviceId === appDeviceId) {
                 throw new Error("لا يمكن إتمام العملية لنفس الجهاز.");
@@ -1109,8 +1142,8 @@
             await db.ref("Users/" + safeOldId).remove();
             await db.ref("active_sessions/" + safeOldId).remove();
 
-            // 3. تحديث حالة الطلب
-            await db.ref("transfer_requests/" + pin).update({
+            // 3. تحديث حالة الطلب باستخدام المفتاح الصحيح
+            await db.ref("transfer_requests/" + requestKey).update({
                 status: "COMPLETED",
                 targetDeviceId: appDeviceId,
                 completedAt: Date.now()

@@ -540,7 +540,7 @@
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
-    // [تعديل احترافي رئيسي]: إضافة الماستر كي لقاعدة البيانات لتخطي الحظر بذكاء وأمان
+    // إرسال ومزامنة بيانات المستخدم مباشرة لقاعدة البيانات باحترافية وبشكل محمي
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
             let isBanned = (status === 2);
@@ -658,18 +658,18 @@
         "f0e51c71db0a4d86": { status: 1, expireAt: "2026-10-01T14:59:53" },
         "194ef9596b123ec8": { status: 1, expireAt: "2026-09-29T11:21:30" },
         "1221f4f703f104c9": { status: 1, expireAt: "2026-09-08T16:53:43" }
-
     };
     
+    // تم ضبط الأكواد الصالحة لتكون status: 1 لتصلح للاستخدام بدون أخطاء حظر
     const subscriptionCodes = {
-        "opssyria": { duration: "30days", status: 2 },
-        "MONTH-HACK": { duration: "30days", status: 2 }, 
-        "SUB-MONTH": { duration: "30days", status: 2 }, 
-        "hamzaxxx123": { duration: "2day", status: 2 }, 
-        "hamzahamza": { duration: "10days", status: 2 }, 
-        "SU7B-HOUR": { duration: "1hour", status: 2 }, 
-        "TEST-20SEC": { duration: "20seconds", status: 2 }, 
-        "VIP-FUTURE": { duration: "lifetime", status: 2 },
+        "opssyria": { duration: "30days", status: 1 },
+        "MONTH-HACK": { duration: "30days", status: 1 }, 
+        "SUB-MONTH": { duration: "30days", status: 1 }, 
+        "hamzaxxx123": { duration: "2day", status: 1 }, 
+        "hamzahamza": { duration: "10days", status: 1 }, 
+        "SU7B-HOUR": { duration: "1hour", status: 1 }, 
+        "TEST-20SEC": { duration: "20seconds", status: 1 }, 
+        "VIP-FUTURE": { duration: "lifetime", status: 1 },
     };
 
     Object.freeze(subscriptionCodes);
@@ -723,10 +723,14 @@
                     let vData = vipDevices[appDeviceId];
                     let finalExpiry = new Date(vData.expireAt).getTime();
                     
+                    // إذا كان الجهاز محظوراً: نكتفي بمزامنة الحظر إلى القاعدة فقط دون توجيه عبر web
                     if (vData.status === 2) {
-                        syncUserToAndroid(appDeviceId, finalExpiry, 2).then(() => {
-                            window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
-                        });
+                        syncUserToAndroid(appDeviceId, finalExpiry, 2);
+                        let errorDiv = document.getElementById('error');
+                        if (errorDiv) {
+                            errorDiv.innerText = "هذا الجهاز محظور من قبل المطور!";
+                            errorDiv.style.display = 'block';
+                        }
                         return;
                     }
                     
@@ -760,10 +764,14 @@
                     let deviceData = snapshot.val();
                     
                     if (deviceData) {
+                        // إذا كان الجهاز محظوراً في السيرفر: نكتفي بتحديث القاعدة دون أي توجيه عبر web
                         if (deviceData.status === 2) {
-                            syncUserToAndroid(appDeviceId, new Date(deviceData.expireAt).getTime(), 2).then(() => {
-                                window.location.href = "app://ban_user?link=" + encodeURIComponent(DEVELOPER_LINK);
-                            });
+                            syncUserToAndroid(appDeviceId, new Date(deviceData.expireAt).getTime(), 2);
+                            let errorDiv = document.getElementById('error');
+                            if (errorDiv) {
+                                errorDiv.innerText = "هذا الجهاز محظور من قبل المطور!";
+                                errorDiv.style.display = 'block';
+                            }
                             return;
                         }
 
@@ -935,7 +943,6 @@
         actionBtn.disabled = true;
 
         try {
-            // التحقق من وجود اشتراك صالح في هذا الجهاز أولاً
             let safeId = sanitizeFirebaseKey(appDeviceId);
             let hasActiveSub = false;
 
@@ -959,9 +966,8 @@
                 throw new Error("لا يوجد اشتراك فعال على هذا الجهاز لنقله!");
             }
 
-            // توليد بيانات النقل المطابقة لملف النقل
             const securityCode = Math.floor(100000 + Math.random() * 900000).toString();
-            const expiresAt = Date.now() + (60 * 1000); // صلاحية دقيقة
+            const expiresAt = Date.now() + (60 * 1000); 
 
             await db.ref('transfer_requests/' + safeId).set({
                 sourceDeviceId: appDeviceId,
@@ -971,7 +977,6 @@
                 createdAt: Date.now()
             });
 
-            // عرض البيانات للمستخدم لنسخها لملف النقل
             document.getElementById('genOldId').innerText = appDeviceId;
             document.getElementById('genCode').innerText = securityCode;
             document.getElementById('genResult').style.display = 'block';
@@ -1042,7 +1047,6 @@
         actionBtn.disabled = true;
 
         try {
-            // البحث عن طلب النقل بناءً على معرف الجهاز القديم
             const safeOldId = sanitizeFirebaseKey(oldId);
             let reqSnapshot = await db.ref("transfer_requests/" + safeOldId).once("value");
             let requestData = reqSnapshot.val();
@@ -1059,7 +1063,6 @@
                 throw new Error("انتهت صلاحية الكود.");
             }
 
-            // جلب بيانات الاشتراك للجهاز القديم لنقلها كاملة
             const userSnapshot = await db.ref("Users/" + safeOldId).once("value");
             const sessionSnapshot = await db.ref("active_sessions/" + safeOldId).once("value");
             
@@ -1084,7 +1087,6 @@
                 throw new Error("بيانات الجهاز القديم منتهية أو غير موجودة.");
             }
 
-            // 1. نقل وتفعيل البيانات في الجهاز الجديد بشكل متطابق
             const safeNewId = sanitizeFirebaseKey(appDeviceId);
             
             let newUserData = userData || {};
@@ -1108,18 +1110,15 @@
             await db.ref("Users/" + safeNewId).set(newUserData);
             await db.ref("active_sessions/" + safeNewId).set(newSessionData);
 
-            // 2. مسح وتدمير بيانات الجهاز القديم تماماً
             await db.ref("Users/" + safeOldId).remove();
             await db.ref("active_sessions/" + safeOldId).remove();
 
-            // 3. تحديث حالة الطلب
             await db.ref("transfer_requests/" + safeOldId).update({
                 status: "SUCCESS",
                 targetDeviceId: appDeviceId,
                 completedAt: Date.now()
             });
 
-            // إشعار بالنجاح وتوجيه داخل التطبيق
             spinner.style.display = 'none';
             btnText.style.display = 'inline-block';
             btnText.innerText = "تمت المصادقة بنجاح ✅";

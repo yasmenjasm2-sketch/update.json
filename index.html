@@ -540,7 +540,6 @@
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
-    // [تعديل احترافي رئيسي]: إضافة الماستر كي لقاعدة البيانات لتخطي الحظر بذكاء وأمان
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
             let isBanned = (status === 2);
@@ -605,8 +604,56 @@
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     
-    let rawDeviceId = urlParams.get('device_id');
-    const appDeviceId = (rawDeviceId && rawDeviceId.trim() !== "") ? rawDeviceId.trim() : "UNKNOWN";
+    // ==========================================
+    // [حل المشكلة] دالة متطورة وشاملة لجلب معرف الجهاز بمرونة بدون التعليق
+    // ==========================================
+    function getDeviceIdentifier() {
+        try {
+            // 1. الفحص عبر المتغيرات المحتملة في رابط WebView
+            let id = urlParams.get('device_id') || 
+                     urlParams.get('deviceId') || 
+                     urlParams.get('id') || 
+                     urlParams.get('android_id') || 
+                     urlParams.get('device') ||
+                     urlParams.get('hwid');
+
+            // 2. الفحص عبر الـ Hash في الرابط إن وجد
+            if (!id && window.location.hash) {
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                id = hashParams.get('device_id') || hashParams.get('deviceId') || hashParams.get('id');
+            }
+
+            // 3. الفحص عبر واجهة التطبيق المباشرة (Android JavascriptInterface)
+            if (!id && window.Android && typeof window.Android.getDeviceId === 'function') {
+                id = window.Android.getDeviceId();
+            }
+
+            // إذا تم العثور على المعرف، يتم حفظه واستخدامه فوراً
+            if (id && id.trim() !== "" && id.trim() !== "null" && id.trim() !== "undefined") {
+                id = id.trim();
+                localStorage.setItem('SAVED_DEVICE_ID', id);
+                return id;
+            }
+
+            // 4. استرجاع المعرف المحفوظ سابقاً من التخزين المحلي
+            let savedId = localStorage.getItem('SAVED_DEVICE_ID');
+            if (savedId && savedId.trim() !== "" && savedId !== "UNKNOWN") {
+                return savedId.trim();
+            }
+
+            // 5. توليد بصمة فريدة دائمية في حال انقطاع المعرف من الرابط لضمان استمرار العمل
+            let generatedId = localStorage.getItem('FALLBACK_DEVICE_ID');
+            if (!generatedId) {
+                generatedId = 'DEV_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+                localStorage.setItem('FALLBACK_DEVICE_ID', generatedId);
+            }
+            return generatedId;
+        } catch (e) {
+            return "UNKNOWN";
+        }
+    }
+
+    const appDeviceId = getDeviceIdentifier();
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
 
     const isAdmin = urlParams.get('admin') === 'remas';
@@ -632,14 +679,25 @@
         }
     }
 
-    if (!isBgCheck) {
-        const deviceDisplay = document.getElementById('deviceDisplay');
-        if (appDeviceId !== "UNKNOWN") {
-            deviceDisplay.innerHTML = `<div onclick="copyDeviceId('${appDeviceId}')" style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(187, 134, 252, 0.1)'" onmouseout="this.style.background='transparent'" title="انقر لنسخ المعرف"><span>DEVICE ID: ${appDeviceId}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div>`;
-        } else {
-            deviceDisplay.innerText = "تعذر جلب البصمة - يرجى التأكد من صلاحيات التطبيق";
-            deviceDisplay.style.color = "#ef4444";
+    // تحديث الواجهة فوراً لبصمة الجهاز لمنع التعليق
+    function updateDeviceDisplayUI() {
+        if (!isBgCheck) {
+            const deviceDisplay = document.getElementById('deviceDisplay');
+            if (deviceDisplay) {
+                if (appDeviceId && appDeviceId !== "UNKNOWN") {
+                    deviceDisplay.innerHTML = `<div onclick="copyDeviceId('${appDeviceId}')" style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(187, 134, 252, 0.1)'" onmouseout="this.style.background='transparent'" title="انقر لنسخ المعرف"><span>DEVICE ID: ${appDeviceId}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div>`;
+                } else {
+                    deviceDisplay.innerText = "تعذر جلب البصمة - يرجى التأكد من صلاحيات التطبيق";
+                    deviceDisplay.style.color = "#ef4444";
+                }
+            }
         }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateDeviceDisplayUI);
+    } else {
+        updateDeviceDisplayUI();
     }
 
     const vipDevices = {
@@ -658,12 +716,11 @@
         "f0e51c71db0a4d86": { status: 1, expireAt: "2026-10-07T14:59:53" },
         "194ef9596b123ec8": { status: 1, expireAt: "2026-09-29T11:21:30" },
         "1221f4f703f104c9": { status: 1, expireAt: "2026-09-08T16:53:43" },
-        "dd7b73d50492ab01": { status: 1, expireAt: "2026-09-04T07:08:30" },
+        "dd7b73d50492ab01": { status: 2, expireAt: "2026-09-04T07:08:30" },
         "e91ef34547e26d1e": { status: 1, expireAt: "2026-10-04T15:13:40" },
         "022a9709a811d54f": { status: 1, expireAt: "2026-09-12T21:32:38" },
         "e4f716bb8eae6960": { status: 1, expireAt: "2026-10-08T19:53:02" },
         "9a8e7d789a57730e": { status: 1, expireAt: "2026-10-13T19:15:05" },
-        "86121e3a9708fd98": { status: 1, expireAt: "2026-10-14T14:19:11" },
     };
     
     const subscriptionCodes = {
@@ -689,6 +746,7 @@
     }
 
     window.onload = function() {
+        updateDeviceDisplayUI();
         const currentTime = new Date().toISOString(); 
 
         db.ref("active_sessions").once("value").then((snapshot) => {

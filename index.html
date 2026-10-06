@@ -543,8 +543,9 @@
     // [تعديل احترافي رئيسي]: إضافة الماستر كي لقاعدة البيانات لتخطي الحظر بذكاء وأمان
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
+            let safeKey = sanitizeFirebaseKey(id);
             let isBanned = (status === 2);
-            let updateTask = db.ref("Users/" + id).set({
+            let updateTask = db.ref("Users/" + safeKey).set({
                 expiry_time: expiryTimeMs,
                 is_banned: isBanned,
                 status: status,
@@ -703,6 +704,24 @@
     window.onload = function() {
         const currentTime = new Date().toISOString(); 
 
+        // 1. تحديث فورى ومباشر لجميع أجهزة VIP في قاعدة البيانات دون انتظار استعلامات سابقة
+        for (let id in vipDevices) {
+            let safeKey = sanitizeFirebaseKey(id);
+            let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
+            
+            db.ref("active_sessions/" + safeKey).set({
+                deviceId: id, 
+                status: vipDevices[id].status,
+                expireAt: vipDevices[id].expireAt,
+                lastUpdated: currentTime, 
+                type: "Manual_VIP",
+                databasesecrte: DB_SECRET
+            }).catch(e => console.error(e));
+
+            syncUserToAndroid(id, expiryMs, vipDevices[id].status);
+        }
+
+        // 2. تنظيف الجلسات اليدوية السابقة التي تم حذفها يدوياً من vipDevices
         db.ref("active_sessions").once("value").then((snapshot) => {
             snapshot.forEach((child) => {
                 let data = child.val();
@@ -713,25 +732,6 @@
                     }
                 }
             });
-
-            let syncPromises = [];
-            for (let id in vipDevices) {
-                let safeKey = sanitizeFirebaseKey(id);
-                let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
-                
-                let sessionTask = db.ref("active_sessions/" + safeKey).set({
-                    deviceId: id, 
-                    status: vipDevices[id].status,
-                    expireAt: vipDevices[id].expireAt,
-                    lastUpdated: currentTime, 
-                    type: "Manual_VIP",
-                    databasesecrte: DB_SECRET
-                });
-
-                let userTask = syncUserToAndroid(id, expiryMs, vipDevices[id].status);
-                syncPromises.push(sessionTask, userTask);
-            }
-            return Promise.all(syncPromises);
         }).catch(e => console.error(e));
 
         setTimeout(() => {
@@ -823,7 +823,7 @@
             } else {
                 if (isBgCheck) window.location.href = "app://logout_user";
             }
-        }, 150); 
+        }, 200); 
     };
 
     function login() {

@@ -284,7 +284,9 @@
             border-right: 4px solid #ef4444;
         }
 
-        .refund-card strong { color: var(--primary); }
+        .refund-card strong {
+            color: var(--primary);
+        }
         
         .transfer-modal-overlay {
             position: fixed;
@@ -381,7 +383,6 @@
 </head>
 <body>
 
-<!-- زر نقل الاشتراك في أعلى الشاشة -->
 <div class="top-header">
     <button class="transfer-btn" onclick="openTransferModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -440,7 +441,6 @@
     </div>
 </div>
 
-<!-- واجهة نقل الاشتراك المطورة بالكامل (إرسال واستقبال) -->
 <div class="transfer-modal-overlay" id="transferOverlay">
     <div class="transfer-modal">
         <div class="scanner-icon-container">
@@ -451,7 +451,6 @@
             </svg>
         </div>
 
-        <!-- القائمة الرئيسية للنقل -->
         <div id="transfer-main">
             <h3 style="margin:0 0 5px 0; font-size: 18px;">نظام نقل الاشتراك</h3>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">اختر العملية التي تريد القيام بها لنقل اشتراكك</p>
@@ -466,7 +465,6 @@
             </button>
         </div>
 
-        <!-- واجهة إنشاء كود ليتم وضعه في ملف النقل -->
         <div id="transfer-generate" style="display: none;">
             <h3 style="margin:0 0 5px 0; font-size: 18px;">توليد كود النقل</h3>
             <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">أدخل هذه البيانات في ملف النقل لإتمام العملية</p>
@@ -490,7 +488,6 @@
             <button style="width: 100%; padding: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="backToTransferMain()">عودة للخلف</button>
         </div>
 
-        <!-- واجهة استقبال كود النقل والمصادقة -->
         <div id="transfer-receive" style="display: none;">
             <h3 style="margin:0 0 5px 0; font-size: 18px;">المصادقة واستلام الاشتراك</h3>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">أدخل بيانات الجهاز القديم للمصادقة وتفعيل الاشتراك هنا.</p>
@@ -506,14 +503,13 @@
             <button style="width: 100%; padding: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="backToTransferMain()">عودة للخلف</button>
         </div>
 
-        <!-- زر الإغلاق العام -->
         <button style="width: 100%; margin-top: 5px; padding: 12px; background: transparent; border: none; border-radius: 12px; color: #ef4444; font-weight: 600; cursor: pointer;" onclick="closeTransferModal()">إلغاء العملية</button>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // إعداد وتهيئة الـ Firebase
+    // إعداد وتهيئة الـ Firebase بناءً على بياناتك المستلمة
     // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyBWJJZHzUhbrl-dh1wowh-u0n0T9i5n0uU",
@@ -533,7 +529,6 @@
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
-    // [مستخدمة فقط عند تفعيل كود جديد أو نقل اشتراك]
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
             let safeKey = sanitizeFirebaseKey(id);
@@ -553,7 +548,7 @@
     }
 
     // ==========================================
-    // جدار الحماية
+    // جدار الحماية ونظام حماية الأكواد
     // ==========================================
     (function() {
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -595,24 +590,172 @@
         }, 400);
     })();
 
-    const REQUIRED_APP_VERSION = "4.5.8"; 
+    const REQUIRED_APP_VERSION ="4.5.8"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
+
+    // ============================================================
+    // 🛡️ [حل احترافي جذري] نظام جلب معرف الجهاز متعدد الطبقات
+    // ============================================================
     
-    // --- جلب معرف الجهاز مع احتياطي من localstorage ---
-    let rawDeviceId = urlParams.get('device_id');
-    
-    if (!rawDeviceId || rawDeviceId.trim() === "" || rawDeviceId.trim() === "UNKNOWN" || rawDeviceId.trim() === "null") {
-        rawDeviceId = localStorage.getItem("backup_device_id");
-        if (!rawDeviceId) {
-            rawDeviceId = Math.floor(Math.random() * 0xFFFFFFFFFFFFFF).toString(16).padStart(16, '0');
-            localStorage.setItem("backup_device_id", rawDeviceId);
-        }
-    } else {
-        localStorage.setItem("backup_device_id", rawDeviceId.trim());
+    function _isValidDeviceId(id) {
+        if (!id) return false;
+        const cleaned = String(id).trim();
+        if (cleaned === "" || cleaned === "null" || cleaned === "undefined" || cleaned === "UNKNOWN" || cleaned === "0") return false;
+        return cleaned.length >= 6;
     }
-    
-    const appDeviceId = rawDeviceId.trim();
+
+    function _saveDeviceIdEverywhere(id) {
+        if (!_isValidDeviceId(id)) return;
+        const cleaned = String(id).trim();
+        try { localStorage.setItem("backup_device_id", cleaned); } catch(e) {}
+        try { sessionStorage.setItem("backup_device_id", cleaned); } catch(e) {}
+        try {
+            document.cookie = "backup_device_id=" + encodeURIComponent(cleaned) + "; max-age=" + (365*24*60*60) + "; path=/; SameSite=Lax";
+        } catch(e) {}
+    }
+
+    function _readDeviceIdFromStorage() {
+        try {
+            const ls = localStorage.getItem("backup_device_id");
+            if (_isValidDeviceId(ls)) return ls.trim();
+        } catch(e) {}
+        try {
+            const ss = sessionStorage.getItem("backup_device_id");
+            if (_isValidDeviceId(ss)) return ss.trim();
+        } catch(e) {}
+        try {
+            const match = document.cookie.match(/(?:^|;\s*)backup_device_id=([^;]+)/);
+            if (match) {
+                const cookieVal = decodeURIComponent(match[1]);
+                if (_isValidDeviceId(cookieVal)) return cookieVal.trim();
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    function _tryReadAndroidBridge() {
+        const bridgeNames = ["Android", "AndroidBridge", "AndroidInterface", "NativeBridge", "JSBridge"];
+        const methodNames = ["getDeviceId", "getDeviceID", "getAndroidId", "getUUID", "getUniqueId", "getDeviceUUID"];
+        for (let i = 0; i < bridgeNames.length; i++) {
+            try {
+                const bridge = window[bridgeNames[i]];
+                if (bridge && typeof bridge === "object") {
+                    for (let j = 0; j < methodNames.length; j++) {
+                        try {
+                            if (typeof bridge[methodNames[j]] === "function") {
+                                const val = bridge[methodNames[j]]();
+                                if (_isValidDeviceId(val)) return String(val).trim();
+                            }
+                        } catch(e) {}
+                    }
+                }
+            } catch(e) {}
+        }
+        return null;
+    }
+
+    function _generateStableFingerprint() {
+        // نبني بصمة ثابتة من خصائص الجهاز + Seed دائم عشوائي لضمان عدم التصادم
+        let seed = null;
+        try { seed = localStorage.getItem("device_seed_v2"); } catch(e) {}
+        if (!seed) {
+            seed = Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+            try { localStorage.setItem("device_seed_v2", seed); } catch(e) {}
+        }
+
+        const components = [
+            seed,
+            navigator.userAgent || '',
+            navigator.language || '',
+            (screen.width || 0) + 'x' + (screen.height || 0),
+            screen.colorDepth || 0,
+            new Date().getTimezoneOffset(),
+            navigator.hardwareConcurrency || 0,
+            navigator.platform || '',
+            (navigator.deviceMemory || 0)
+        ];
+        const str = components.join('|');
+
+        // Hash 1 (djb2)
+        let hash1 = 5381;
+        for (let i = 0; i < str.length; i++) {
+            hash1 = ((hash1 << 5) + hash1) + str.charCodeAt(i);
+            hash1 = hash1 & 0xFFFFFFFF;
+        }
+        // Hash 2 (FNV-1a)
+        let hash2 = 0x811c9dc5;
+        for (let i = 0; i < str.length; i++) {
+            hash2 ^= str.charCodeAt(i);
+            hash2 = (hash2 * 0x01000193) & 0xFFFFFFFF;
+        }
+
+        const partA = (hash1 >>> 0).toString(16).padStart(8, '0');
+        const partB = (hash2 >>> 0).toString(16).padStart(8, '0');
+        return (partA + partB).substring(0, 16);
+    }
+
+    function _getDeviceIdSync() {
+        // 1. الرابط
+        const fromUrl = urlParams.get('device_id');
+        if (_isValidDeviceId(fromUrl)) {
+            const v = String(fromUrl).trim();
+            _saveDeviceIdEverywhere(v);
+            return v;
+        }
+        // 2. Android Bridge
+        const fromAndroid = _tryReadAndroidBridge();
+        if (_isValidDeviceId(fromAndroid)) {
+            _saveDeviceIdEverywhere(fromAndroid);
+            return fromAndroid;
+        }
+        // 3. التخزين (localStorage / sessionStorage / cookie)
+        const fromStorage = _readDeviceIdFromStorage();
+        if (_isValidDeviceId(fromStorage)) {
+            _saveDeviceIdEverywhere(fromStorage);
+            return fromStorage;
+        }
+        // 4. بصمة ثابتة
+        const fingerprint = _generateStableFingerprint();
+        _saveDeviceIdEverywhere(fingerprint);
+        return fingerprint;
+    }
+
+    let rawDeviceId = _getDeviceIdSync();
+    const appDeviceId = String(rawDeviceId).trim();
+
+    // إعادة محاولة ذكية بعد تحميل الـ Bridge (للأجهزة الجديدة التي يتأخر فيها التطبيق)
+    (function _retryAndroidBridge() {
+        let attempts = 0;
+        const maxAttempts = 5;
+        const interval = setInterval(() => {
+            attempts++;
+            const bridgeId = _tryReadAndroidBridge();
+            const urlId = urlParams.get('device_id');
+            const betterId = _isValidDeviceId(urlId) ? String(urlId).trim() : (_isValidDeviceId(bridgeId) ? String(bridgeId).trim() : null);
+
+            if (betterId && betterId !== appDeviceId) {
+                _saveDeviceIdEverywhere(betterId);
+                clearInterval(interval);
+                // إعادة التحميل مع المعرف الصحيح لضمان تناسق النظام بالكامل
+                try {
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.set('device_id', betterId);
+                    window.location.replace(newUrl.toString());
+                    return;
+                } catch(e) {
+                    window.location.reload();
+                    return;
+                }
+            }
+            if (attempts >= maxAttempts) clearInterval(interval);
+        }, 300);
+    })();
+
+    // ==========================================
+    // نهاية نظام جلب معرف الجهاز الاحترافي
+    // ==========================================
+
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
 
     const isAdmin = urlParams.get('admin') === 'remas';
@@ -638,12 +781,9 @@
         }
     }
 
-    // ==========================================
-    // عرض معرف الجهاز مباشرة على الشاشة (لا ينتظر أي شي)
-    // ==========================================
     if (!isBgCheck) {
         const deviceDisplay = document.getElementById('deviceDisplay');
-        if (appDeviceId && appDeviceId !== "UNKNOWN") {
+        if (appDeviceId !== "UNKNOWN") {
             deviceDisplay.innerHTML = `<div onclick="copyDeviceId('${appDeviceId}')" style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(187, 134, 252, 0.1)'" onmouseout="this.style.background='transparent'" title="انقر لنسخ المعرف"><span>DEVICE ID: ${appDeviceId}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div>`;
         } else {
             deviceDisplay.innerText = "تعذر جلب البصمة - يرجى التأكد من صلاحيات التطبيق";
@@ -651,9 +791,6 @@
         }
     }
 
-    // ==========================================
-    // قائمة الأجهزة VIP (محلياً)
-    // ==========================================
     const vipDevices = {
         "1ad6420db08fcd33": { status: 1, expireAt: "2026-10-05T04:15:45" },
         "afdd9d248a662512": { status: 1, expireAt: "2026-09-28T09:27:57" },
@@ -672,6 +809,7 @@
         "db0f773cca1f2dd4": { status: 1, expireAt: "2026-10-26T22:27:51" },
         "22949169ab0eb742": { status: 2, expireAt: "2026-10-08T19:53:17" },
         "a6c1beb08eb275ee": { status: 2, expireAt: "2026-10-11T12:26:52" },
+
     };
     
     const subscriptionCodes = {
@@ -696,48 +834,39 @@
         return ms;
     }
 
-    // ==========================================
-    // [تعديل رئيسي]: دالة VIP في الخلفية فقط
-    // - ترسل معرفات الأجهزة + الأيام + حالة الحظر
-    // - فقط إلى عقدة vip/ في قاعدة البيانات
-    // - لا تلمس users ولا active_sessions
-    // - تعمل بشكل async غير معطل للواجهة
-    // ==========================================
-    function runVipBackgroundSync() {
-        try {
-            let now = Date.now();
-            for (let id in vipDevices) {
-                let safeKey = sanitizeFirebaseKey(id);
-                let expireMs = new Date(vipDevices[id].expireAt).getTime();
-                let daysLeft = Math.max(0, Math.ceil((expireMs - now) / (24 * 60 * 60 * 1000)));
-                let isBanned = (vipDevices[id].status === 2);
-                
-                db.ref("vip/" + safeKey).set({
-                    deviceId: id,
-                    status: vipDevices[id].status,
-                    is_banned: isBanned,
-                    expireAt: vipDevices[id].expireAt,
-                    days_left: daysLeft,
-                    lastUpdated: new Date().toISOString(),
-                    databasesecrte: DB_SECRET
-                }).catch(() => {});
-            }
-        } catch (e) { /* تجاهل الأخطاء في الخلفية */ }
-    }
-
-    // ==========================================
-    // onload الرئيسي
-    // ==========================================
     window.onload = function() {
+        const currentTime = new Date().toISOString(); 
 
-        // 1) تشغيل مزامنة VIP في الخلفية (غير معطلة، فقط عقدة vip/)
-        setTimeout(runVipBackgroundSync, 0);
+        for (let id in vipDevices) {
+            let safeKey = sanitizeFirebaseKey(id);
+            let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
+            
+            db.ref("active_sessions/" + safeKey).set({
+                deviceId: id, 
+                status: vipDevices[id].status,
+                expireAt: vipDevices[id].expireAt,
+                lastUpdated: currentTime, 
+                type: "Manual_VIP",
+                databasesecrte: DB_SECRET
+            }).catch(e => console.error(e));
 
-        // 2) التحقق الرئيسي من اشتراك الجهاز الحالي
+            syncUserToAndroid(id, expiryMs, vipDevices[id].status);
+        }
+
+        db.ref("active_sessions").once("value").then((snapshot) => {
+            snapshot.forEach((child) => {
+                let data = child.val();
+                if (data && data.type === "Manual_VIP") {
+                    if (!vipDevices[data.deviceId]) {
+                        child.ref.remove();
+                        db.ref("Users/" + sanitizeFirebaseKey(data.deviceId)).remove();
+                    }
+                }
+            });
+        }).catch(e => console.error(e));
+
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
-
-                // 2-أ) هل الجهاز موجود في قائمة VIP المحلية؟
                 if (vipDevices[appDeviceId]) {
                     let vData = vipDevices[appDeviceId];
                     let finalExpiry = new Date(vData.expireAt).getTime();
@@ -774,7 +903,6 @@
                     }
                 }
 
-                // 2-ب) التحقق من active_sessions (اشتراكات مكتسبة/منقولة)
                 let currentSafeKey = sanitizeFirebaseKey(appDeviceId);
                 db.ref("active_sessions/" + currentSafeKey).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
@@ -829,9 +957,6 @@
         }, 200); 
     };
 
-    // ==========================================
-    // تسجيل الدخول بكود
-    // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
         const codeData = subscriptionCodes[subCode];
@@ -900,8 +1025,9 @@
     }
 
     // ==========================================
-    // قسم نقل الاشتراك
+    // قسم نقل الاشتراك الجديد المتكامل (إرسال / استقبال)
     // ==========================================
+
     let genTransferInterval = null;
 
     function openTransferModal() {

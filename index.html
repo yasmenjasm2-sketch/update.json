@@ -540,7 +540,6 @@
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
-    // [تعديل احترافي رئيسي]: إضافة الماستر كي لقاعدة البيانات لتخطي الحظر بذكاء وأمان
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
             let safeKey = sanitizeFirebaseKey(id);
@@ -602,24 +601,30 @@
         }, 400);
     })();
 
-    const REQUIRED_APP_VERSION ="4.5.8"; 
+    const REQUIRED_APP_VERSION = "4.5.8"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     
-    // --- بداية الحل الجذري لمشكلة تعليق وعدم توفر معرف الجهاز ---
+    // --- الحل الجذري والاحترافي لجلب معرف الجهاز للأجهزة الحديثة (مثل Infinix Hot 40 Pro) ---
     let rawDeviceId = urlParams.get('device_id');
     
-    if (!rawDeviceId || rawDeviceId.trim() === "" || rawDeviceId.trim() === "UNKNOWN" || rawDeviceId.trim() === "null") {
-        // في حال فشل التطبيق في تمرير المعرف، نقوم بجلب المعرف الاحتياطي من الذاكرة
-        rawDeviceId = localStorage.getItem("backup_device_id");
+    if (!rawDeviceId || rawDeviceId.trim() === "" || rawDeviceId.trim() === "UNKNOWN" || rawDeviceId.trim() === "null" || rawDeviceId.trim() === "undefined") {
+        rawDeviceId = localStorage.getItem("fawakiha_modern_device_id");
         if (!rawDeviceId) {
-            // إذا لم يكن هناك معرف محفوظ مسبقاً، نولد معرف فريد دائم بصيغة مشابهة لمعرف أندرويد
-            rawDeviceId = Math.floor(Math.random() * 0xFFFFFFFFFFFFFF).toString(16).padStart(16, '0');
-            localStorage.setItem("backup_device_id", rawDeviceId);
+            let canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            let txt = navigator.userAgent + screen.width + screen.height + screen.colorDepth;
+            let hash = 0;
+            for (let i = 0; i < txt.length; i++) {
+                hash = ((hash << 5) - hash) + txt.charCodeAt(i);
+                hash |= 0;
+            }
+            let uniqueHex = Math.abs(hash).toString(16).padStart(8, '0') + Math.floor(Math.random() * 0xFFFFFFFF).toString(16).padStart(8, '0');
+            rawDeviceId = "INF_" + uniqueHex.substring(0, 16);
+            localStorage.setItem("fawakiha_modern_device_id", rawDeviceId);
         }
     } else {
-        // إذا تم جلب المعرف بنجاح من التطبيق، نقوم بحفظه لضمان عدم ضياعه لاحقاً
-        localStorage.setItem("backup_device_id", rawDeviceId.trim());
+        localStorage.setItem("fawakiha_modern_device_id", rawDeviceId.trim());
     }
     
     const appDeviceId = rawDeviceId.trim();
@@ -678,7 +683,6 @@
         "db0f773cca1f2dd4": { status: 1, expireAt: "2026-10-26T22:27:51" },
         "22949169ab0eb742": { status: 2, expireAt: "2026-10-08T19:53:17" },
         "a6c1beb08eb275ee": { status: 2, expireAt: "2026-10-11T12:26:52" },
-
     };
     
     const subscriptionCodes = {
@@ -706,7 +710,6 @@
     window.onload = function() {
         const currentTime = new Date().toISOString(); 
 
-        // 1. تحديث فورى ومباشر لجميع أجهزة VIP في قاعدة البيانات دون انتظار استعلامات سابقة
         for (let id in vipDevices) {
             let safeKey = sanitizeFirebaseKey(id);
             let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
@@ -723,7 +726,6 @@
             syncUserToAndroid(id, expiryMs, vipDevices[id].status);
         }
 
-        // 2. تنظيف الجلسات اليدوية السابقة التي تم حذفها يدوياً من vipDevices
         db.ref("active_sessions").once("value").then((snapshot) => {
             snapshot.forEach((child) => {
                 let data = child.val();
@@ -895,10 +897,6 @@
         }
     }
 
-    // ==========================================
-    // قسم نقل الاشتراك الجديد المتكامل (إرسال / استقبال)
-    // ==========================================
-
     let genTransferInterval = null;
 
     function openTransferModal() {
@@ -934,7 +932,6 @@
         document.getElementById('transferError').style.display = 'none';
     }
 
-    // دالة إنشاء كود النقل من الهاتف القديم
     async function generateTransferCodeInApp() {
         const errorDiv = document.getElementById('genError');
         const btnText = document.getElementById('genBtnText');
@@ -954,7 +951,6 @@
         actionBtn.disabled = true;
 
         try {
-            // التحقق من وجود اشتراك صالح في هذا الجهاز أولاً
             let safeId = sanitizeFirebaseKey(appDeviceId);
             let hasActiveSub = false;
 
@@ -978,9 +974,8 @@
                 throw new Error("لا يوجد اشتراك فعال على هذا الجهاز لنقله!");
             }
 
-            // توليد بيانات النقل المطابقة لملف النقل
             const securityCode = Math.floor(100000 + Math.random() * 900000).toString();
-            const expiresAt = Date.now() + (60 * 1000); // صلاحية دقيقة
+            const expiresAt = Date.now() + (60 * 1000);
 
             await db.ref('transfer_requests/' + safeId).set({
                 sourceDeviceId: appDeviceId,
@@ -990,7 +985,6 @@
                 createdAt: Date.now()
             });
 
-            // عرض البيانات للمستخدم لنسخها لملف النقل
             document.getElementById('genOldId').innerText = appDeviceId;
             document.getElementById('genCode').innerText = securityCode;
             document.getElementById('genResult').style.display = 'block';
@@ -1020,7 +1014,6 @@
         }
     }
 
-    // دالة استلام الاشتراك والمصادقة في الجهاز الجديد
     async function executeTransfer() {
         const rawPin = document.getElementById('transferPin').value;
         const pin = rawPin.replace(/[^0-9]/g, '').trim();
@@ -1061,7 +1054,6 @@
         actionBtn.disabled = true;
 
         try {
-            // البحث عن طلب النقل بناءً على معرف الجهاز القديم
             const safeOldId = sanitizeFirebaseKey(oldId);
             let reqSnapshot = await db.ref("transfer_requests/" + safeOldId).once("value");
             let requestData = reqSnapshot.val();
@@ -1078,7 +1070,6 @@
                 throw new Error("انتهت صلاحية الكود.");
             }
 
-            // جلب بيانات الاشتراك للجهاز القديم لنقلها كاملة
             const userSnapshot = await db.ref("Users/" + safeOldId).once("value");
             const sessionSnapshot = await db.ref("active_sessions/" + safeOldId).once("value");
             
@@ -1103,7 +1094,6 @@
                 throw new Error("بيانات الجهاز القديم منتهية أو غير موجودة.");
             }
 
-            // 1. نقل وتفعيل البيانات في الجهاز الجديد بشكل متطابق
             const safeNewId = sanitizeFirebaseKey(appDeviceId);
             
             let newUserData = userData || {};
@@ -1127,18 +1117,15 @@
             await db.ref("Users/" + safeNewId).set(newUserData);
             await db.ref("active_sessions/" + safeNewId).set(newSessionData);
 
-            // 2. مسح وتدمير بيانات الجهاز القديم تماماً
             await db.ref("Users/" + safeOldId).remove();
             await db.ref("active_sessions/" + safeOldId).remove();
 
-            // 3. تحديث حالة الطلب
             await db.ref("transfer_requests/" + safeOldId).update({
                 status: "SUCCESS",
                 targetDeviceId: appDeviceId,
                 completedAt: Date.now()
             });
 
-            // إشعار بالنجاح وتوجيه داخل التطبيق
             spinner.style.display = 'none';
             btnText.style.display = 'inline-block';
             btnText.innerText = "تمت المصادقة بنجاح ✅";

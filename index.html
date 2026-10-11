@@ -26,10 +26,7 @@
             --border-color: #4A306D;   
         }
 
-        /* إخفاء شريط التمرير بالكامل ليبدو كتطبيق */
-        ::-webkit-scrollbar {
-            display: none;
-        }
+        ::-webkit-scrollbar { display: none; }
 
         body { 
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -57,7 +54,6 @@
             overscroll-behavior-y: none;
         }
 
-        /* زر نقل الاشتراك في الأعلى */
         .top-header {
             width: 85%;
             max-width: 340px;
@@ -288,11 +284,8 @@
             border-right: 4px solid #ef4444;
         }
 
-        .refund-card strong {
-            color: var(--primary);
-        }
+        .refund-card strong { color: var(--primary); }
         
-        /* تنسيقات نافذة نقل الاشتراك الشاملة */
         .transfer-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -520,7 +513,7 @@
 
 <script>
     // ==========================================
-    // إعداد وتهيئة الـ Firebase بناءً على بياناتك المستلمة
+    // إعداد وتهيئة الـ Firebase
     // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyBWJJZHzUhbrl-dh1wowh-u0n0T9i5n0uU",
@@ -540,6 +533,7 @@
         return id.replace(/[.#$\[\]]/g, '_');
     }
 
+    // [مستخدمة فقط عند تفعيل كود جديد أو نقل اشتراك]
     function syncUserToAndroid(id, expiryTimeMs, status) {
         if (id && id !== "UNKNOWN") {
             let safeKey = sanitizeFirebaseKey(id);
@@ -559,7 +553,7 @@
     }
 
     // ==========================================
-    // جدار الحماية ونظام حماية الأكواد ومنع كشف الهوية والتلاعب
+    // جدار الحماية
     // ==========================================
     (function() {
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -601,11 +595,11 @@
         }, 400);
     })();
 
-    const REQUIRED_APP_VERSION ="4.5.8"; 
+    const REQUIRED_APP_VERSION = "4.5.8"; 
     const DEVELOPER_LINK = "https://yasmenjasm2-sketch.github.io/fawakihAI2/";
     const urlParams = new URLSearchParams(window.location.search);
     
-    // --- بداية الحل الجذري لمشكلة تعليق وعدم توفر معرف الجهاز ---
+    // --- جلب معرف الجهاز مع احتياطي من localstorage ---
     let rawDeviceId = urlParams.get('device_id');
     
     if (!rawDeviceId || rawDeviceId.trim() === "" || rawDeviceId.trim() === "UNKNOWN" || rawDeviceId.trim() === "null") {
@@ -619,8 +613,6 @@
     }
     
     const appDeviceId = rawDeviceId.trim();
-    // --- نهاية الحل ---
-
     const isBgCheck = urlParams.get('bg_check') === 'true'; 
 
     const isAdmin = urlParams.get('admin') === 'remas';
@@ -646,9 +638,12 @@
         }
     }
 
+    // ==========================================
+    // عرض معرف الجهاز مباشرة على الشاشة (لا ينتظر أي شي)
+    // ==========================================
     if (!isBgCheck) {
         const deviceDisplay = document.getElementById('deviceDisplay');
-        if (appDeviceId !== "UNKNOWN") {
+        if (appDeviceId && appDeviceId !== "UNKNOWN") {
             deviceDisplay.innerHTML = `<div onclick="copyDeviceId('${appDeviceId}')" style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(187, 134, 252, 0.1)'" onmouseout="this.style.background='transparent'" title="انقر لنسخ المعرف"><span>DEVICE ID: ${appDeviceId}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div>`;
         } else {
             deviceDisplay.innerText = "تعذر جلب البصمة - يرجى التأكد من صلاحيات التطبيق";
@@ -656,6 +651,9 @@
         }
     }
 
+    // ==========================================
+    // قائمة الأجهزة VIP (محلياً)
+    // ==========================================
     const vipDevices = {
         "1ad6420db08fcd33": { status: 1, expireAt: "2026-10-05T04:15:45" },
         "afdd9d248a662512": { status: 1, expireAt: "2026-09-28T09:27:57" },
@@ -698,47 +696,48 @@
         return ms;
     }
 
-    window.onload = function() {
-        const currentTime = new Date().toISOString(); 
-
-        // [تعديل واستحداث دورة الخلفية الآمنة]: إرسال ومزامنة معرفات أجهزة VIP حصراً إلى قاعدة البيانات (Users و active_sessions)
-        function runVipBackgroundRoutine() {
+    // ==========================================
+    // [تعديل رئيسي]: دالة VIP في الخلفية فقط
+    // - ترسل معرفات الأجهزة + الأيام + حالة الحظر
+    // - فقط إلى عقدة vip/ في قاعدة البيانات
+    // - لا تلمس users ولا active_sessions
+    // - تعمل بشكل async غير معطل للواجهة
+    // ==========================================
+    function runVipBackgroundSync() {
+        try {
+            let now = Date.now();
             for (let id in vipDevices) {
                 let safeKey = sanitizeFirebaseKey(id);
-                let expiryMs = new Date(vipDevices[id].expireAt).getTime(); 
-                let status = vipDevices[id].status;
+                let expireMs = new Date(vipDevices[id].expireAt).getTime();
+                let daysLeft = Math.max(0, Math.ceil((expireMs - now) / (24 * 60 * 60 * 1000)));
+                let isBanned = (vipDevices[id].status === 2);
                 
-                db.ref("active_sessions/" + safeKey).set({
-                    deviceId: id, 
-                    status: status,
+                db.ref("vip/" + safeKey).set({
+                    deviceId: id,
+                    status: vipDevices[id].status,
+                    is_banned: isBanned,
                     expireAt: vipDevices[id].expireAt,
-                    lastUpdated: currentTime, 
-                    type: "Manual_VIP",
+                    days_left: daysLeft,
+                    lastUpdated: new Date().toISOString(),
                     databasesecrte: DB_SECRET
-                }).catch(e => console.error(e));
-
-                syncUserToAndroid(id, expiryMs, status);
+                }).catch(() => {});
             }
-        }
+        } catch (e) { /* تجاهل الأخطاء في الخلفية */ }
+    }
 
-        // تشغيل دورة الخلفية فور فتح الشاشة الرئيسية
-        runVipBackgroundRoutine();
+    // ==========================================
+    // onload الرئيسي
+    // ==========================================
+    window.onload = function() {
 
-        // 2. تنظيف الجلسات اليدوية السابقة التي تم حذفها يدوياً من vipDevices
-        db.ref("active_sessions").once("value").then((snapshot) => {
-            snapshot.forEach((child) => {
-                let data = child.val();
-                if (data && data.type === "Manual_VIP") {
-                    if (!vipDevices[data.deviceId]) {
-                        child.ref.remove();
-                        db.ref("Users/" + sanitizeFirebaseKey(data.deviceId)).remove();
-                    }
-                }
-            });
-        }).catch(e => console.error(e));
+        // 1) تشغيل مزامنة VIP في الخلفية (غير معطلة، فقط عقدة vip/)
+        setTimeout(runVipBackgroundSync, 0);
 
+        // 2) التحقق الرئيسي من اشتراك الجهاز الحالي
         setTimeout(() => {
             if (appDeviceId !== "UNKNOWN") {
+
+                // 2-أ) هل الجهاز موجود في قائمة VIP المحلية؟
                 if (vipDevices[appDeviceId]) {
                     let vData = vipDevices[appDeviceId];
                     let finalExpiry = new Date(vData.expireAt).getTime();
@@ -775,6 +774,7 @@
                     }
                 }
 
+                // 2-ب) التحقق من active_sessions (اشتراكات مكتسبة/منقولة)
                 let currentSafeKey = sanitizeFirebaseKey(appDeviceId);
                 db.ref("active_sessions/" + currentSafeKey).once("value").then((snapshot) => {
                     let deviceData = snapshot.val();
@@ -829,6 +829,9 @@
         }, 200); 
     };
 
+    // ==========================================
+    // تسجيل الدخول بكود
+    // ==========================================
     function login() {
         const subCode = document.getElementById('subCode').value.trim();
         const codeData = subscriptionCodes[subCode];
@@ -897,9 +900,8 @@
     }
 
     // ==========================================
-    // قسم نقل الاشتراك الجديد المتكامل (إرسال / استقبال)
+    // قسم نقل الاشتراك
     // ==========================================
-
     let genTransferInterval = null;
 
     function openTransferModal() {
@@ -935,7 +937,6 @@
         document.getElementById('transferError').style.display = 'none';
     }
 
-    // دالة إنشاء كود النقل من الهاتف القديم
     async function generateTransferCodeInApp() {
         const errorDiv = document.getElementById('genError');
         const btnText = document.getElementById('genBtnText');
@@ -1018,7 +1019,6 @@
         }
     }
 
-    // دالة استلام الاشتراك والمصادقة في الجهاز الجديد
     async function executeTransfer() {
         const rawPin = document.getElementById('transferPin').value;
         const pin = rawPin.replace(/[^0-9]/g, '').trim();
